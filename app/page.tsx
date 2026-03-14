@@ -12,10 +12,10 @@ export default function HomePage() {
           className="h-6 sm:h-8 w-auto animate-arrow-bounce"
         />
       </div>
-      <ScrollReveal animation="pixel-fade-up">
+      <ScrollReveal animation="pixel-fade-up" threshold={0.02}>
         <HowItWorks />
       </ScrollReveal>
-      <ScrollReveal animation="pixel-fade-up" delay={100}>
+      <ScrollReveal animation="pixel-fade-up" delay={100} threshold={0.02}>
         <ShopCategories />
       </ScrollReveal>
     </>
