@@ -13,6 +13,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx prisma generate
+# Dummy env vars needed at build time for Next.js static page generation
+ENV SESSION_SECRET=build-placeholder
+ENV DATABASE_URL=postgres://x:x@localhost:5432/x
 RUN npm run build
 
 # Production image
