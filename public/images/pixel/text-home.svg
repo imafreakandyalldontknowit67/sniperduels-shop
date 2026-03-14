@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg shape-rendering="crispEdges" id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 392.1 92.92">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #3084b1;
+      }
+    </style>
+  </defs>
+  <g id="Layer_1-2" data-name="Layer 1">
+    <g>
+      <path class="cls-1" d="M0,0h26.55v39.82h39.82V0h26.55v92.92h-26.55v-39.82H26.55v39.82H0V0Z"/>
+      <path class="cls-1" d="M183.79,92.92h-66.37v-13.27h-13.27V13.27h13.27V0h66.37v13.27h13.27v66.37h-13.27v13.27ZM170.52,13.27h-39.82v66.37h39.82V13.27Z"/>
+      <path class="cls-1" d="M208.3,0h26.55v13.27h13.27v13.27h13.27v-13.27h13.27V0h26.55v92.92h-26.55v-53.1h-13.27v13.27h-13.27v-13.27h-13.27v53.1h-26.55V0Z"/>
+      <path class="cls-1" d="M392.1,53.09h-53.1v26.55h53.1v13.27h-79.64V0h79.64v13.27h-53.1v26.55h53.1v13.27Z"/>
+    </g>
+  </g>
+</svg>

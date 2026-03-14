@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg shape-rendering="crispEdges" id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 302.27 174">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #f2f2f2;
+      }
+    </style>
+  </defs>
+  <g id="Layer_1-2" data-name="Layer 1">
+    <g>
+      <rect class="cls-1" x="0" y="0" width="43.18" height="43.5"/>
+      <rect class="cls-1" x="43.18" y="43.5" width="43.18" height="43.5"/>
+      <rect class="cls-1" x="86.36" y="87" width="43.18" height="43.5"/>
+      <rect class="cls-1" x="129.55" y="130.5" width="43.18" height="43.5"/>
+      <rect class="cls-1" x="172.73" y="87" width="43.18" height="43.5"/>
+      <rect class="cls-1" x="215.91" y="43.5" width="43.18" height="43.5"/>
+      <rect class="cls-1" x="259.09" y="0" width="43.18" height="43.5"/>
+    </g>
+  </g>
+</svg>

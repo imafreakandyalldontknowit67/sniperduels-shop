@@ -1,0 +1,338 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'PixelEmulator';
+  src: url('/fonts/PixelEmulator-xq08.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --accent: #e1ad2d;
+  --accent-dark: #c4961f;
+  --pixel-blue: #3084b1;
+  --pixel-blue-dark: #205ad7;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-dark-900 text-white;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+  font-smooth: never;
+}
+
+/* ===== PIXEL BUTTON STYLES ===== */
+
+/* Gold pixel button - matches concept mockup */
+.pixel-btn-gold {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e1ad2d;
+  color: #0a0a0b;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  padding: 0 24px;
+  image-rendering: pixelated;
+}
+.pixel-btn-gold::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 4px;
+  right: 4px;
+  height: 4px;
+  background: #e1ad2d;
+}
+.pixel-btn-gold::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 4px;
+  right: 4px;
+  height: 4px;
+  background: #e1ad2d;
+}
+/* Side extensions */
+.pixel-btn-gold-wrap {
+  position: relative;
+}
+.pixel-btn-gold-wrap::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: 4px;
+  bottom: 4px;
+  width: 4px;
+  background: #e1ad2d;
+}
+.pixel-btn-gold-wrap::after {
+  content: '';
+  position: absolute;
+  right: -4px;
+  top: 4px;
+  bottom: 4px;
+  width: 4px;
+  background: #e1ad2d;
+}
+/* Corner pixel decorations for gold button */
+.pixel-btn-gold .corner-tl {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  width: 8px;
+  height: 8px;
+  background: transparent;
+}
+.pixel-btn-gold .corner-br {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  background: #fff;
+}
+
+/* Blue pixel button - smaller pill style */
+.pixel-btn-blue {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #2a7ca3;
+  color: #fff;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: 3px solid #3bb8e8;
+  padding: 0 16px;
+}
+.pixel-btn-blue::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 6px;
+  height: 6px;
+  background: #3bb8e8;
+  clip-path: polygon(100% 0, 0 0, 0 100%);
+}
+.pixel-btn-blue::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  width: 6px;
+  height: 6px;
+  background: #3bb8e8;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+/* ===== INTERACTIVE EFFECTS ===== */
+
+/* Pixel button press effect */
+.pixel-btn-press {
+  transition: transform 0.1s steps(2), filter 0.1s steps(2);
+}
+.pixel-btn-press:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+.pixel-btn-press:active {
+  transform: translateY(2px);
+  filter: brightness(0.95);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Nav link pixel underline */
+.pixel-underline {
+  position: relative;
+}
+.pixel-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background: currentColor;
+  transition: width 0.15s steps(3);
+}
+.pixel-underline:hover::after {
+  width: 100%;
+}
+.pixel-underline-active::after {
+  width: 100% !important;
+}
+
+/* Card pixel hover glow */
+.pixel-card-hover {
+  transition: border-color 0.2s steps(3), box-shadow 0.2s steps(3);
+}
+.pixel-card-hover:hover {
+  box-shadow: 0 0 0 1px rgba(225,173,45,0.15), 0 4px 0 #000;
+}
+
+/* Speech bubble pop on hover */
+@keyframes pixel-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+.pixel-pop-hover {
+  cursor: default;
+}
+.pixel-pop-hover:hover {
+  animation: pixel-pop 0.3s steps(3);
+}
+
+/* ===== UTILITY CLASSES ===== */
+
+.pixel-border {
+  border: 3px solid #e1ad2d;
+}
+
+.pixel-border-blue {
+  border: 3px solid #205ad7;
+}
+
+.pixel-border-white {
+  border: 3px solid #ffffff;
+}
+
+.pixel-shadow {
+  box-shadow: 4px 4px 0px #000;
+}
+
+.pixel-shadow-sm {
+  box-shadow: 2px 2px 0px #000;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-dark-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-dark-500;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-dark-400;
+}
+
+/* Selection */
+::selection {
+  @apply bg-accent/30 text-white;
+}
+
+/* Pixel frame card - kept as fallback, inline styles preferred for cross-browser compat */
+.pixel-frame-card {
+  position: relative;
+  background: #0e0e10 !important;
+  border: 3px solid rgba(255, 255, 255, 0.25) !important;
+}
+.pixel-frame-card::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
+  border: 3px solid rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+}
+.pixel-frame-card::after {
+  content: '';
+  position: absolute;
+  top: -9px;
+  left: -9px;
+  width: 12px;
+  height: 12px;
+  border-top: 3px solid rgba(255, 255, 255, 0.3);
+  border-left: 3px solid rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+}
+
+/* Pixel card with glint effect */
+.pixel-card-glint {
+  position: relative;
+  box-shadow: inset 6px 6px 0 rgba(255,255,255,0.08), inset -2px -2px 0 rgba(0,0,0,0.3);
+}
+.pixel-card-glint::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-top: 3px solid rgba(255,255,255,0.2);
+  border-left: 3px solid rgba(255,255,255,0.2);
+  pointer-events: none;
+}
+
+/* ===== PIXEL ANIMATIONS ===== */
+
+@keyframes pixel-fade-up {
+  0% { opacity: 0; transform: translateY(16px); }
+  50% { opacity: 0.5; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pixel-fade-in {
+  0% { opacity: 0; }
+  25% { opacity: 0.25; }
+  50% { opacity: 0.5; }
+  75% { opacity: 0.75; }
+  100% { opacity: 1; }
+}
+
+@keyframes pixel-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes pixel-bob-badge {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(225, 173, 45, 0.3)); }
+  50% { filter: drop-shadow(0 0 20px rgba(225, 173, 45, 0.6)) drop-shadow(0 0 40px rgba(225, 173, 45, 0.2)); }
+}
+
+@keyframes arrow-bounce {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50% { transform: translateY(8px); opacity: 0.9; }
+}
+
+@keyframes pixel-scale-in {
+  0% { opacity: 0; transform: scale(0.9); }
+  50% { opacity: 0.5; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

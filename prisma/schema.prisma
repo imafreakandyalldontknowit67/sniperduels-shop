@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Users ───────────────────────────────────────────────────────────────────
+model User {
+  id              String   @id // Roblox user ID
+  name            String
+  displayName     String
+  avatar          String?
+  robloxCreatedAt String?
+
+  // Discord linked account
+  discordId         String?
+  discordUsername   String?
+  discordAvatar    String?
+  discordLinkedAt  String?
+
+  // Wallet
+  walletBalance Decimal @default(0) @db.Decimal(12, 2)
+
+  // Loyalty
+  lifetimeSpend             Decimal @default(0) @db.Decimal(12, 2)
+  discordFirstPurchaseUsed  Boolean @default(false)
+
+  // Timestamps & status
+  createdAt String
+  lastLogin String
+  isAdmin   Boolean @default(false)
+
+  // Relations
+  orders   Order[]
+  deposits Deposit[]
+}
+
+// ─── Orders ──────────────────────────────────────────────────────────────────
+enum OrderType {
+  gems
+  item
+  crate
+}
+
+enum OrderStatus {
+  pending
+  processing
+  completed
+  failed
+  refunded
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  userId      String
+  userName    String
+  type        OrderType
+  itemName    String
+  quantity    Int
+  pricePerUnit Decimal    @db.Decimal(12, 2)
+  totalPrice  Decimal     @db.Decimal(12, 2)
+  status      OrderStatus @default(pending)
+  playerReady Boolean     @default(false)
+  createdAt   String
+  updatedAt   String
+  completedAt String?
+  notes       String?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+}
+
+// ─── Deposits ────────────────────────────────────────────────────────────────
+enum DepositStatus {
+  pending
+  completed
+  failed
+  expired
+}
+
+model Deposit {
+  id                    String        @id @default(cuid())
+  userId                String
+  amount                Decimal       @db.Decimal(12, 2)
+  status                DepositStatus @default(pending)
+  pandabaseInvoiceId    String        @unique
+  pandabaseCheckoutUrl  String
+  createdAt             String
+  updatedAt             String
+  completedAt           String?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+// ─── Stock Items ─────────────────────────────────────────────────────────────
+model StockItem {
+  id          String  @id @default(cuid())
+  name        String  @db.VarChar(200)
+  type        String  // 'sniper' | 'knife' | 'crate'
+  description String? @db.VarChar(2000)
+  priceUsd    Decimal @db.Decimal(12, 2)
+  stock       Int     @default(0)
+  imageUrl    String?
+  rarity      String?
+  fx          String?
+  fragtrak    String?
+  active      Boolean @default(true)
+  createdAt   String
+  updatedAt   String
+}
+
+// ─── Gem Stock (singleton) ───────────────────────────────────────────────────
+model GemStock {
+  id         String @id @default("singleton")
+  balanceInK Int    @default(0)
+  updatedAt  String
+}
+
+// ─── Site Settings (singleton) ──────────────────────────────────────────────
+model SiteSettings {
+  id              String  @id @default("singleton")
+  itemsComingSoon Boolean @default(true)
+  updatedAt       String
+}
+
+// ─── Session Blacklist ───────────────────────────────────────────────────────
+model SessionBlacklist {
+  jti       String @id // JWT ID
+  expiresAt Int    // Unix timestamp (seconds)
+
+  @@index([expiresAt])
+}

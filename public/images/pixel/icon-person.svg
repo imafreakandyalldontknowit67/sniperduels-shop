@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" shape-rendering="crispEdges">
+  <defs>
+    <style>.a{fill:#3084b1;}</style>
+  </defs>
+  <g>
+    <!-- Head circle -->
+    <rect class="a" x="150" y="20" width="100" height="25"/>
+    <rect class="a" x="125" y="45" width="150" height="25"/>
+    <rect class="a" x="125" y="70" width="150" height="25"/>
+    <rect class="a" x="125" y="95" width="150" height="25"/>
+    <rect class="a" x="150" y="120" width="100" height="25"/>
+    <!-- Neck -->
+    <rect class="a" x="175" y="145" width="50" height="25"/>
+    <!-- Shoulders/Body -->
+    <rect class="a" x="75" y="170" width="250" height="25"/>
+    <rect class="a" x="50" y="195" width="300" height="25"/>
+    <rect class="a" x="50" y="220" width="300" height="25"/>
+    <rect class="a" x="50" y="245" width="300" height="25"/>
+    <rect class="a" x="50" y="270" width="300" height="25"/>
+    <rect class="a" x="75" y="295" width="250" height="25"/>
+    <rect class="a" x="100" y="320" width="200" height="25"/>
+    <!-- Small arrow/login indicator bottom-left -->
+    <rect class="a" x="0" y="345" width="25" height="25"/>
+    <rect class="a" x="25" y="345" width="25" height="25"/>
+    <rect class="a" x="50" y="345" width="25" height="25"/>
+    <rect class="a" x="50" y="320" width="25" height="25"/>
+    <rect class="a" x="50" y="370" width="25" height="25"/>
+  </g>
+</svg>

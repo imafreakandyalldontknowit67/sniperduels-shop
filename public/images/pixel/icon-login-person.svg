@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg shape-rendering="crispEdges" id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 609 302.27">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #f2f2f2;
+      }
+    </style>
+  </defs>
+  <g id="Layer_1-2" data-name="Layer 1">
+    <g>
+      <rect class="cls-1" x="435" y="259.09" width="43.5" height="43.18"/>
+      <rect class="cls-1" x="478.5" y="215.91" width="43.5" height="43.18"/>
+      <rect class="cls-1" x="522" y="172.73" width="43.5" height="43.18"/>
+      <rect class="cls-1" x="565.5" y="129.55" width="43.5" height="43.18"/>
+      <rect class="cls-1" x="522" y="86.36" width="43.5" height="43.18"/>
+      <rect class="cls-1" x="478.5" y="43.18" width="43.5" height="43.18"/>
+      <rect class="cls-1" x="435" y="0" width="43.5" height="43.18"/>
+      <rect class="cls-1" x="348" y="129.55" width="43.5" height="43.18"/>
+      <rect class="cls-1" x="391.5" y="129.55" width="43.5" height="43.18"/>
+      <rect class="cls-1" x="435" y="129.55" width="43.5" height="43.18"/>
+      <rect class="cls-1" x="478.5" y="129.55" width="43.5" height="43.18"/>
+      <rect class="cls-1" x="522" y="129.55" width="43.5" height="43.18"/>
+      <rect class="cls-1" x="174" y="129.55" width="43.5" height="43.18"/>
+      <rect class="cls-1" x="217.5" y="129.55" width="43.5" height="43.18"/>
+      <rect class="cls-1" x="261" y="129.55" width="43.5" height="43.18"/>
+      <rect class="cls-1" x="304.5" y="129.55" width="43.5" height="43.18"/>
+      <rect class="cls-1" x="0" y="129.55" width="43.5" height="43.18"/>
+      <rect class="cls-1" x="43.5" y="129.55" width="43.5" height="43.18"/>
+      <rect class="cls-1" x="87" y="129.55" width="43.5" height="43.18"/>
+      <rect class="cls-1" x="130.5" y="129.55" width="43.5" height="43.18"/>
+    </g>
+  </g>
+</svg>

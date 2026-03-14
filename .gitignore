@@ -1,0 +1,72 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
+
+# Production
+/build
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local env files
+.env*.local
+.env
+
+# Data storage
+/data
+
+# Vercel
+.vercel
+
+# Logs
+*.log
+.playwright-mcp/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Security test artifacts
+test_*.py
+*_test_results.md
+deliverables/
+workspace/
+*_ANALYSIS.md
+*_ASSESSMENT.md
+*_EVIDENCE.md
+*_TEST_RESULTS.md
+RUN_*.md
+dashboard-error-state.png
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+/lib/generated/prisma
+
+# Orchestrator
+.worktrees/
+tasks.json
+tasks.results.json
+tasks.review.json
