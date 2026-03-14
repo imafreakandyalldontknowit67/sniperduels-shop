@@ -172,28 +172,29 @@ export function OrdersTable({ initialOrders }: OrdersTableProps) {
         </div>
       ) : (
         <div className="bg-dark-800/50 rounded-xl overflow-hidden">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[700px]">
             <thead className="bg-dark-800">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Order ID</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Customer</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Item</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Total</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Date</th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-400">Actions</th>
+                <th className="px-3 md:px-6 py-4 text-left text-sm font-semibold text-gray-400">Order ID</th>
+                <th className="px-3 md:px-6 py-4 text-left text-sm font-semibold text-gray-400">Customer</th>
+                <th className="px-3 md:px-6 py-4 text-left text-sm font-semibold text-gray-400">Item</th>
+                <th className="px-3 md:px-6 py-4 text-left text-sm font-semibold text-gray-400">Total</th>
+                <th className="px-3 md:px-6 py-4 text-left text-sm font-semibold text-gray-400">Status</th>
+                <th className="px-3 md:px-6 py-4 text-left text-sm font-semibold text-gray-400">Date</th>
+                <th className="px-3 md:px-6 py-4 text-right text-sm font-semibold text-gray-400">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-dark-700">
               {orders.map((order) => (
                 <tr key={order.id} className="hover:bg-dark-600/50">
-                  <td className="px-6 py-4">
+                  <td className="px-3 md:px-6 py-4">
                     <span className="text-gray-400 font-mono text-sm">
                       {order.id.slice(0, 15)}...
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-white">{order.userName}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 md:px-6 py-4 text-white">{order.userName}</td>
+                  <td className="px-3 md:px-6 py-4">
                     <div>
                       <div className="text-white">{order.itemName}</div>
                       <div className="text-gray-500 text-sm">
@@ -201,10 +202,10 @@ export function OrdersTable({ initialOrders }: OrdersTableProps) {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-white font-semibold">
+                  <td className="px-3 md:px-6 py-4 text-white font-semibold">
                     ${order.totalPrice.toFixed(2)}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 md:px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
                       statusColors[order.status] || statusColors.pending
                     }`}>
@@ -216,10 +217,10 @@ export function OrdersTable({ initialOrders }: OrdersTableProps) {
                       </p>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-gray-400 text-sm">
+                  <td className="px-3 md:px-6 py-4 text-gray-400 text-sm">
                     {new Date(order.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-3 md:px-6 py-4 text-right">
                     {isActionable(order) ? (
                       <button
                         ref={(el) => {
@@ -240,6 +241,7 @@ export function OrdersTable({ initialOrders }: OrdersTableProps) {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

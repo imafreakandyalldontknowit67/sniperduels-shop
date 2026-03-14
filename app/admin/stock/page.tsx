@@ -101,36 +101,37 @@ export default function StockPage() {
         </div>
       ) : (
         <div className="bg-dark-800/50 rounded-xl overflow-hidden">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[700px]">
             <thead className="bg-dark-800">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Item</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Type</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Rarity</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Extras</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Price</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Stock</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Status</th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-400">Actions</th>
+                <th className="px-3 md:px-6 py-4 text-left text-sm font-semibold text-gray-400">Item</th>
+                <th className="px-3 md:px-6 py-4 text-left text-sm font-semibold text-gray-400">Type</th>
+                <th className="hidden md:table-cell px-3 md:px-6 py-4 text-left text-sm font-semibold text-gray-400">Rarity</th>
+                <th className="hidden md:table-cell px-3 md:px-6 py-4 text-left text-sm font-semibold text-gray-400">Extras</th>
+                <th className="px-3 md:px-6 py-4 text-left text-sm font-semibold text-gray-400">Price</th>
+                <th className="px-3 md:px-6 py-4 text-left text-sm font-semibold text-gray-400">Stock</th>
+                <th className="px-3 md:px-6 py-4 text-left text-sm font-semibold text-gray-400">Status</th>
+                <th className="px-3 md:px-6 py-4 text-right text-sm font-semibold text-gray-400">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-dark-700">
               {items.map((item) => (
                 <tr key={item.id} className="hover:bg-dark-600/50">
-                  <td className="px-6 py-4">
+                  <td className="px-3 md:px-6 py-4">
                     <div className="text-white font-medium">{item.name}</div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 md:px-6 py-4">
                     <span className="px-2 py-1 bg-dark-600 rounded text-xs text-gray-300 capitalize">
                       {item.type}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="hidden md:table-cell px-3 md:px-6 py-4">
                     <span className={`font-medium ${getRarityColor(item.rarity)}`}>
                       {item.rarity || '-'}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="hidden md:table-cell px-3 md:px-6 py-4">
                     <div className="flex flex-col gap-1">
                       {item.fx && (
                         <span className="text-xs text-purple-400">FX: {item.fx}</span>
@@ -143,15 +144,15 @@ export default function StockPage() {
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-white font-medium">
+                  <td className="px-3 md:px-6 py-4 text-white font-medium">
                     ${item.priceUsd?.toFixed(2) || '0.00'}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 md:px-6 py-4">
                     <span className={item.stock > 0 ? 'text-green-500' : 'text-red-500'}>
                       {item.stock}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 md:px-6 py-4">
                     <button
                       onClick={() => handleToggleActive(item.id, item.active)}
                       className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -163,7 +164,7 @@ export default function StockPage() {
                       {item.active ? 'Active' : 'Inactive'}
                     </button>
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-3 md:px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => { setEditingItem(item); setShowModal(true) }}
@@ -183,6 +184,7 @@ export default function StockPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
