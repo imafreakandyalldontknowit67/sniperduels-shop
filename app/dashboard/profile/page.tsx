@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth'
 import { getUser, getUserLoyaltyInfo, LOYALTY_TIERS, canUseDiscordFirstPurchaseDiscount } from '@/lib/storage'
 import { User, Check, ExternalLink, Crown, Gift } from 'lucide-react'
@@ -28,6 +29,9 @@ export default async function ProfilePage({
 }) {
   const params = await searchParams
   const currentUser = await getCurrentUser()
+  if (!currentUser) {
+    redirect('/')
+  }
   const storedUser = currentUser ? await getUser(currentUser.id) : null
   const loyaltyInfo = currentUser ? await getUserLoyaltyInfo(currentUser.id) : null
   const hasDiscordDiscount = currentUser ? await canUseDiscordFirstPurchaseDiscount(currentUser.id) : false
