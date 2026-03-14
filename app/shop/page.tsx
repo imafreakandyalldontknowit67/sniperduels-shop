@@ -175,13 +175,6 @@ export default function ShopPage() {
 
         {/* Page Header */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-dark-700 border-[2px] border-accent mb-6">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <rect x="8" y="0" width="4" height="20" fill="#e1ad2d"/>
-              <rect x="0" y="8" width="20" height="4" fill="#e1ad2d"/>
-            </svg>
-            <span className="text-xs text-gray-300 uppercase">Item Shop</span>
-          </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 uppercase">
             Browse <span className="text-accent">Items</span>
           </h1>

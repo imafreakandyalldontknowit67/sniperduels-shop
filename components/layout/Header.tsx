@@ -232,7 +232,7 @@ export function Header() {
                 )}
               </div>
             ) : (
-              <button onClick={login} className="relative inline-flex items-center justify-center" style={{ textDecoration: 'none' }}>
+              <button onClick={login} className="relative inline-flex items-center justify-center pixel-btn-press" style={{ textDecoration: 'none' }}>
                 <img src="/images/pixel/pngs/asset-64.png" alt="" className="h-[41px] w-auto" />
                 <span className="absolute inset-0 flex items-center justify-center font-bold text-white text-[9px] uppercase tracking-wider">
                   Login with Roblox
@@ -386,7 +386,7 @@ export function Header() {
                   </button>
                 </>
               ) : (
-                <button onClick={login} className="relative inline-flex items-center justify-center w-full mt-2" style={{ textDecoration: 'none' }}>
+                <button onClick={login} className="relative inline-flex items-center justify-center w-full mt-2 pixel-btn-press" style={{ textDecoration: 'none' }}>
                   <img src="/images/pixel/pngs/asset-64.png" alt="" className="h-[52px] w-auto" />
                   <span className="absolute inset-0 flex items-center justify-center font-bold text-white text-[10px] uppercase tracking-wider">
                     Login with Roblox
