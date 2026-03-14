@@ -37,40 +37,41 @@ export default async function OrdersPage() {
         </div>
       ) : (
         <div className="bg-dark-800/50 rounded-xl overflow-hidden">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[700px]">
             <thead className="bg-dark-800">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-medium text-gray-400">Date</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-gray-400">Item</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-gray-400">Type</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-gray-400">Qty</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-gray-400">Total</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-gray-400">Status</th>
+                <th className="px-3 sm:px-6 py-4 text-left text-sm font-medium text-gray-400">Date</th>
+                <th className="px-3 sm:px-6 py-4 text-left text-sm font-medium text-gray-400">Item</th>
+                <th className="hidden sm:table-cell px-3 sm:px-6 py-4 text-left text-sm font-medium text-gray-400">Type</th>
+                <th className="hidden sm:table-cell px-3 sm:px-6 py-4 text-left text-sm font-medium text-gray-400">Qty</th>
+                <th className="px-3 sm:px-6 py-4 text-left text-sm font-medium text-gray-400">Total</th>
+                <th className="px-3 sm:px-6 py-4 text-left text-sm font-medium text-gray-400">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-dark-700">
               {sortedOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-dark-600/50 transition-colors">
-                  <td className="px-6 py-4 text-sm text-gray-300">
+                  <td className="px-3 sm:px-6 py-4 text-sm text-gray-300">
                     <Link href={`/dashboard/orders/${order.id}`} className="hover:text-white transition-colors">
                       {new Date(order.createdAt).toLocaleDateString()}
                     </Link>
                   </td>
-                  <td className="px-6 py-4 text-sm text-white font-medium">
+                  <td className="px-3 sm:px-6 py-4 text-sm text-white font-medium">
                     <Link href={`/dashboard/orders/${order.id}`} className="hover:text-accent transition-colors">
                       {order.itemName}
                     </Link>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-300 capitalize">
+                  <td className="hidden sm:table-cell px-3 sm:px-6 py-4 text-sm text-gray-300 capitalize">
                     {order.type}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-300">
+                  <td className="hidden sm:table-cell px-3 sm:px-6 py-4 text-sm text-gray-300">
                     {order.quantity}
                   </td>
-                  <td className="px-6 py-4 text-sm text-white font-medium">
+                  <td className="px-3 sm:px-6 py-4 text-sm text-white font-medium">
                     ${order.totalPrice.toFixed(2)}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 sm:px-6 py-4">
                     <Link href={`/dashboard/orders/${order.id}`}>
                       <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium capitalize ${statusColors[order.status] || 'bg-gray-500/20 text-gray-400'}`}>
                         {order.status}
@@ -81,6 +82,7 @@ export default async function OrdersPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>

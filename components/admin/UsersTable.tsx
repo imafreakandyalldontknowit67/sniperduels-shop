@@ -141,22 +141,23 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
         </div>
       ) : (
         <div className="bg-dark-800/50 rounded-xl overflow-hidden">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[700px]">
             <thead className="bg-dark-800">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">User</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Roblox ID</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Discord</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Balance</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Role</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Last Login</th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-400">Actions</th>
+                <th className="px-3 md:px-6 py-4 text-left text-sm font-semibold text-gray-400">User</th>
+                <th className="px-3 md:px-6 py-4 text-left text-sm font-semibold text-gray-400">Roblox ID</th>
+                <th className="hidden md:table-cell px-3 md:px-6 py-4 text-left text-sm font-semibold text-gray-400">Discord</th>
+                <th className="px-3 md:px-6 py-4 text-left text-sm font-semibold text-gray-400">Balance</th>
+                <th className="px-3 md:px-6 py-4 text-left text-sm font-semibold text-gray-400">Role</th>
+                <th className="hidden md:table-cell px-3 md:px-6 py-4 text-left text-sm font-semibold text-gray-400">Last Login</th>
+                <th className="px-3 md:px-6 py-4 text-right text-sm font-semibold text-gray-400">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-dark-700">
               {filteredUsers.map((user) => (
                 <tr key={user.id} className="hover:bg-dark-600/50">
-                  <td className="px-6 py-4">
+                  <td className="px-3 md:px-6 py-4">
                     <div className="flex items-center gap-3">
                       {user.avatar ? (
                         <img src={user.avatar} alt="" className="w-10 h-10 rounded-full" />
@@ -171,8 +172,8 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-400 font-mono text-sm">{user.id}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 md:px-6 py-4 text-gray-400 font-mono text-sm">{user.id}</td>
+                  <td className="hidden md:table-cell px-3 md:px-6 py-4">
                     {user.discordUsername ? (
                       <div className="flex items-center gap-2">
                         <DiscordIcon className="w-4 h-4 text-[#5865F2]" />
@@ -182,13 +183,13 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
                       <span className="text-gray-500 text-sm">Not linked</span>
                     )}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 md:px-6 py-4">
                     <div className="flex items-center gap-2">
                       <Wallet className="w-4 h-4 text-accent" />
                       <span className="text-white font-medium">${(user.walletBalance || 0).toFixed(2)}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 md:px-6 py-4">
                     {user.isAdmin ? (
                       <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-accent/20 text-accent text-xs font-medium">
                         <Shield className="w-3 h-3" />
@@ -200,10 +201,10 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-gray-400 text-sm">
+                  <td className="hidden md:table-cell px-3 md:px-6 py-4 text-gray-400 text-sm">
                     {new Date(user.lastLogin).toLocaleString()}
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-3 md:px-6 py-4 text-right">
                     <button
                       ref={(el) => {
                         if (el) buttonRefs.current.set(user.id, el)
@@ -219,6 +220,7 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
