@@ -16,7 +16,7 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen bg-dark-900 flex">
       <AdminSidebar />
-      <main className="flex-1 ml-64 p-8 bg-gradient-to-br from-dark-900 via-dark-900 to-dark-800">
+      <main className="flex-1 ml-0 md:ml-64 p-4 md:p-8 pt-14 md:pt-8 bg-gradient-to-br from-dark-900 via-dark-900 to-dark-800">
         {children}
       </main>
     </div>
