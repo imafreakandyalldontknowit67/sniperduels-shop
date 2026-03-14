@@ -1,24 +1,10 @@
-import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/lib/auth'
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar'
 
-export default async function DashboardLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  let user = null
-  let authError = false
-  try {
-    user = await getCurrentUser()
-  } catch {
-    authError = true
-  }
-
-  if (!user && !authError) {
-    redirect('/')
-  }
-
   return (
     <div className="min-h-screen bg-dark-900 flex">
       <DashboardSidebar />

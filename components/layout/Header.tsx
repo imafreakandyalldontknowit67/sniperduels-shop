@@ -98,7 +98,7 @@ export function Header() {
                 </button>
 
                 {userDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-dark-800 border-[2px] border-accent shadow-lg overflow-hidden z-50">
+                  <div className="absolute right-0 mt-2 w-64 bg-dark-800 border-[2px] border-accent shadow-lg overflow-hidden z-50">
                     <div className="px-4 py-3 border-b-[2px] border-dark-600">
                       <div className="flex items-center justify-between">
                         <p className="text-xs font-medium text-white uppercase">{user.displayName}</p>

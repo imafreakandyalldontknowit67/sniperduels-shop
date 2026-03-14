@@ -2,7 +2,7 @@ import { Fragment } from 'react'
 import { HOW_IT_WORKS_STEPS } from '@/lib/constants'
 
 const stepIcons: Record<number, string> = {
-  1: '/images/pixel/icon-person.svg',
+  1: '/images/pixel/pngs/asset-96.png',
   2: '/images/pixel/icon-coins.svg',
   3: '/images/pixel/icon-sniper.svg',
   4: '/images/pixel/icon-roblox.svg',
@@ -41,7 +41,7 @@ export function HowItWorks() {
                     <img
                       src={stepIcons[step.step]}
                       alt=""
-                      className="relative h-10 w-10 object-contain -mt-1"
+                      className={`relative object-contain ${step.step === 1 ? 'h-14 w-14 -mt-2' : 'h-10 w-10 -mt-1'}`}
                     />
                   </div>
 
@@ -84,7 +84,7 @@ export function HowItWorks() {
                     <img
                       src={stepIcons[step.step]}
                       alt=""
-                      className="relative h-7 w-7 object-contain -mt-1"
+                      className={`relative object-contain ${step.step === 1 ? 'h-10 w-10 -mt-1.5' : 'h-7 w-7 -mt-1'}`}
                     />
                   </div>
                   <h3 className="mb-2 text-accent font-bold text-xs sm:text-sm uppercase tracking-wider leading-tight max-w-[110px]">
@@ -120,7 +120,7 @@ export function HowItWorks() {
                   <img
                     src={stepIcons[step.step]}
                     alt=""
-                    className="relative h-5 w-5 object-contain -mt-0.5"
+                    className={`relative object-contain ${step.step === 1 ? 'h-8 w-8 -mt-1' : 'h-5 w-5 -mt-0.5'}`}
                   />
                 </div>
                 <div className="pt-1">

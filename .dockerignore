@@ -1,0 +1,16 @@
+node_modules
+.next
+.git
+.env
+.env.local
+*.md
+!CLAUDE.md
+swagger.json
+test_*.py
+__pycache__
+deliverables
+workspace
+screenshots
+*.png
+!public/**/*.png
+!gem_icon.png

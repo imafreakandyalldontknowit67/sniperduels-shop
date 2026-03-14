@@ -205,7 +205,16 @@ export default function ShopPage() {
               <p className="text-gray-400 max-w-md mx-auto mb-8 text-xs uppercase">
                 The items shop is currently being prepared. In the meantime, check out our gems store!
               </p>
-              <Button href="/gems">Browse Gems</Button>
+              <Link
+                href="/gems"
+                className="relative inline-flex items-center justify-center pixel-btn-press"
+                style={{ textDecoration: 'none' }}
+              >
+                <img src="/images/pixel/pngs/asset-59.png" alt="" className="h-[56px] sm:h-[62px] w-auto" />
+                <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-xs sm:text-sm uppercase tracking-wider">
+                  Browse Gems
+                </span>
+              </Link>
             </div>
           )
         ) : (

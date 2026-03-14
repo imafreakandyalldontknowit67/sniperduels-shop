@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth'
 import { getUser, getUserLoyaltyInfo, LOYALTY_TIERS, canUseDiscordFirstPurchaseDiscount } from '@/lib/storage'
 import { User, Check, ExternalLink, Crown, Gift } from 'lucide-react'
@@ -29,9 +28,6 @@ export default async function ProfilePage({
 }) {
   const params = await searchParams
   const currentUser = await getCurrentUser()
-  if (!currentUser) {
-    redirect('/')
-  }
   const storedUser = currentUser ? await getUser(currentUser.id) : null
   const loyaltyInfo = currentUser ? await getUserLoyaltyInfo(currentUser.id) : null
   const hasDiscordDiscount = currentUser ? await canUseDiscordFirstPurchaseDiscount(currentUser.id) : false
@@ -48,7 +44,7 @@ export default async function ProfilePage({
   }
 
   return (
-    <div>
+    <div className="overflow-x-hidden">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white">Profile</h1>
         <p className="text-gray-400 mt-1">Manage your account and linked services</p>
@@ -162,7 +158,7 @@ export default async function ProfilePage({
           <h2 className="text-lg font-semibold text-white mb-4">Linked Accounts</h2>
           <div className="space-y-4">
             {/* Roblox - Always Linked */}
-            <div className="flex items-center justify-between p-4 bg-dark-600 rounded-lg">
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-dark-600 rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-dark-500 flex items-center justify-center">
                   <RobloxIcon className="w-5 h-5 text-white" />
@@ -179,7 +175,7 @@ export default async function ProfilePage({
             </div>
 
             {/* Discord */}
-            <div className="flex items-center justify-between p-4 bg-dark-600 rounded-lg">
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-dark-600 rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-[#5865F2] flex items-center justify-center">
                   <DiscordIcon className="w-5 h-5 text-white" />
@@ -209,7 +205,7 @@ export default async function ProfilePage({
                   </form>
                 </div>
               ) : (
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-3">
                   <span className="text-xs text-accent">2.5% off first purchase!</span>
                   <Link
                     href="/api/auth/discord"

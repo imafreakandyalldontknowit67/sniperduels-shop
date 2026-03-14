@@ -48,6 +48,9 @@ export async function POST(
     return NextResponse.json({ error: 'Failed to update balance' }, { status: 500 })
   }
 
+  // Audit log for admin balance changes
+  console.log(`[AUDIT] Admin ${currentUser.name} (${currentUser.id}) ${action} $${amount} on user ${user.name} (${id}): $${currentBalance} → $${updatedUser.walletBalance}`)
+
   const response = NextResponse.json({
     success: true,
     newBalance: updatedUser.walletBalance

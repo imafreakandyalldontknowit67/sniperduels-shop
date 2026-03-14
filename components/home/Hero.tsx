@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ScrollArrow } from '@/components/ui/ScrollArrow'
 
 export function Hero() {
   return (
@@ -105,7 +106,7 @@ export function Hero() {
         <div className="mb-4 sm:mb-6 animate-pixel-fade-up opacity-0" style={{ animationDelay: '0.45s', animationFillMode: 'forwards' }}>
           <Link
             href="/shop"
-            className="relative inline-flex items-center justify-center"
+            className="relative inline-flex items-center justify-center pixel-btn-press"
             style={{ textDecoration: 'none' }}
           >
             <img
@@ -121,9 +122,7 @@ export function Hero() {
 
       </div>
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
-        <img src="/images/pixel/pngs/asset-86.png" alt="" className="h-6 sm:h-8 w-auto animate-arrow-bounce" />
-      </div>
+      <ScrollArrow />
     </section>
   )
 }

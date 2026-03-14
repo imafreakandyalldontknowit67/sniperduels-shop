@@ -38,6 +38,9 @@ function getRateLimit(pathname: string): { max: number; windowMs: number } {
   if (pathname.startsWith('/api/deposits')) {
     return { max: 10, windowMs: 60_000 } // 10 per minute for payment operations
   }
+  if (pathname.startsWith('/api/orders/purchase')) {
+    return { max: 5, windowMs: 60_000 } // 5 per minute for purchases (financial operations)
+  }
   if (pathname.startsWith('/api/orders')) {
     return { max: 30, windowMs: 60_000 } // 30 per minute (order tracking polls every 5s)
   }

@@ -1,5 +1,5 @@
 import { SHOP_CATEGORIES } from '@/lib/constants'
-import { PixelButton } from '@/components/ui'
+import Link from 'next/link'
 
 const categoryIcons: Record<string, string> = {
   items: '/images/pixel/icon-coins.svg',
@@ -57,9 +57,21 @@ export function ShopCategories() {
                 </p>
 
                 {/* Button */}
-                <PixelButton href={category.href} variant="blue" size="md">
-                  {category.buttonText}
-                </PixelButton>
+                <Link
+                  href={category.href}
+                  className="relative inline-flex items-center justify-center pixel-btn-press"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <img
+                    src="/images/pixel/pngs/asset-60.png"
+                    alt=""
+                    className="h-[48px] sm:h-[54px] w-auto"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                  <span className="absolute inset-0 flex items-center justify-center font-bold text-white text-[10px] sm:text-xs uppercase tracking-wider">
+                    {category.buttonText}
+                  </span>
+                </Link>
               </div>
             </div>
           ))}

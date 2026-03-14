@@ -203,16 +203,21 @@ export default function GemsPage() {
               <label className="block text-[10px] sm:text-xs text-white mb-2 sm:mb-3 uppercase font-bold">Quick Select</label>
               <div className="grid grid-cols-4 gap-2 sm:gap-3">
                 {PRESET_AMOUNTS.map((preset) => (
-                  <PixelButton
+                  <button
                     key={preset}
-                    variant="blue"
-                    size="sm"
                     onClick={() => handleAmountChange(preset)}
-                    className={amount !== preset ? 'opacity-50' : ''}
-                    fullWidth
+                    className={`relative inline-flex items-center justify-center pixel-btn-press ${amount !== preset ? 'opacity-50' : ''}`}
                   >
-                    {preset}k
-                  </PixelButton>
+                    <img
+                      src="/images/pixel/pngs/asset-62.png"
+                      alt=""
+                      className="w-full h-[36px] sm:h-[40px]"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                    <span className="absolute inset-0 flex items-center justify-center font-bold text-white text-[9px] sm:text-[10px] uppercase tracking-wider">
+                      {preset}k
+                    </span>
+                  </button>
                 ))}
               </div>
             </div>
@@ -221,14 +226,14 @@ export default function GemsPage() {
             <div className="mb-6 sm:mb-8">
               <label className="block text-[10px] sm:text-xs text-white mb-2 sm:mb-3 uppercase font-bold">Custom Amount (in thousands)</label>
               <div className="flex items-center gap-2 sm:gap-3">
-                <PixelButton
-                  variant="blue"
-                  size="sm"
-                  onClick={() => handleAmountChange(amount + 1)}
-                  disabled={amount >= 500}
+                <button
+                  onClick={() => handleAmountChange(amount - 1)}
+                  disabled={amount <= 1}
+                  className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                </PixelButton>
+                  <img src="/images/pixel/pngs/asset-63.png" alt="" className="h-[36px] sm:h-[40px] w-auto" />
+                  <Minus className="absolute w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                </button>
                 <div className="flex-1 relative">
                   <input
                     type="number"
@@ -241,14 +246,14 @@ export default function GemsPage() {
                   />
                   <span className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm sm:text-base uppercase">k</span>
                 </div>
-                <PixelButton
-                  variant="blue"
-                  size="sm"
-                  onClick={() => handleAmountChange(amount - 1)}
-                  disabled={amount <= 1}
+                <button
+                  onClick={() => handleAmountChange(amount + 1)}
+                  disabled={amount >= 500}
+                  className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Minus className="w-4 h-4 sm:w-5 sm:h-5" />
-                </PixelButton>
+                  <img src="/images/pixel/pngs/asset-63.png" alt="" className="h-[36px] sm:h-[40px] w-auto" />
+                  <Plus className="absolute w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                </button>
               </div>
             </div>
 
@@ -288,19 +293,26 @@ export default function GemsPage() {
 
             {/* Purchase Button */}
             <div className="flex justify-center">
-              <PixelButton
-                variant="gold"
-                size="lg"
+              <button
                 onClick={handlePurchaseClick}
                 disabled={gemStock !== null && gemStock < amount}
+                className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {gemStock !== null && gemStock === 0
-                  ? 'Out of Stock'
-                  : gemStock !== null && gemStock < amount
-                    ? `Only ${gemStock.toLocaleString()}k available`
-                    : 'Finish Purchase'
-                }
-              </PixelButton>
+                <img
+                  src="/images/pixel/pngs/asset-88.png"
+                  alt=""
+                  className="h-[52px] sm:h-[58px] w-auto"
+                  style={{ imageRendering: 'pixelated' }}
+                />
+                <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-[10px] sm:text-xs uppercase tracking-wider">
+                  {gemStock !== null && gemStock === 0
+                    ? 'Out of Stock'
+                    : gemStock !== null && gemStock < amount
+                      ? `Only ${gemStock.toLocaleString()}k available`
+                      : 'Finish Purchase'
+                  }
+                </span>
+              </button>
             </div>
           </div>
 
@@ -350,9 +362,16 @@ export default function GemsPage() {
                   <span className="text-gray-400 text-[10px] sm:text-xs uppercase">Balance:</span>
                   <span className="text-white font-semibold text-xs sm:text-sm">${userInfo.walletBalance.toFixed(2)}</span>
                 </div>
-                <PixelButton href="/dashboard/deposit" variant="gold" size="sm">
-                  Add Funds
-                </PixelButton>
+                <Link
+                  href="/dashboard/deposit"
+                  className="relative inline-flex items-center justify-center pixel-btn-press"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <img src="/images/pixel/pngs/asset-59.png" alt="" className="h-[40px] sm:h-[44px] w-auto" />
+                  <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-[9px] sm:text-[10px] uppercase tracking-wider">
+                    Add Funds
+                  </span>
+                </Link>
               </div>
             )}
           </div>
@@ -408,9 +427,16 @@ export default function GemsPage() {
             {userInfo.walletBalance < discountedPrice ? (
               <div className="space-y-3">
                 <p className="text-red-400 text-xs text-center uppercase">Insufficient balance</p>
-                <PixelButton href="/dashboard/deposit" variant="gold" size="md" fullWidth>
-                  Add Funds
-                </PixelButton>
+                <Link
+                  href="/dashboard/deposit"
+                  className="relative inline-flex items-center justify-center pixel-btn-press w-full"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <img src="/images/pixel/pngs/asset-59.png" alt="" className="h-[48px] sm:h-[52px] w-auto" />
+                  <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-[10px] sm:text-xs uppercase tracking-wider">
+                    Add Funds
+                  </span>
+                </Link>
               </div>
             ) : (
               <div className="flex gap-3">

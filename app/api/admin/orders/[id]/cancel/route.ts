@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser, isAdmin } from '@/lib/auth'
-import { getOrder, updateOrder, addToWallet, addToLifetimeSpend, getStock, updateStockItem } from '@/lib/storage'
+import { getOrder, updateOrder, addToWallet, addToLifetimeSpend, getStock, updateStockItem, addGemStock } from '@/lib/storage'
 
 export async function POST(
   request: NextRequest,
@@ -46,8 +46,10 @@ export async function POST(
   await addToWallet(order.userId, order.totalPrice)
   await addToLifetimeSpend(order.userId, -order.totalPrice)
 
-  // Restore stock for non-gems orders
-  if (order.type !== 'gems') {
+  // Restore stock
+  if (order.type === 'gems') {
+    await addGemStock(order.quantity)
+  } else {
     const stock = await getStock()
     const stockItem = stock.find(i => i.name === order.itemName)
     if (stockItem) {

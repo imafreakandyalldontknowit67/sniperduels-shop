@@ -221,10 +221,13 @@ export async function deductFromWallet(userId: string, amount: number): Promise<
   if (!Number.isFinite(amount) || amount < 0) return null
 
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    const user = await tx.user.findUnique({ where: { id: userId } })
-    if (!user) return null
+    // Lock the user row to prevent concurrent balance reads (race condition fix)
+    const locked = await tx.$queryRaw<Array<{ id: string; walletBalance: unknown }>>`
+      SELECT id, "walletBalance" FROM "User" WHERE id = ${userId} FOR UPDATE
+    `
+    if (!locked.length) return null
 
-    const currentBalance = d(user.walletBalance)
+    const currentBalance = d(locked[0].walletBalance)
     if (currentBalance < amount) return null
 
     const row = await tx.user.update({
@@ -693,8 +696,11 @@ export async function setGemStock(balanceInK: number): Promise<number> {
 
 export async function deductGemStock(amountInK: number): Promise<boolean> {
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    const row = await tx.gemStock.findUnique({ where: { id: 'singleton' } })
-    const current = row?.balanceInK ?? 0
+    // Lock the gem stock row to prevent concurrent reads (race condition fix)
+    const locked = await tx.$queryRaw<Array<{ balanceInK: number }>>`
+      SELECT "balanceInK" FROM "GemStock" WHERE id = 'singleton' FOR UPDATE
+    `
+    const current = locked.length ? locked[0].balanceInK : 0
     if (current < amountInK) return false
     await tx.gemStock.update({
       where: { id: 'singleton' },

@@ -169,9 +169,12 @@ export default function FAQPage() {
             href="https://discord.gg/sniperduels"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block bg-accent text-dark-900 font-bold uppercase px-6 py-3 text-sm hover:brightness-110 transition-all"
+            className="relative inline-flex items-center justify-center pixel-btn-press"
           >
-            Join Our Discord
+            <img src="/images/pixel/pngs/asset-88.png" alt="" className="h-[52px] sm:h-[58px] w-auto" />
+            <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-[10px] sm:text-xs uppercase tracking-wider">
+              Join Our Discord
+            </span>
           </a>
         </section>
       </div>
