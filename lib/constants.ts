@@ -61,7 +61,7 @@ export const HOW_IT_WORKS_STEPS = [
   {
     step: 5,
     title: 'Accept Bot Trade',
-    description: 'Our stock bot will sell. When you get your items, just accept and receive your items.',
+    description: 'Our stock bot will trade you. Just accept and receive your items.',
   },
 ] as const
 

@@ -121,6 +121,9 @@ export function Hero() {
 
       </div>
 
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
+        <img src="/images/pixel/pngs/asset-86.png" alt="" className="h-6 sm:h-8 w-auto animate-arrow-bounce" />
+      </div>
     </section>
   )
 }
