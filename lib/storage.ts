@@ -726,11 +726,15 @@ export async function addGemStock(amountInK: number): Promise<number> {
 
 export interface SiteSettings {
   itemsComingSoon: boolean
+  depositsDisabled: boolean
 }
 
 export async function getSiteSettings(): Promise<SiteSettings> {
   const row = await prisma.siteSettings.findUnique({ where: { id: 'singleton' } })
-  return { itemsComingSoon: row?.itemsComingSoon ?? true }
+  return {
+    itemsComingSoon: row?.itemsComingSoon ?? true,
+    depositsDisabled: (row as Record<string, unknown>)?.depositsDisabled as boolean ?? false,
+  }
 }
 
 export async function updateSiteSettings(settings: Partial<SiteSettings>): Promise<SiteSettings> {
@@ -740,14 +744,19 @@ export async function updateSiteSettings(settings: Partial<SiteSettings>): Promi
     create: {
       id: 'singleton',
       itemsComingSoon: settings.itemsComingSoon ?? true,
+      depositsDisabled: settings.depositsDisabled ?? false,
       updatedAt: now,
-    },
+    } as Record<string, unknown>,
     update: {
       ...(settings.itemsComingSoon !== undefined ? { itemsComingSoon: settings.itemsComingSoon } : {}),
+      ...(settings.depositsDisabled !== undefined ? { depositsDisabled: settings.depositsDisabled } : {}),
       updatedAt: now,
     },
   })
-  return { itemsComingSoon: row.itemsComingSoon }
+  return {
+    itemsComingSoon: row.itemsComingSoon,
+    depositsDisabled: (row as Record<string, unknown>).depositsDisabled as boolean ?? false,
+  }
 }
 
 // ─── Analytics helpers ───────────────────────────────────────────────────────

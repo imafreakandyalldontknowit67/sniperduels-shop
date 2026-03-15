@@ -125,9 +125,10 @@ model GemStock {
 
 // ─── Site Settings (singleton) ──────────────────────────────────────────────
 model SiteSettings {
-  id              String  @id @default("singleton")
-  itemsComingSoon Boolean @default(true)
-  updatedAt       String
+  id               String  @id @default("singleton")
+  itemsComingSoon  Boolean @default(true)
+  depositsDisabled Boolean @default(false)
+  updatedAt        String
 }
 
 // ─── Session Blacklist ───────────────────────────────────────────────────────

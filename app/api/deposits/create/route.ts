@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
-import { getUserDeposits, createDeposit, expireStaleDeposits } from '@/lib/storage'
+import { getUserDeposits, createDeposit, expireStaleDeposits, getSiteSettings } from '@/lib/storage'
 import { createDepositIntent, BillingInfo } from '@/lib/pandabase'
 
 export async function POST(request: NextRequest) {
@@ -8,6 +8,11 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const settings = await getSiteSettings()
+    if (settings.depositsDisabled) {
+      return NextResponse.json({ error: 'Deposits are currently disabled' }, { status: 403 })
     }
 
     const body = await request.json()
