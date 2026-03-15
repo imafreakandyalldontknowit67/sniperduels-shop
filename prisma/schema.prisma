@@ -64,6 +64,7 @@ model Order {
   totalPrice  Decimal     @db.Decimal(12, 2)
   status      OrderStatus @default(pending)
   playerReady Boolean     @default(false)
+  skippedAt   String?
   createdAt   String
   updatedAt   String
   completedAt String?

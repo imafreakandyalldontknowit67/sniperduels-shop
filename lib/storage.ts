@@ -318,6 +318,7 @@ export interface Order {
   totalPrice: number
   status: OrderStatus
   playerReady: boolean
+  skippedAt?: string
   createdAt: string
   updatedAt: string
   completedAt?: string
@@ -335,6 +336,7 @@ function toOrder(row: {
   totalPrice: Decimal
   status: string
   playerReady: boolean
+  skippedAt: string | null
   createdAt: string
   updatedAt: string
   completedAt: string | null
@@ -351,6 +353,7 @@ function toOrder(row: {
     totalPrice: d(row.totalPrice),
     status: row.status as OrderStatus,
     playerReady: row.playerReady,
+    skippedAt: row.skippedAt ?? undefined,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     completedAt: row.completedAt ?? undefined,

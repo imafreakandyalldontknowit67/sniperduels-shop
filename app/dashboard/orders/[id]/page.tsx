@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Order } from '@/lib/storage'
 
-const PRIVATE_SERVER_URL = process.env.NEXT_PUBLIC_PRIVATE_SERVER_URL || ''
 const POLL_INTERVAL = 5000
 
 interface OrderStatus {
@@ -13,6 +12,37 @@ interface OrderStatus {
   queuePosition: number | null
   estimatedMinutes: number | null
   totalInQueue: number
+  showServerLink: boolean
+  skipDeadline: string | null
+  serverLink: string | null
+}
+
+function useCountdown(deadline: string | null): string | null {
+  const [timeLeft, setTimeLeft] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!deadline) {
+      setTimeLeft(null)
+      return
+    }
+
+    function tick() {
+      const ms = new Date(deadline!).getTime() - Date.now()
+      if (ms <= 0) {
+        setTimeLeft('0:00')
+        return
+      }
+      const mins = Math.floor(ms / 60000)
+      const secs = Math.floor((ms % 60000) / 1000)
+      setTimeLeft(`${mins}:${secs.toString().padStart(2, '0')}`)
+    }
+
+    tick()
+    const interval = setInterval(tick, 1000)
+    return () => clearInterval(interval)
+  }, [deadline])
+
+  return timeLeft
 }
 
 export default function OrderTrackingPage() {
@@ -32,6 +62,7 @@ export default function OrderTrackingPage() {
   routerRef.current = router
 
   const canConfirm = tradesEnabled && inServer
+  const skipCountdown = useCountdown(status?.skipDeadline ?? null)
 
   async function markPlayerReady() {
     if (!canConfirm) return
@@ -161,7 +192,7 @@ export default function OrderTrackingPage() {
     )
   }
 
-  const { order, queuePosition, estimatedMinutes } = status
+  const { order, queuePosition, estimatedMinutes, showServerLink, serverLink } = status
 
   const toastColors = {
     success: 'bg-green-500/20 border-green-500/30 text-green-400',
@@ -185,8 +216,8 @@ export default function OrderTrackingPage() {
         </div>
       )}
 
-      {/* Pending — #1 in queue (ready) */}
-      {order.status === 'pending' && queuePosition === 1 && (
+      {/* Pending — #1 in queue (server link shown) */}
+      {order.status === 'pending' && showServerLink && (
         <div className="text-center">
           <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg className="w-10 h-10 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -199,17 +230,36 @@ export default function OrderTrackingPage() {
             Join the private server and confirm when you&apos;re in.
           </p>
 
+          {/* Skip countdown warning */}
+          {!order.playerReady && skipCountdown && skipCountdown !== '0:00' && (
+            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mb-4">
+              <p className="text-yellow-400 text-sm font-medium">
+                Join within <span className="font-mono text-lg">{skipCountdown}</span> or you&apos;ll be moved back in the queue
+              </p>
+            </div>
+          )}
+
+          {order.skippedAt && !order.playerReady && (
+            <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-4 mb-4">
+              <p className="text-orange-400 text-sm font-medium">
+                You were moved back for not joining in time. Mark ready now to keep your spot!
+              </p>
+            </div>
+          )}
+
           {!order.playerReady ? (
             <>
               <div className="bg-dark-800/50 border border-dark-600 rounded-xl p-5 mb-4">
-                <a
-                  href={PRIVATE_SERVER_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block w-full py-3 mb-4 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-xl text-center transition-colors"
-                >
-                  Join Private Server
-                </a>
+                {serverLink && (
+                  <a
+                    href={serverLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block w-full py-3 mb-4 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-xl text-center transition-colors"
+                  >
+                    Join Private Server
+                  </a>
+                )}
 
                 <p className="text-gray-400 text-sm mb-4">Before confirming, make sure:</p>
 
@@ -269,8 +319,8 @@ export default function OrderTrackingPage() {
         </div>
       )}
 
-      {/* Pending — Waiting in queue */}
-      {order.status === 'pending' && queuePosition !== null && queuePosition > 1 && (
+      {/* Pending — Waiting in queue (no server link) */}
+      {order.status === 'pending' && !showServerLink && queuePosition !== null && (
         <div className="text-center">
           <div className="w-20 h-20 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg className="w-10 h-10 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -291,55 +341,20 @@ export default function OrderTrackingPage() {
           </div>
 
           <div className="bg-dark-800/50 border border-dark-600 rounded-xl p-5 mb-4">
-            <a
-              href={PRIVATE_SERVER_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block w-full py-3 mb-4 bg-accent hover:bg-accent-light text-white font-medium rounded-xl text-center transition-colors"
-            >
-              Join Private Server
-            </a>
+            <p className="text-gray-400 text-sm mb-4">
+              You&apos;ll get the server link when it&apos;s your turn. Hang tight!
+            </p>
 
-            {!order.playerReady && (
-              <>
-                <p className="text-gray-400 text-sm mb-3">Get ready while you wait:</p>
-
-                <label className="flex items-center gap-3 p-3 rounded-lg bg-dark-700/50 hover:bg-dark-700 cursor-pointer mb-3 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={tradesEnabled}
-                    onChange={(e) => setTradesEnabled(e.target.checked)}
-                    className="w-5 h-5 rounded border-dark-500 text-accent focus:ring-accent bg-dark-600"
-                  />
-                  <span className="text-white text-sm">My trades are turned on</span>
-                </label>
-
-                <label className="flex items-center gap-3 p-3 rounded-lg bg-dark-700/50 hover:bg-dark-700 cursor-pointer mb-4 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={inServer}
-                    onChange={(e) => setInServer(e.target.checked)}
-                    className="w-5 h-5 rounded border-dark-500 text-accent focus:ring-accent bg-dark-600"
-                  />
-                  <span className="text-white text-sm">I&apos;m in the private server</span>
-                </label>
-
-                <button
-                  onClick={markPlayerReady}
-                  disabled={!canConfirm || confirmingReady}
-                  className={`w-full py-3 font-medium rounded-xl text-center transition-colors ${
-                    canConfirm
-                      ? 'bg-accent hover:bg-accent-light text-white'
-                      : 'bg-dark-700 text-gray-500 cursor-not-allowed'
-                  }`}
-                >
-                  {confirmingReady ? 'Confirming...' : "I'm Ready"}
-                </button>
-              </>
+            {order.skippedAt && (
+              <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-3 mb-4">
+                <p className="text-orange-400 text-xs">
+                  You were moved back for not joining in time. You&apos;ll get another chance when you reach #1 again.
+                </p>
+              </div>
             )}
 
             {order.playerReady && (
-              <p className="text-green-400 text-sm font-medium">Confirmed! The bot will trade you when it&apos;s your turn.</p>
+              <p className="text-green-400 text-sm font-medium">Confirmed ready! The bot will trade you when it&apos;s your turn.</p>
             )}
           </div>
 
@@ -370,14 +385,16 @@ export default function OrderTrackingPage() {
             <p className="text-blue-400 text-sm font-medium mb-3">
               Make sure you&apos;re in the private server and accept the trade request!
             </p>
-            <a
-              href={PRIVATE_SERVER_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block w-full py-3 bg-blue-500 hover:bg-blue-400 text-white font-medium rounded-xl text-center transition-colors"
-            >
-              Join Private Server
-            </a>
+            {serverLink && (
+              <a
+                href={serverLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block w-full py-3 bg-blue-500 hover:bg-blue-400 text-white font-medium rounded-xl text-center transition-colors"
+              >
+                Join Private Server
+              </a>
+            )}
           </div>
 
           <p className="text-gray-500 text-xs mb-6">
