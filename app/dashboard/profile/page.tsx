@@ -27,10 +27,28 @@ export default async function ProfilePage({
   searchParams: Promise<{ discord?: string }>
 }) {
   const params = await searchParams
-  const currentUser = await getCurrentUser()
-  const storedUser = currentUser ? await getUser(currentUser.id) : null
-  const loyaltyInfo = currentUser ? await getUserLoyaltyInfo(currentUser.id) : null
-  const hasDiscordDiscount = currentUser ? await canUseDiscordFirstPurchaseDiscount(currentUser.id) : false
+  let currentUser = null
+  try {
+    currentUser = await getCurrentUser()
+  } catch {
+    // Session read failed transiently
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="overflow-x-hidden">
+        <div className="text-center py-16">
+          <h1 className="text-2xl font-bold text-white mb-4">Profile</h1>
+          <p className="text-gray-400 mb-6">Please log in to view your profile.</p>
+          <a href="/api/auth/roblox" className="text-accent hover:underline uppercase text-sm">Login with Roblox</a>
+        </div>
+      </div>
+    )
+  }
+
+  const storedUser = await getUser(currentUser.id)
+  const loyaltyInfo = await getUserLoyaltyInfo(currentUser.id)
+  const hasDiscordDiscount = await canUseDiscordFirstPurchaseDiscount(currentUser.id)
 
   const discordSuccess = params.discord === 'linked'
   const discordUnlinked = params.discord === 'unlinked'
