@@ -19,12 +19,15 @@ export async function PATCH(request: NextRequest) {
   }
 
   const body = await request.json()
-  const { itemsComingSoon } = body
+  const update: Record<string, boolean> = {}
 
-  if (typeof itemsComingSoon !== 'boolean') {
-    return NextResponse.json({ error: 'itemsComingSoon must be a boolean' }, { status: 400 })
+  if (typeof body.itemsComingSoon === 'boolean') update.itemsComingSoon = body.itemsComingSoon
+  if (typeof body.depositsDisabled === 'boolean') update.depositsDisabled = body.depositsDisabled
+
+  if (Object.keys(update).length === 0) {
+    return NextResponse.json({ error: 'No valid settings provided' }, { status: 400 })
   }
 
-  const settings = await updateSiteSettings({ itemsComingSoon })
+  const settings = await updateSiteSettings(update)
   return NextResponse.json(settings)
 }
