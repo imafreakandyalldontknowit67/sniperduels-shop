@@ -95,7 +95,7 @@ export async function getSession(): Promise<Session | null> {
         if (payload.jti && payload.exp) {
           await blacklistSession(payload.jti as string, payload.exp as number)
         }
-        cookieStore.delete('session')
+        try { cookieStore.delete('session') } catch { /* Server Component context */ }
         return null
       }
     }
@@ -104,19 +104,23 @@ export async function getSession(): Promise<Session | null> {
     // Only refresh if more than 1 minute since last activity (avoid churning on every request)
     const nowSec = Math.floor(Date.now() / 1000)
     if (!session.lastActivity || nowSec - session.lastActivity > 60) {
-      const newToken = await new SignJWT({ ...session, lastActivity: nowSec })
-        .setProtectedHeader({ alg: 'HS256' })
-        .setJti(payload.jti as string)
-        .setExpirationTime('7d')
-        .sign(SESSION_SECRET)
+      try {
+        const newToken = await new SignJWT({ ...session, lastActivity: nowSec })
+          .setProtectedHeader({ alg: 'HS256' })
+          .setJti(payload.jti as string)
+          .setExpirationTime('7d')
+          .sign(SESSION_SECRET)
 
-      cookieStore.set('session', newToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7,
-        path: '/',
-      })
+        cookieStore.set('session', newToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24 * 7,
+          path: '/',
+        })
+      } catch {
+        // cookies().set() is not available in Server Components — skip refresh
+      }
     }
 
     return session
