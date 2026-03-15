@@ -35,6 +35,9 @@ function getRateLimit(pathname: string): { max: number; windowMs: number } {
   if (pathname === '/api/auth/me' || pathname === '/api/auth/logout') {
     return { max: 30, windowMs: 60_000 } // 30 per minute for session checks (not login attempts)
   }
+  if (pathname.startsWith('/api/auth/discord')) {
+    return { max: 10, windowMs: 60_000 } // 10 per minute for Discord link/unlink (account management)
+  }
   if (pathname.startsWith('/api/auth') || pathname === '/redirect') {
     return { max: 5, windowMs: 60_000 } // 5 per minute for auth (stricter)
   }
@@ -59,7 +62,12 @@ function getRateLimit(pathname: string): { max: number; windowMs: number } {
 function checkRateLimit(ip: string, pathname: string): { allowed: boolean; retryAfter: number } {
   cleanup()
   const { max, windowMs } = getRateLimit(pathname)
-  const key = `${ip}:${pathname.split('/').slice(0, 3).join('/')}`
+  // Use full pathname for auth endpoints so /api/auth/me, /api/auth/discord, etc.
+  // each get their own rate limit bucket instead of sharing one
+  const pathKey = pathname.startsWith('/api/auth')
+    ? pathname
+    : pathname.split('/').slice(0, 3).join('/')
+  const key = `${ip}:${pathKey}`
   const now = Date.now()
   const entry = rateLimitStore.get(key)
 
