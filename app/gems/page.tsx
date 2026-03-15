@@ -454,7 +454,7 @@ export default function GemsPage() {
                   className="flex-1 relative h-[42px] bg-no-repeat bg-center bg-contain border-0 cursor-pointer active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ backgroundImage: 'url(/images/pixel/pngs/asset-59.png)', backgroundSize: '100% 100%' }}
                 >
-                  <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-[10px] sm:text-xs uppercase tracking-wider">
+                  <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-[8px] sm:text-[10px] uppercase tracking-wider">
                     {purchasing ? 'Buying...' : 'Confirm Purchase'}
                   </span>
                 </button>
