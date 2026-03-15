@@ -1,4 +1,4 @@
-const WEBHOOK_URL = 'https://discord.com/api/webhooks/1476529722623262770/y4iPKrsNHb5R4GXPQnsqQ572IscEFYxnV7pDzMFyTU_7on4kQuW77Ie9BUD3XQUucXKN'
+const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || ''
 
 interface Embed {
   title: string
