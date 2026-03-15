@@ -15,9 +15,8 @@ import {
 import { notifyPurchase } from '@/lib/discord-webhook'
 
 const PRICING_TIERS = [
-  { min: 1, max: 9, rate: 2.90 },
-  { min: 10, max: 74, rate: 2.80 },
-  { min: 75, max: 500, rate: 2.65 },
+  { min: 1, max: 99, rate: 2.90 },
+  { min: 100, max: 500, rate: 2.65 },
 ]
 
 function getRate(amountInK: number): number {

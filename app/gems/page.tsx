@@ -7,9 +7,8 @@ import Link from 'next/link'
 import { PixelButton } from '@/components/ui'
 
 const PRICING_TIERS = [
-  { min: 1, max: 9, rate: 2.90, label: '1k-9k' },
-  { min: 10, max: 74, rate: 2.80, label: '10k-74k' },
-  { min: 75, max: Infinity, rate: 2.65, label: '75k+' },
+  { min: 1, max: 99, rate: 2.90, label: '1k-99k' },
+  { min: 100, max: Infinity, rate: 2.65, label: '100k+' },
 ]
 
 const PRESET_AMOUNTS = [10, 25, 50, 100]
