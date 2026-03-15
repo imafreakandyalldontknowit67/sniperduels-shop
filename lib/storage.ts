@@ -733,7 +733,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
   const row = await prisma.siteSettings.findUnique({ where: { id: 'singleton' } })
   return {
     itemsComingSoon: row?.itemsComingSoon ?? true,
-    depositsDisabled: (row as Record<string, unknown>)?.depositsDisabled as boolean ?? false,
+    depositsDisabled: row?.depositsDisabled ?? false,
   }
 }
 
@@ -746,7 +746,7 @@ export async function updateSiteSettings(settings: Partial<SiteSettings>): Promi
       itemsComingSoon: settings.itemsComingSoon ?? true,
       depositsDisabled: settings.depositsDisabled ?? false,
       updatedAt: now,
-    } as Record<string, unknown>,
+    },
     update: {
       ...(settings.itemsComingSoon !== undefined ? { itemsComingSoon: settings.itemsComingSoon } : {}),
       ...(settings.depositsDisabled !== undefined ? { depositsDisabled: settings.depositsDisabled } : {}),
@@ -755,7 +755,7 @@ export async function updateSiteSettings(settings: Partial<SiteSettings>): Promi
   })
   return {
     itemsComingSoon: row.itemsComingSoon,
-    depositsDisabled: (row as Record<string, unknown>).depositsDisabled as boolean ?? false,
+    depositsDisabled: row.depositsDisabled,
   }
 }
 
