@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
 
   // Auto-expire stale orders
   const now = Date.now()
-  const activeOrders = []
+  const activeOrders: typeof pendingOrProcessing = []
   for (const o of pendingOrProcessing) {
     const age = now - new Date(o.createdAt).getTime()
     if (age > ORDER_TIMEOUT_MS) {
