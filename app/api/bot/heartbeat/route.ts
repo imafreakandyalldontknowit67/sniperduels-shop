@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
+import { getBotLastHeartbeat, setBotHeartbeat } from '@/lib/bot-heartbeat'
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -14,19 +15,12 @@ function authenticateBot(request: NextRequest): boolean {
   }
 }
 
-// In-memory heartbeat timestamp (resets on deploy, which is fine)
-let lastHeartbeat: number = 0
-
-export function getBotLastHeartbeat(): number {
-  return lastHeartbeat
-}
-
 export async function POST(request: NextRequest) {
   if (!authenticateBot(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  lastHeartbeat = Date.now()
+  setBotHeartbeat()
   return NextResponse.json({ ok: true })
 }
 
@@ -35,6 +29,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const lastHeartbeat = getBotLastHeartbeat()
   const now = Date.now()
   const ago = lastHeartbeat ? Math.floor((now - lastHeartbeat) / 1000) : null
 
