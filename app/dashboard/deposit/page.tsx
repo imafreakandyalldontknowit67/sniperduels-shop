@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/components/providers'
 import type { Deposit } from '@/lib/storage'
 
 const PRESET_AMOUNTS = [5, 10, 25, 50, 100]
 
 export default function DepositPage() {
   const router = useRouter()
+  const { user, isLoading, walletBalance: authWalletBalance } = useAuth()
   const [amount, setAmount] = useState('')
   const [walletBalance, setWalletBalance] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -15,7 +17,6 @@ export default function DepositPage() {
   const [deposits, setDeposits] = useState<Deposit[]>([])
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-  const [authed, setAuthed] = useState<boolean | null>(null)
   const [billingEmail, setBillingEmail] = useState('')
   const [billingAddress, setBillingAddress] = useState('')
   const [billingAddress2, setBillingAddress2] = useState('')
@@ -25,23 +26,13 @@ export default function DepositPage() {
   const [billingCountry, setBillingCountry] = useState('United States')
 
   useEffect(() => {
-    async function init() {
-      try {
-        const meRes = await fetch('/api/auth/me')
-        if (!meRes.ok) {
-          setAuthed(false)
-          return
-        }
-        const me = await meRes.json()
-        setAuthed(true)
-        setWalletBalance(me.walletBalance || 0)
+    if (!isLoading) {
+      setWalletBalance(authWalletBalance)
+      if (user) {
         fetchDeposits()
-      } catch {
-        setAuthed(false)
       }
     }
-    init()
-  }, [])
+  }, [isLoading, user, authWalletBalance])
 
   async function fetchDeposits() {
     try {
@@ -55,7 +46,7 @@ export default function DepositPage() {
     }
   }
 
-  if (authed === null) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
@@ -63,7 +54,7 @@ export default function DepositPage() {
     )
   }
 
-  if (authed === false) {
+  if (!user) {
     router.push('/')
     return null
   }

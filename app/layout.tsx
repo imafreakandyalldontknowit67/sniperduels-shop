@@ -9,22 +9,24 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: 'Sniper Duels Shop',
+  metadataBase: new URL('https://sniperduels.shop'),
+  title: 'sniperduels.shop',
   description: 'The first automated item shop for Sniper Duels. Purchase gems, items, and crates with automatic 24/7 delivery.',
   keywords: ['Sniper Duels', 'Roblox', 'auto shop', 'gems', 'items', 'automated delivery'],
   icons: {
     icon: '/gem_icon.png',
   },
   openGraph: {
-    title: 'Sniper Duels Shop',
+    title: 'sniperduels.shop',
     description: 'The first automated item shop for Sniper Duels. Purchase gems, items, and crates with automatic 24/7 delivery.',
-    siteName: 'Sniper Duels Shop',
+    siteName: 'sniperduels.shop',
+    url: 'https://sniperduels.shop',
     images: [{ url: '/og-banner.png', width: 1200, height: 630 }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Sniper Duels Shop',
+    title: 'sniperduels.shop',
     description: 'The first automated item shop for Sniper Duels. Purchase gems, items, and crates with automatic 24/7 delivery.',
     images: ['/og-banner.png'],
   },

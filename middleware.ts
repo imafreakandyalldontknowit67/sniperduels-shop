@@ -32,6 +32,9 @@ function cleanup() {
 }
 
 function getRateLimit(pathname: string): { max: number; windowMs: number } {
+  if (pathname === '/api/auth/me' || pathname === '/api/auth/logout') {
+    return { max: 30, windowMs: 60_000 } // 30 per minute for session checks (not login attempts)
+  }
   if (pathname.startsWith('/api/auth') || pathname === '/redirect') {
     return { max: 5, windowMs: 60_000 } // 5 per minute for auth (stricter)
   }
