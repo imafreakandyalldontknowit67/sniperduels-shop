@@ -64,7 +64,7 @@ function checkRateLimit(ip: string, pathname: string): { allowed: boolean; retry
   const { max, windowMs } = getRateLimit(pathname)
   // Use full pathname for auth endpoints so /api/auth/me, /api/auth/discord, etc.
   // each get their own rate limit bucket instead of sharing one
-  const pathKey = pathname.startsWith('/api/auth')
+  const pathKey = pathname.startsWith('/api/auth') || pathname === '/api/orders/purchase'
     ? pathname
     : pathname.split('/').slice(0, 3).join('/')
   const key = `${ip}:${pathKey}`
