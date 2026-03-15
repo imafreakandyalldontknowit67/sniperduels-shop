@@ -108,13 +108,9 @@ function checkAuthLockout(ip: string): { locked: boolean; retryAfter: number } {
 }
 
 // Auth initiation endpoints that should have strict lockout protection.
-// Excludes /api/auth/me (session check) and /api/auth/logout (session teardown).
+// Only actual login flows — Discord link/unlink should NOT trigger lockout.
 function isAuthInitiationEndpoint(pathname: string): boolean {
-  if (pathname === '/redirect') return true
-  if (!pathname.startsWith('/api/auth')) return false
-  // These are session management, not login attempts
-  if (pathname === '/api/auth/me' || pathname === '/api/auth/logout') return false
-  return true
+  return pathname === '/api/auth/roblox' || pathname === '/redirect'
 }
 
 function isAuthEndpoint(pathname: string): boolean {
