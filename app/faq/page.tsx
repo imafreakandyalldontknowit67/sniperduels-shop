@@ -8,23 +8,49 @@ export const metadata: Metadata = {
   },
 }
 
+const faqData = [
+  // General
+  { section: 'General', q: 'What is Sniper Duels Auto Shop?', a: 'The first fully automated item shop for the Roblox game Sniper Duels. Browse and purchase snipers, knives, crates, and gems with instant automated delivery.' },
+  { section: 'General', q: 'How does the delivery system work?', a: "After purchasing, you'll receive a link to join our private server. Our automated bot will trade you the items directly. The entire process takes under 2 minutes." },
+  { section: 'General', q: 'Is this site affiliated with Sniper Duels?', a: 'We are an independent third-party marketplace. We are not affiliated with the developers of Sniper Duels.' },
+  { section: 'General', q: 'Is Sniper Duels Auto Shop legit?', a: 'Yes. We use secure payment processing through Pandabase, Roblox OAuth for safe authentication, and our automated bot handles all trades transparently. You can track every order in real-time from your dashboard.' },
+  { section: 'General', q: 'How do I contact support?', a: 'Join our Discord server at discord.gg/sniperduels. Our team responds to support requests there. You can also check your order status directly from your dashboard.' },
+  // Delivery
+  { section: 'Delivery', q: 'How long does delivery take?', a: "Most orders are delivered within 2 minutes. You'll be able to track your order status in real-time from your dashboard." },
+  { section: 'Delivery', q: 'What happens after I purchase an item?', a: "You'll see a link to join our private Roblox server. Join the server, and our automated bot will initiate a trade with you. Accept the trade and the items are yours." },
+  { section: 'Delivery', q: 'Do I need to be online in Roblox to receive items?', a: 'Yes. You need to join our private server in Roblox to accept the trade from our bot. The server link is provided after purchase.' },
+  { section: 'Delivery', q: 'What if the bot is offline or the trade fails?', a: 'If an order cannot be fulfilled, your wallet balance is automatically refunded. You can retry the purchase at any time. Our system runs 24/7 with high uptime.' },
+  { section: 'Delivery', q: 'Can I receive items on a different Roblox account?', a: 'No. Items are delivered to the Roblox account you logged in with. Make sure you are logged in with the correct account before purchasing.' },
+  // Items & Gems
+  { section: 'Items & Gems', q: 'What items do you sell?', a: 'We sell snipers, knives, and crates from the Roblox game Sniper Duels. Each item lists its rarity, FX effects, and Fragtrak details where applicable.' },
+  { section: 'Items & Gems', q: 'What are gems used for?', a: 'Gems are the in-game currency for Sniper Duels. They can be used to open crates, purchase items, and more within the game.' },
+  { section: 'Items & Gems', q: 'How does gem pricing work?', a: 'Gems are priced per thousand (k). Orders of 1k-99k are $2.90/k. Orders of 100k or more get a bulk discount at $2.65/k.' },
+  { section: 'Items & Gems', q: 'Do item prices change?', a: 'Yes. Prices may fluctuate based on rarity, demand, and availability. The price shown on the shop page is always the current price.' },
+  { section: 'Items & Gems', q: 'What do the rarity tiers mean?', a: 'Items range from Uncommon to Collectible. Higher rarity items (Secret, Collectible) are rarer and typically more valuable. Each rarity is color-coded on the shop page.' },
+  // Payments & Wallet
+  { section: 'Payments & Wallet', q: 'How do I add funds to my wallet?', a: "Go to your Dashboard and click 'Deposit'. We accept payments through Pandabase. Funds are credited to your wallet instantly after payment confirmation." },
+  { section: 'Payments & Wallet', q: 'What payment methods are accepted?', a: 'We accept credit/debit cards and other methods available through our payment processor Pandabase.' },
+  { section: 'Payments & Wallet', q: 'Can I withdraw my balance?', a: 'Yes. Contact us through our Discord server to request a withdrawal.' },
+  { section: 'Payments & Wallet', q: 'What is your refund policy?', a: 'If an order cannot be fulfilled, your wallet balance will be automatically refunded. For other refund requests, please contact us on Discord.' },
+  { section: 'Payments & Wallet', q: 'Why is my balance different than expected?', a: 'Your balance may reflect pending orders or loyalty discounts applied to purchases. Check your order history for details.' },
+  // Account & Security
+  { section: 'Account & Security', q: 'How do I create an account?', a: "Click 'Login with Roblox' and authorize with your Roblox account. Your account is created automatically — no separate registration needed." },
+  { section: 'Account & Security', q: 'Is my Roblox account safe?', a: 'Yes. We only use Roblox OAuth for authentication. We never have access to your Roblox password or account credentials.' },
+  { section: 'Account & Security', q: 'Why should I link my Discord?', a: 'Linking Discord gives you a one-time 2.5% discount on your first purchase. It also helps us provide better support.' },
+  { section: 'Account & Security', q: 'What is the loyalty program?', a: 'The more you spend, the bigger your discount. Silver tier (after $100 spent) gives 0.5% off, Gold tier (after $250 spent) gives 1% off all purchases.' },
+  { section: 'Account & Security', q: 'Can I use the same account on multiple devices?', a: 'Yes. Your account is tied to your Roblox login, so you can access it from any device by logging in with Roblox.' },
+]
+
+const sections = ['General', 'Delivery', 'Items & Gems', 'Payments & Wallet', 'Account & Security'] as const
+
 const faqSchema = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
-  mainEntity: [
-    { '@type': 'Question', name: 'What is Sniper Duels Auto Shop?', acceptedAnswer: { '@type': 'Answer', text: 'The first fully automated item shop for the Roblox game Sniper Duels. Browse and purchase snipers, knives, crates, and gems with instant automated delivery.' } },
-    { '@type': 'Question', name: 'How does the delivery system work?', acceptedAnswer: { '@type': 'Answer', text: "After purchasing, you'll receive a link to join our private server. Our automated bot will trade you the items directly. The entire process takes under 2 minutes." } },
-    { '@type': 'Question', name: 'How long does delivery take?', acceptedAnswer: { '@type': 'Answer', text: "Most orders are delivered within 2 minutes. You'll be able to track your order status in real-time from your dashboard." } },
-    { '@type': 'Question', name: 'Is this site affiliated with Sniper Duels?', acceptedAnswer: { '@type': 'Answer', text: 'We are an independent third-party marketplace. We are not affiliated with the developers of Sniper Duels.' } },
-    { '@type': 'Question', name: 'How do I add funds to my wallet?', acceptedAnswer: { '@type': 'Answer', text: "Go to your Dashboard and click 'Deposit'. We accept payments through Pandabase. Funds are credited to your wallet instantly after payment confirmation." } },
-    { '@type': 'Question', name: 'What payment methods are accepted?', acceptedAnswer: { '@type': 'Answer', text: 'We accept credit/debit cards and other methods available through our payment processor Pandabase.' } },
-    { '@type': 'Question', name: 'Can I withdraw my balance?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. Contact us through our Discord server to request a withdrawal.' } },
-    { '@type': 'Question', name: 'What is your refund policy?', acceptedAnswer: { '@type': 'Answer', text: 'If an order cannot be fulfilled, your wallet balance will be automatically refunded. For other refund requests, please contact us on Discord.' } },
-    { '@type': 'Question', name: 'How do I create an account?', acceptedAnswer: { '@type': 'Answer', text: "Click 'Login with Roblox' and authorize with your Roblox account. Your account is created automatically — no separate registration needed." } },
-    { '@type': 'Question', name: 'Is my Roblox account safe?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. We only use Roblox OAuth for authentication. We never have access to your Roblox password or account credentials.' } },
-    { '@type': 'Question', name: 'Why should I link my Discord?', acceptedAnswer: { '@type': 'Answer', text: 'Linking Discord gives you a one-time 2.5% discount on your first purchase. It also helps us provide better support.' } },
-    { '@type': 'Question', name: 'What is the loyalty program?', acceptedAnswer: { '@type': 'Answer', text: 'The more you spend, the bigger your discount. Silver tier (after $100 spent) gives 0.5% off, Gold tier (after $250 spent) gives 1% off all purchases.' } },
-  ],
+  mainEntity: faqData.map(({ q, a }) => ({
+    '@type': 'Question',
+    name: q,
+    acceptedAnswer: { '@type': 'Answer', text: a },
+  })),
 }
 
 const breadcrumbSchema = {
@@ -51,159 +77,29 @@ export default function FAQPage() {
         <h1 className="text-4xl font-bold text-accent uppercase mb-2">FAQ</h1>
         <p className="text-gray-400 mb-12">Frequently Asked Questions</p>
 
-        {/* General */}
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold text-accent uppercase mb-4 border-b-[2px] border-dark-500 pb-2">
-            General
-          </h2>
-          <div className="space-y-2">
-            <details className="group border-[2px] border-dark-500 bg-dark-800 p-4">
-              <summary className="cursor-pointer text-white uppercase font-semibold text-sm list-none flex items-center justify-between">
-                What is Sniper Duels Auto Shop?
-                <span className="text-accent group-open:rotate-45 transition-transform text-xl leading-none">+</span>
-              </summary>
-              <p className="text-gray-400 mt-3 text-sm leading-relaxed">
-                The first fully automated item shop for the Roblox game Sniper Duels. Browse and purchase snipers, knives, crates, and gems with instant automated delivery.
-              </p>
-            </details>
-
-            <details className="group border-[2px] border-dark-500 bg-dark-800 p-4">
-              <summary className="cursor-pointer text-white uppercase font-semibold text-sm list-none flex items-center justify-between">
-                How does the delivery system work?
-                <span className="text-accent group-open:rotate-45 transition-transform text-xl leading-none">+</span>
-              </summary>
-              <p className="text-gray-400 mt-3 text-sm leading-relaxed">
-                After purchasing, you&apos;ll receive a link to join our private server. Our automated bot will trade you the items directly. The entire process takes under 2 minutes.
-              </p>
-            </details>
-
-            <details className="group border-[2px] border-dark-500 bg-dark-800 p-4">
-              <summary className="cursor-pointer text-white uppercase font-semibold text-sm list-none flex items-center justify-between">
-                How long does delivery take?
-                <span className="text-accent group-open:rotate-45 transition-transform text-xl leading-none">+</span>
-              </summary>
-              <p className="text-gray-400 mt-3 text-sm leading-relaxed">
-                Most orders are delivered within 2 minutes. You&apos;ll be able to track your order status in real-time from your dashboard.
-              </p>
-            </details>
-
-            <details className="group border-[2px] border-dark-500 bg-dark-800 p-4">
-              <summary className="cursor-pointer text-white uppercase font-semibold text-sm list-none flex items-center justify-between">
-                Is this site affiliated with Sniper Duels?
-                <span className="text-accent group-open:rotate-45 transition-transform text-xl leading-none">+</span>
-              </summary>
-              <p className="text-gray-400 mt-3 text-sm leading-relaxed">
-                We are an independent third-party marketplace. We are not affiliated with the developers of Sniper Duels.
-              </p>
-            </details>
-          </div>
-        </section>
-
-        {/* Payments & Wallet */}
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold text-accent uppercase mb-4 border-b-[2px] border-dark-500 pb-2">
-            Payments &amp; Wallet
-          </h2>
-          <div className="space-y-2">
-            <details className="group border-[2px] border-dark-500 bg-dark-800 p-4">
-              <summary className="cursor-pointer text-white uppercase font-semibold text-sm list-none flex items-center justify-between">
-                How do I add funds to my wallet?
-                <span className="text-accent group-open:rotate-45 transition-transform text-xl leading-none">+</span>
-              </summary>
-              <p className="text-gray-400 mt-3 text-sm leading-relaxed">
-                Go to your Dashboard and click &apos;Deposit&apos;. We accept payments through Pandabase. Funds are credited to your wallet instantly after payment confirmation.
-              </p>
-            </details>
-
-            <details className="group border-[2px] border-dark-500 bg-dark-800 p-4">
-              <summary className="cursor-pointer text-white uppercase font-semibold text-sm list-none flex items-center justify-between">
-                What payment methods are accepted?
-                <span className="text-accent group-open:rotate-45 transition-transform text-xl leading-none">+</span>
-              </summary>
-              <p className="text-gray-400 mt-3 text-sm leading-relaxed">
-                We accept credit/debit cards and other methods available through our payment processor Pandabase.
-              </p>
-            </details>
-
-            <details className="group border-[2px] border-dark-500 bg-dark-800 p-4">
-              <summary className="cursor-pointer text-white uppercase font-semibold text-sm list-none flex items-center justify-between">
-                Can I withdraw my balance?
-                <span className="text-accent group-open:rotate-45 transition-transform text-xl leading-none">+</span>
-              </summary>
-              <p className="text-gray-400 mt-3 text-sm leading-relaxed">
-                Yes. Contact us through our Discord server to request a withdrawal.
-              </p>
-            </details>
-
-            <details className="group border-[2px] border-dark-500 bg-dark-800 p-4">
-              <summary className="cursor-pointer text-white uppercase font-semibold text-sm list-none flex items-center justify-between">
-                What is your refund policy?
-                <span className="text-accent group-open:rotate-45 transition-transform text-xl leading-none">+</span>
-              </summary>
-              <p className="text-gray-400 mt-3 text-sm leading-relaxed">
-                If an order cannot be fulfilled, your wallet balance will be automatically refunded. For other refund requests, please contact us on Discord.
-              </p>
-            </details>
-
-            <details className="group border-[2px] border-dark-500 bg-dark-800 p-4">
-              <summary className="cursor-pointer text-white uppercase font-semibold text-sm list-none flex items-center justify-between">
-                Why is my balance different than expected?
-                <span className="text-accent group-open:rotate-45 transition-transform text-xl leading-none">+</span>
-              </summary>
-              <p className="text-gray-400 mt-3 text-sm leading-relaxed">
-                Your balance may reflect pending orders or loyalty discounts applied to purchases. Check your order history for details.
-              </p>
-            </details>
-          </div>
-        </section>
-
-        {/* Account & Security */}
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold text-accent uppercase mb-4 border-b-[2px] border-dark-500 pb-2">
-            Account &amp; Security
-          </h2>
-          <div className="space-y-2">
-            <details className="group border-[2px] border-dark-500 bg-dark-800 p-4">
-              <summary className="cursor-pointer text-white uppercase font-semibold text-sm list-none flex items-center justify-between">
-                How do I create an account?
-                <span className="text-accent group-open:rotate-45 transition-transform text-xl leading-none">+</span>
-              </summary>
-              <p className="text-gray-400 mt-3 text-sm leading-relaxed">
-                Click &apos;Login with Roblox&apos; and authorize with your Roblox account. Your account is created automatically — no separate registration needed.
-              </p>
-            </details>
-
-            <details className="group border-[2px] border-dark-500 bg-dark-800 p-4">
-              <summary className="cursor-pointer text-white uppercase font-semibold text-sm list-none flex items-center justify-between">
-                Is my Roblox account safe?
-                <span className="text-accent group-open:rotate-45 transition-transform text-xl leading-none">+</span>
-              </summary>
-              <p className="text-gray-400 mt-3 text-sm leading-relaxed">
-                Yes. We only use Roblox OAuth for authentication. We never have access to your Roblox password or account credentials.
-              </p>
-            </details>
-
-            <details className="group border-[2px] border-dark-500 bg-dark-800 p-4">
-              <summary className="cursor-pointer text-white uppercase font-semibold text-sm list-none flex items-center justify-between">
-                Why should I link my Discord?
-                <span className="text-accent group-open:rotate-45 transition-transform text-xl leading-none">+</span>
-              </summary>
-              <p className="text-gray-400 mt-3 text-sm leading-relaxed">
-                Linking Discord gives you a one-time 2.5% discount on your first purchase. It also helps us provide better support.
-              </p>
-            </details>
-
-            <details className="group border-[2px] border-dark-500 bg-dark-800 p-4">
-              <summary className="cursor-pointer text-white uppercase font-semibold text-sm list-none flex items-center justify-between">
-                What is the loyalty program?
-                <span className="text-accent group-open:rotate-45 transition-transform text-xl leading-none">+</span>
-              </summary>
-              <p className="text-gray-400 mt-3 text-sm leading-relaxed">
-                The more you spend, the bigger your discount. Silver tier (after $100 spent) gives 0.5% off, Gold tier (after $250 spent) gives 1% off all purchases.
-              </p>
-            </details>
-          </div>
-        </section>
+        {sections.map((section) => {
+          const sectionFaqs = faqData.filter((f) => f.section === section)
+          return (
+            <section key={section} className="mb-10">
+              <h2 className="text-xl font-semibold text-accent uppercase mb-4 border-b-[2px] border-dark-500 pb-2">
+                {section}
+              </h2>
+              <div className="space-y-2">
+                {sectionFaqs.map(({ q, a }) => (
+                  <details key={q} className="group border-[2px] border-dark-500 bg-dark-800 p-4">
+                    <summary className="cursor-pointer text-white uppercase font-semibold text-sm list-none flex items-center justify-between">
+                      {q}
+                      <span className="text-accent group-open:rotate-45 transition-transform text-xl leading-none">+</span>
+                    </summary>
+                    <p className="text-gray-400 mt-3 text-sm leading-relaxed">
+                      {a}
+                    </p>
+                  </details>
+                ))}
+              </div>
+            </section>
+          )
+        })}
 
         {/* Support CTA */}
         <section className="border-[2px] border-accent bg-dark-800 p-8 text-center">

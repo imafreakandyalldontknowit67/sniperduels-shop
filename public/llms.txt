@@ -1,0 +1,44 @@
+# Sniper Duels Auto Shop
+
+> The first fully automated item shop for Sniper Duels on Roblox. Purchase gems, items, and crates with automatic 24/7 delivery.
+
+## About
+
+Sniper Duels Auto Shop is an independent third-party marketplace for the Roblox game Sniper Duels. We provide automated delivery of in-game items including snipers, knives, crates, and gems. Our bot-powered system completes trades within 2 minutes, 24 hours a day.
+
+## Products
+
+- **Snipers**: Ranged weapons with various rarity tiers (Uncommon, Rare, Legendary, Epic, Secret, Collectible). Some include FX effects and Fragtrak stat tracking.
+- **Knives**: Melee weapons with rarity tiers and optional FX effects.
+- **Crates**: Mystery crates containing random items of varying rarity.
+- **Gems**: In-game currency sold in bulk. Pricing: $2.90/k for 1k-99k, $2.65/k for 100k+.
+
+## How It Works
+
+1. Log in with your Roblox account (OAuth — we never see your password)
+2. Browse and select items or gems
+3. Pay securely through Pandabase (credit/debit cards)
+4. Join our private Roblox server via the provided link
+5. Accept the automated bot trade — items delivered in under 2 minutes
+
+## Pricing
+
+- Items: Priced individually based on rarity and demand
+- Gems: $2.90 per 1,000 (1k-99k orders), $2.65 per 1,000 (100k+ orders)
+- Loyalty discounts: Silver tier (0.5% off after $100 spent), Gold tier (1% off after $250 spent)
+- Discord link bonus: One-time 2.5% discount on first purchase
+
+## Pages
+
+- Homepage: https://sniperduels.shop
+- Item Shop: https://sniperduels.shop/shop
+- Gem Shop: https://sniperduels.shop/gems
+- FAQ: https://sniperduels.shop/faq
+- About: https://sniperduels.shop/about
+- Privacy Policy: https://sniperduels.shop/privacy
+- Terms of Service: https://sniperduels.shop/terms
+- Refund Policy: https://sniperduels.shop/refunds
+
+## Contact
+
+- Discord: https://discord.gg/sniperduels
