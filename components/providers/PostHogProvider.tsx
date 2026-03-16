@@ -15,6 +15,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       capture_pageleave: true,
       session_recording: {
         maskAllInputs: true,
+        collectFonts: true,
       },
     })
   }, [])

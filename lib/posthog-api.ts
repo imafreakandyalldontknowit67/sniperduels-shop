@@ -8,8 +8,10 @@ interface PostHogQueryOptions {
 }
 
 async function posthogFetch(path: string, options?: RequestInit) {
-  const res = await fetch(`${POSTHOG_HOST}${path}`, {
+  const url = `${POSTHOG_HOST}${path}`
+  const res = await fetch(url, {
     ...options,
+    cache: 'no-store',
     headers: {
       'Authorization': `Bearer ${POSTHOG_API_KEY}`,
       'Content-Type': 'application/json',
@@ -17,7 +19,8 @@ async function posthogFetch(path: string, options?: RequestInit) {
     },
   })
   if (!res.ok) {
-    throw new Error(`PostHog API error: ${res.status} ${res.statusText}`)
+    const body = await res.text().catch(() => '')
+    throw new Error(`PostHog API error: ${res.status} ${res.statusText} – ${body.slice(0, 200)}`)
   }
   return res.json()
 }

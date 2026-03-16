@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser, isAdmin } from '@/lib/auth'
 import { queryEvents } from '@/lib/posthog-api'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser()
   if (!user || !isAdmin(user.id)) {
