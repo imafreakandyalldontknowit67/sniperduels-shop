@@ -1,0 +1,72 @@
+<clickhouse>
+    <profiles>
+        <default>
+            <max_memory_usage>1073741824</max_memory_usage>
+        </default>
+    </profiles>
+
+    <max_server_memory_usage>2147483648</max_server_memory_usage>
+
+    <logger>
+        <level>warning</level>
+        <console>true</console>
+    </logger>
+
+    <listen_host>0.0.0.0</listen_host>
+
+    <merge_tree>
+        <replicated_deduplication_window>0</replicated_deduplication_window>
+    </merge_tree>
+
+    <!-- Single-node cluster definitions for PostHog -->
+    <remote_servers>
+        <posthog>
+            <shard>
+                <replica>
+                    <host>clickhouse</host>
+                    <port>9000</port>
+                </replica>
+            </shard>
+        </posthog>
+        <posthog_migrations>
+            <shard>
+                <replica>
+                    <host>clickhouse</host>
+                    <port>9000</port>
+                </replica>
+            </shard>
+        </posthog_migrations>
+    </remote_servers>
+
+    <macros>
+        <shard>01</shard>
+        <replica>01</replica>
+    </macros>
+
+    <!-- Embedded ClickHouse Keeper (single-node, no external ZooKeeper) -->
+    <keeper_server>
+        <tcp_port>9181</tcp_port>
+        <server_id>1</server_id>
+        <log_storage_path>/var/lib/clickhouse/coordination/log</log_storage_path>
+        <snapshot_storage_path>/var/lib/clickhouse/coordination/snapshots</snapshot_storage_path>
+        <coordination_settings>
+            <operation_timeout_ms>10000</operation_timeout_ms>
+            <session_timeout_ms>30000</session_timeout_ms>
+            <raft_logs_level>warning</raft_logs_level>
+        </coordination_settings>
+        <raft_configuration>
+            <server>
+                <id>1</id>
+                <hostname>clickhouse</hostname>
+                <port>9234</port>
+            </server>
+        </raft_configuration>
+    </keeper_server>
+
+    <zookeeper>
+        <node>
+            <host>clickhouse</host>
+            <port>9181</port>
+        </node>
+    </zookeeper>
+</clickhouse>

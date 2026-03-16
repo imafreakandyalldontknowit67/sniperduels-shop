@@ -1,11 +1,20 @@
 import type { Metadata, Viewport } from 'next'
+import localFont from 'next/font/local'
 import './globals.css'
+import { Suspense } from 'react'
 import { Header, Footer } from '@/components/layout'
-import { AuthProvider } from '@/components/providers'
+import { AuthProvider, PostHogProvider, PostHogPageView } from '@/components/providers'
+
+const pixelEmulator = localFont({
+  src: '../public/fonts/PixelEmulator-xq08.ttf',
+  variable: '--font-pixel',
+  display: 'swap',
+})
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  themeColor: '#7ec8e3',
 }
 
 export const metadata: Metadata = {
@@ -30,9 +39,6 @@ export const metadata: Metadata = {
     description: 'The first automated item shop for Sniper Duels. Purchase gems, items, and crates with automatic 24/7 delivery.',
     images: ['/og-banner.png'],
   },
-  other: {
-    'theme-color': '#7ec8e3',
-  },
 }
 
 export default function RootLayout({
@@ -41,15 +47,20 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className={`dark ${pixelEmulator.variable}`}>
       <body>
-        <AuthProvider>
-          <Header />
-          <main className="min-h-screen pt-[56px] sm:pt-[64px] md:pt-[72px]">
-            {children}
-          </main>
-          <Footer />
-        </AuthProvider>
+        <PostHogProvider>
+          <Suspense fallback={null}>
+            <PostHogPageView />
+          </Suspense>
+          <AuthProvider>
+            <Header />
+            <main className="min-h-screen pt-[56px] sm:pt-[64px] md:pt-[72px]">
+              {children}
+            </main>
+            <Footer />
+          </AuthProvider>
+        </PostHogProvider>
       </body>
     </html>
   )

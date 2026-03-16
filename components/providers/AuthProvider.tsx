@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import posthog from 'posthog-js'
 import type { LoyaltyTier } from '@/lib/loyalty'
 
 interface User {
@@ -59,6 +60,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoyaltyDiscount(data.loyaltyDiscount || 0)
       setLifetimeSpend(data.lifetimeSpend || 0)
       setCanUseDiscordDiscount(data.canUseDiscordDiscount || false)
+      // PostHog identification
+      if (data.user) {
+        posthog.identify(data.user.id, {
+          roblox_username: data.user.name,
+          roblox_display_name: data.user.displayName,
+          is_admin: data.isAdmin,
+          discord_linked: data.discordLinked || false,
+          loyalty_tier: data.loyaltyTier || 'member',
+        })
+      }
     } catch (error) {
       console.error('Failed to fetch user:', error)
       setUser(null)
@@ -80,10 +91,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = () => {
+    posthog.capture('login_initiated')
     window.location.href = '/api/auth/roblox'
   }
 
   const logout = async () => {
+    posthog.capture('logged_out')
+    posthog.reset()
     await fetch('/api/auth/logout', { method: 'POST' })
     setUser(null)
     setIsAdmin(false)

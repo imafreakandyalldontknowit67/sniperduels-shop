@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import posthog from 'posthog-js'
 import { Minus, Plus, X, Wallet } from 'lucide-react'
 import Link from 'next/link'
 import { PixelButton } from '@/components/ui'
@@ -97,6 +98,7 @@ export default function GemsPage() {
   }
 
   function handlePurchaseClick() {
+    posthog.capture('gems_buy_clicked', { amount_k: amount, total_price: discountedPrice })
     if (!userInfo?.user) {
       window.location.href = '/api/auth/roblox'
       return
@@ -118,6 +120,7 @@ export default function GemsPage() {
       const data = await res.json()
 
       if (!res.ok) {
+        posthog.capture('gems_purchase_failed', { amount_k: amount, error: data.error })
         if (data.error === 'Insufficient wallet balance') {
           setToast({ type: 'error', text: `Not enough balance ($${data.balance.toFixed(2)}). Add funds first!` })
         } else if (data.error === 'Not enough gems in stock') {
@@ -130,8 +133,10 @@ export default function GemsPage() {
         return
       }
 
+      posthog.capture('gems_purchased', { amount_k: amount, total_price: discountedPrice })
       router.push(`/dashboard/orders/${data.order.id}`)
     } catch {
+      posthog.capture('gems_purchase_failed', { amount_k: amount, error: 'network_error' })
       setToast({ type: 'error', text: 'Something went wrong' })
       setShowConfirm(false)
     } finally {

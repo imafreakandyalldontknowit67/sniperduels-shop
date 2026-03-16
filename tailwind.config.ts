@@ -30,7 +30,7 @@ const config: Config = {
         }
       },
       fontFamily: {
-        sans: ['PixelEmulator', 'monospace'],
+        sans: ['var(--font-pixel)', 'monospace'],
       },
       animation: {
         'pixel-fade-up': 'pixel-fade-up 0.4s steps(4) forwards',

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import posthog from 'posthog-js'
+import Image from 'next/image'
 import { Card, Button } from '@/components/ui'
 import { Loader2, X } from 'lucide-react'
 import Link from 'next/link'
@@ -100,6 +102,13 @@ export default function ShopPage() {
   }
 
   function handleBuyClick(item: StockItem) {
+    posthog.capture('item_buy_clicked', {
+      item_id: item.id,
+      item_name: item.name,
+      item_type: item.type,
+      item_rarity: item.rarity,
+      price: item.priceUsd,
+    })
     if (!userInfo?.user) {
       window.location.href = '/api/auth/roblox'
       return
@@ -121,6 +130,7 @@ export default function ShopPage() {
       const data = await res.json()
 
       if (!res.ok) {
+        posthog.capture('item_purchase_failed', { item_id: confirmItem.id, error: data.error })
         if (data.error === 'Insufficient wallet balance') {
           setToast({ type: 'error', text: `Not enough balance ($${data.balance.toFixed(2)}). Add funds first!` })
         } else {
@@ -130,8 +140,15 @@ export default function ShopPage() {
         return
       }
 
+      posthog.capture('item_purchased', {
+        item_id: confirmItem.id,
+        item_name: confirmItem.name,
+        price: confirmItem.priceUsd,
+        discounted_price: getDiscountedPrice(confirmItem.priceUsd),
+      })
       router.push(`/dashboard/orders/${data.order.id}`)
     } catch {
+      posthog.capture('item_purchase_failed', { item_id: confirmItem.id, error: 'network_error' })
       setToast({ type: 'error', text: 'Something went wrong' })
       setConfirmItem(null)
     } finally {
@@ -256,7 +273,7 @@ export default function ShopPage() {
               {filters.map((filter) => (
                 <button
                   key={filter}
-                  onClick={() => setSelectedFilter(filter)}
+                  onClick={() => { posthog.capture('shop_filter_changed', { filter }); setSelectedFilter(filter) }}
                   className={`px-4 py-2 text-xs uppercase border-[2px] ${
                     selectedFilter === filter
                       ? 'bg-pixel-blue-dark text-white border-pixel-blue pixel-shadow-sm'
@@ -296,11 +313,13 @@ export default function ShopPage() {
                       {/* Item Image */}
                       <div className="aspect-video bg-dark-600 relative overflow-hidden">
                         {item.imageUrl ? (
-                          <img
+                          <Image
                             src={item.imageUrl}
                             alt={item.name}
+                            width={150}
+                            height={150}
                             className="w-full h-full object-cover"
-                                                     />
+                          />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <svg width="64" height="64" viewBox="0 0 64 64" fill="none">

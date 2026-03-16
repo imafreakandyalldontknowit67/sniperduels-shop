@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
 import { NAV_LINKS } from '@/lib/constants'
@@ -89,7 +90,7 @@ export function Header() {
                   className="flex items-center gap-2 px-3 py-1.5 bg-dark-700 hover:bg-dark-600 border-[2px] border-dark-500"
                 >
                   {user.avatar ? (
-                    <img src={user.avatar} alt="" className="w-6 h-6" />
+                    <Image src={user.avatar} alt="" width={24} height={24} className="w-6 h-6" />
                   ) : (
                     <User className="w-5 h-5 text-gray-400" />
                   )}
@@ -275,7 +276,7 @@ export function Header() {
                 <>
                   <div className="flex items-center gap-2 pt-2 border-t-[2px] border-dark-600">
                     {user.avatar ? (
-                      <img src={user.avatar} alt="" className="w-8 h-8" />
+                      <Image src={user.avatar} alt="" width={32} height={32} className="w-8 h-8" />
                     ) : (
                       <User className="w-6 h-6 text-gray-400" />
                     )}

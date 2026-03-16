@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import posthog from 'posthog-js'
 import { useAuth } from '@/components/providers'
 import type { Deposit } from '@/lib/storage'
 
@@ -94,6 +95,7 @@ export default function DepositPage() {
         return
       }
 
+      posthog.capture('deposit_initiated', { amount: numAmount })
       // On mobile, navigate directly (popups are often blocked)
       // On desktop, open in new tab
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)

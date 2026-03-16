@@ -2,14 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@font-face {
-  font-family: 'PixelEmulator';
-  src: url('/fonts/PixelEmulator-xq08.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
 :root {
   --accent: #e1ad2d;
   --accent-dark: #c4961f;

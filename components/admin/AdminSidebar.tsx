@@ -13,7 +13,10 @@ import {
   Crosshair,
   ArrowLeft,
   Menu,
-  X
+  X,
+  BarChart3,
+  TrendingDown,
+  GitBranch,
 } from 'lucide-react'
 
 const navItems = [
@@ -23,6 +26,12 @@ const navItems = [
   { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
+]
+
+const analyticsItems = [
+  { href: '/admin/analytics', label: 'Overview', icon: BarChart3 },
+  { href: '/admin/analytics/funnels', label: 'Funnels', icon: GitBranch },
+  { href: '/admin/analytics/dropoffs', label: 'Drop-offs', icon: TrendingDown },
 ]
 
 export function AdminSidebar() {
@@ -70,11 +79,11 @@ export function AdminSidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4">
+        <nav className="flex-1 p-4 overflow-y-auto">
           <ul className="space-y-2">
             {navItems.map((item) => {
               const isActive = pathname === item.href ||
-                (item.href !== '/admin' && pathname.startsWith(item.href))
+                (item.href !== '/admin' && pathname.startsWith(item.href) && !pathname.startsWith('/admin/analytics'))
               const Icon = item.icon
 
               return (
@@ -95,6 +104,34 @@ export function AdminSidebar() {
               )
             })}
           </ul>
+
+          <div className="mt-6 pt-4 border-t border-dark-700">
+            <span className="px-4 text-[10px] text-gray-500 uppercase font-bold tracking-wider">Analytics</span>
+            <ul className="space-y-2 mt-2">
+              {analyticsItems.map((item) => {
+                const isActive = pathname === item.href ||
+                  (item.href !== '/admin/analytics' && pathname.startsWith(item.href))
+                const Icon = item.icon
+
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={() => setOpen(false)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                        isActive
+                          ? 'bg-accent text-white'
+                          : 'text-gray-400 hover:text-white hover:bg-dark-700'
+                      }`}
+                    >
+                      <Icon className="w-5 h-5" />
+                      {item.label}
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
         </nav>
 
         {/* Back to Site */}
