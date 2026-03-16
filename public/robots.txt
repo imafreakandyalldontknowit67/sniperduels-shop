@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /dashboard
+Disallow: /dashboard/*
+Disallow: /api/
+Disallow: /dev/
+
+Sitemap: https://sniperduels.shop/sitemap.xml

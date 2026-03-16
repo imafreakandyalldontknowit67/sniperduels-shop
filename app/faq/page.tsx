@@ -1,6 +1,52 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'FAQ — How It Works, Payments & Delivery',
+  description: 'Frequently asked questions about Sniper Duels Auto Shop. Learn about automated delivery, payment methods, wallet system, account security, and loyalty discounts.',
+  alternates: {
+    canonical: 'https://sniperduels.shop/faq',
+  },
+}
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    { '@type': 'Question', name: 'What is Sniper Duels Auto Shop?', acceptedAnswer: { '@type': 'Answer', text: 'The first fully automated item shop for the Roblox game Sniper Duels. Browse and purchase snipers, knives, crates, and gems with instant automated delivery.' } },
+    { '@type': 'Question', name: 'How does the delivery system work?', acceptedAnswer: { '@type': 'Answer', text: "After purchasing, you'll receive a link to join our private server. Our automated bot will trade you the items directly. The entire process takes under 2 minutes." } },
+    { '@type': 'Question', name: 'How long does delivery take?', acceptedAnswer: { '@type': 'Answer', text: "Most orders are delivered within 2 minutes. You'll be able to track your order status in real-time from your dashboard." } },
+    { '@type': 'Question', name: 'Is this site affiliated with Sniper Duels?', acceptedAnswer: { '@type': 'Answer', text: 'We are an independent third-party marketplace. We are not affiliated with the developers of Sniper Duels.' } },
+    { '@type': 'Question', name: 'How do I add funds to my wallet?', acceptedAnswer: { '@type': 'Answer', text: "Go to your Dashboard and click 'Deposit'. We accept payments through Pandabase. Funds are credited to your wallet instantly after payment confirmation." } },
+    { '@type': 'Question', name: 'What payment methods are accepted?', acceptedAnswer: { '@type': 'Answer', text: 'We accept credit/debit cards and other methods available through our payment processor Pandabase.' } },
+    { '@type': 'Question', name: 'Can I withdraw my balance?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. Contact us through our Discord server to request a withdrawal.' } },
+    { '@type': 'Question', name: 'What is your refund policy?', acceptedAnswer: { '@type': 'Answer', text: 'If an order cannot be fulfilled, your wallet balance will be automatically refunded. For other refund requests, please contact us on Discord.' } },
+    { '@type': 'Question', name: 'How do I create an account?', acceptedAnswer: { '@type': 'Answer', text: "Click 'Login with Roblox' and authorize with your Roblox account. Your account is created automatically — no separate registration needed." } },
+    { '@type': 'Question', name: 'Is my Roblox account safe?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. We only use Roblox OAuth for authentication. We never have access to your Roblox password or account credentials.' } },
+    { '@type': 'Question', name: 'Why should I link my Discord?', acceptedAnswer: { '@type': 'Answer', text: 'Linking Discord gives you a one-time 2.5% discount on your first purchase. It also helps us provide better support.' } },
+    { '@type': 'Question', name: 'What is the loyalty program?', acceptedAnswer: { '@type': 'Answer', text: 'The more you spend, the bigger your discount. Silver tier (after $100 spent) gives 0.5% off, Gold tier (after $250 spent) gives 1% off all purchases.' } },
+  ],
+}
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://sniperduels.shop' },
+    { '@type': 'ListItem', position: 2, name: 'FAQ', item: 'https://sniperduels.shop/faq' },
+  ],
+}
+
 export default function FAQPage() {
   return (
     <div className="min-h-screen bg-dark-900 pt-24 pb-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-4xl font-bold text-accent uppercase mb-2">FAQ</h1>
         <p className="text-gray-400 mb-12">Frequently Asked Questions</p>

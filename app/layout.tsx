@@ -19,23 +19,29 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://sniperduels.shop'),
-  title: 'sniperduels.shop',
+  title: {
+    default: 'Sniper Duels Auto Shop — Buy Gems, Items & Crates | Automatic Delivery',
+    template: '%s | Sniper Duels Auto Shop',
+  },
   description: 'The first automated item shop for Sniper Duels. Purchase gems, items, and crates with automatic 24/7 delivery.',
-  keywords: ['Sniper Duels', 'Roblox', 'auto shop', 'gems', 'items', 'automated delivery'],
+  keywords: ['Sniper Duels', 'Roblox', 'auto shop', 'gems', 'items', 'automated delivery', 'sniper duels shop', 'buy sniper duels items'],
   icons: {
     icon: '/gem_icon.png',
   },
+  alternates: {
+    canonical: 'https://sniperduels.shop',
+  },
   openGraph: {
-    title: 'sniperduels.shop',
+    title: 'Sniper Duels Auto Shop — Buy Gems, Items & Crates | Automatic Delivery',
     description: 'The first automated item shop for Sniper Duels. Purchase gems, items, and crates with automatic 24/7 delivery.',
-    siteName: 'sniperduels.shop',
+    siteName: 'Sniper Duels Auto Shop',
     url: 'https://sniperduels.shop',
     images: [{ url: '/og-banner.png', width: 1200, height: 630 }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'sniperduels.shop',
+    title: 'Sniper Duels Auto Shop — Buy Gems, Items & Crates | Automatic Delivery',
     description: 'The first automated item shop for Sniper Duels. Purchase gems, items, and crates with automatic 24/7 delivery.',
     images: ['/og-banner.png'],
   },
@@ -48,6 +54,44 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`dark ${pixelEmulator.variable}`}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'Sniper Duels Auto Shop',
+              url: 'https://sniperduels.shop',
+              logo: 'https://sniperduels.shop/gem_icon.png',
+              description: 'The first automated item shop for Sniper Duels. Purchase gems, items, and crates with automatic 24/7 delivery.',
+              sameAs: ['https://discord.gg/sniperduels'],
+              contactPoint: {
+                '@type': 'ContactPoint',
+                contactType: 'customer support',
+                url: 'https://discord.gg/sniperduels',
+              },
+            }),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'Sniper Duels Auto Shop',
+              url: 'https://sniperduels.shop',
+              description: 'The first automated item shop for Sniper Duels. Purchase gems, items, and crates with automatic 24/7 delivery.',
+              publisher: {
+                '@type': 'Organization',
+                name: 'Sniper Duels Auto Shop',
+                url: 'https://sniperduels.shop',
+              },
+            }),
+          }}
+        />
+      </head>
       <body>
         <PostHogProvider>
           <Suspense fallback={null}>

@@ -18,7 +18,7 @@ export function Hero() {
         {/* Headline */}
         <h1 className="font-bold mb-3 sm:mb-4 leading-tight uppercase animate-pixel-fade-in">
           <span className="block text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[52px]">
-            <span className="text-pixel-blue">Your Items, </span>
+            <span className="text-pixel-blue">Sniper Duels Items, </span>
             <span className="text-pixel-blue">Delivered</span>
           </span>
           <span className="block text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[52px] text-accent">

@@ -1,0 +1,286 @@
+{
+  "_comment": "Schema.org JSON-LD recommendations for sniperduels.shop — Generated 2026-03-16",
+  "_implementation_notes": [
+    "Add Organization + WebSite schema to app/layout.tsx as a <script type='application/ld+json'> in the <head>",
+    "Add BreadcrumbList to each page or as a shared component",
+    "Add FAQPage schema to app/faq/page.tsx (AI/GEO benefit only, no Google rich result for commercial sites)",
+    "Product schema should be generated dynamically from stock API data on shop/gems pages",
+    "All schemas below use https://schema.org as @context"
+  ],
+
+  "schemas": {
+
+    "1_organization": {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Sniper Duels Auto Shop",
+      "url": "https://sniperduels.shop",
+      "logo": "https://sniperduels.shop/gem_icon.png",
+      "description": "The first automated item shop for Sniper Duels. Purchase gems, items, and crates with automatic 24/7 delivery.",
+      "sameAs": [
+        "https://discord.gg/sniperduels"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer support",
+        "url": "https://discord.gg/sniperduels"
+      }
+    },
+
+    "2_website": {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "sniperduels.shop",
+      "url": "https://sniperduels.shop",
+      "description": "The first automated item shop for Sniper Duels. Purchase gems, items, and crates with automatic 24/7 delivery.",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Sniper Duels Auto Shop",
+        "url": "https://sniperduels.shop"
+      },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://sniperduels.shop/shop?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    },
+
+    "3_breadcrumb_homepage": {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://sniperduels.shop"
+        }
+      ]
+    },
+
+    "4_breadcrumb_shop": {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://sniperduels.shop"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Shop",
+          "item": "https://sniperduels.shop/shop"
+        }
+      ]
+    },
+
+    "5_breadcrumb_gems": {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://sniperduels.shop"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Gems",
+          "item": "https://sniperduels.shop/gems"
+        }
+      ]
+    },
+
+    "6_breadcrumb_faq": {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://sniperduels.shop"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "FAQ",
+          "item": "https://sniperduels.shop/faq"
+        }
+      ]
+    },
+
+    "7_faqpage": {
+      "_note": "FAQPage rich results are restricted to government/healthcare sites since August 2023. This schema still benefits AI discoverability (ChatGPT, Gemini, Perplexity citations) and general semantic understanding.",
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is Sniper Duels Auto Shop?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The first fully automated item shop for the Roblox game Sniper Duels. Browse and purchase snipers, knives, crates, and gems with instant automated delivery."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does the delivery system work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "After purchasing, you'll receive a link to join our private server. Our automated bot will trade you the items directly. The entire process takes under 2 minutes."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How long does delivery take?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Most orders are delivered within 2 minutes. You'll be able to track your order status in real-time from your dashboard."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is this site affiliated with Sniper Duels?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "We are an independent third-party marketplace. We are not affiliated with the developers of Sniper Duels."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I add funds to my wallet?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Go to your Dashboard and click 'Deposit'. We accept payments through Pandabase. Funds are credited to your wallet instantly after payment confirmation."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What payment methods are accepted?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "We accept credit/debit cards and other methods available through our payment processor Pandabase."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I withdraw my balance?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Contact us through our Discord server to request a withdrawal."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is your refund policy?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "If an order cannot be fulfilled, your wallet balance will be automatically refunded. For other refund requests, please contact us on Discord."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why is my balance different than expected?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Your balance may reflect pending orders or loyalty discounts applied to purchases. Check your order history for details."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I create an account?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Click 'Login with Roblox' and authorize with your Roblox account. Your account is created automatically — no separate registration needed."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is my Roblox account safe?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. We only use Roblox OAuth for authentication. We never have access to your Roblox password or account credentials."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why should I link my Discord?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Linking Discord gives you a one-time 2.5% discount on your first purchase. It also helps us provide better support."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the loyalty program?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The more you spend, the bigger your discount. Silver tier (after $100 spent) gives 0.5% off, Gold tier (after $250 spent) gives 1% off all purchases."
+          }
+        }
+      ]
+    },
+
+    "8_product_template_shop_item": {
+      "_note": "This template should be generated dynamically for each item from the /api/stock response. Replace placeholders with actual item data.",
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": "{item.name}",
+      "description": "{item.type} for Sniper Duels on Roblox — {item.rarity} rarity",
+      "image": "{item.imageUrl — must be absolute URL}",
+      "url": "https://sniperduels.shop/shop",
+      "brand": {
+        "@type": "Organization",
+        "name": "Sniper Duels Auto Shop"
+      },
+      "category": "Virtual Game Items",
+      "offers": {
+        "@type": "Offer",
+        "url": "https://sniperduels.shop/shop",
+        "priceCurrency": "USD",
+        "price": "{item.priceUsd}",
+        "availability": "https://schema.org/InStock",
+        "seller": {
+          "@type": "Organization",
+          "name": "Sniper Duels Auto Shop"
+        }
+      }
+    },
+
+    "9_product_gems": {
+      "_note": "For the gems page, represent the gem bundles as products. Since pricing is tiered, use the base rate.",
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": "Sniper Duels Gems",
+      "description": "In-game gems for Sniper Duels on Roblox. Buy in bulk for better rates. Automated delivery within 2 minutes.",
+      "image": "https://sniperduels.shop/gem_icon.png",
+      "url": "https://sniperduels.shop/gems",
+      "brand": {
+        "@type": "Organization",
+        "name": "Sniper Duels Auto Shop"
+      },
+      "category": "Virtual Game Currency",
+      "offers": {
+        "@type": "AggregateOffer",
+        "priceCurrency": "USD",
+        "lowPrice": "2.65",
+        "highPrice": "2.90",
+        "offerCount": "2",
+        "url": "https://sniperduels.shop/gems",
+        "seller": {
+          "@type": "Organization",
+          "name": "Sniper Duels Auto Shop"
+        }
+      }
+    }
+  }
+}
