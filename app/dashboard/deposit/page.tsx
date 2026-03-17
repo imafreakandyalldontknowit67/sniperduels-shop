@@ -81,8 +81,8 @@ export default function DepositPage() {
       posthog.capture('deposit_initiated', { amount: numAmount })
 
       // Use Pandabase SDK modal if available, fallback to redirect
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const Pandabase = (window as any).Pandabase as {
+      const win = window as unknown as { Pandabase?: { checkout: (opts: Record<string, unknown>) => { open: () => void; destroy: () => void } } }
+      const Pandabase = win.Pandabase as {
         checkout: (opts: Record<string, unknown>) => { open: () => void; destroy: () => void }
       } | undefined
 
