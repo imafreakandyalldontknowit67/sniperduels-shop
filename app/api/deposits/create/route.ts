@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { getUserDeposits, createDeposit, expireStaleDeposits, getSiteSettings } from '@/lib/storage'
-import { createDepositIntent } from '@/lib/pandabase'
+import { createCheckout } from '@/lib/pandabase'
 import { flagAndBlacklist } from '@/lib/blacklist'
 
 export async function POST(request: NextRequest) {
@@ -19,34 +19,26 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { amount, website } = body
 
-    // Honeypot: hidden field that real users never fill
+    // Honeypot check
     if (website) {
       const ip = request.headers.get('cf-connecting-ip') || request.ip || request.headers.get('x-real-ip') || '127.0.0.1'
       await flagAndBlacklist({
-        ip,
-        userId: user.id,
+        ip, userId: user.id,
         reason: 'Filled honeypot field on deposit form',
         endpoint: '/api/deposits/create',
         userAgent: request.headers.get('user-agent') || undefined,
       })
-      // Return fake success so they don't know they're caught
-      return NextResponse.json({ depositId: `dep_${Date.now()}`, checkoutUrl: '/dashboard/deposit' })
+      return NextResponse.json({ depositId: `dep_${Date.now()}`, checkoutUrl: '/dashboard/deposit', sessionId: '' })
     }
 
     if (!amount || typeof amount !== 'number' || amount < 1 || amount > 500) {
-      return NextResponse.json(
-        { error: 'Amount must be between $1 and $500' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Amount must be between $1 and $500' }, { status: 400 })
     }
 
-    // Round to 2 decimal places
     const roundedAmount = Math.round(amount * 100) / 100
 
-    // Expire stale deposits before checking limit
     await expireStaleDeposits()
 
-    // Limit pending deposits to prevent Pandabase invoice spam
     const pendingDeposits = (await getUserDeposits(user.id)).filter(d => d.status === 'pending')
     if (pendingDeposits.length >= 3) {
       return NextResponse.json(
@@ -55,29 +47,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create Pandabase checkout
-    const { checkoutUrl, invoiceId, refId, sessionId } = await createDepositIntent(roundedAmount)
+    const { sessionId, checkoutUrl, refId } = await createCheckout(roundedAmount)
 
-    // Store deposit record
+    // Store sessionId as pandabaseInvoiceId — webhook sends it back as orderNumber
     const deposit = await createDeposit({
       userId: user.id,
       amount: roundedAmount,
       status: 'pending',
-      pandabaseInvoiceId: invoiceId,
+      pandabaseInvoiceId: sessionId,
       pandabaseRefId: refId,
       pandabaseCheckoutUrl: checkoutUrl,
     })
 
     return NextResponse.json({
       depositId: deposit.id,
-      checkoutUrl,
       sessionId,
+      checkoutUrl,
     })
   } catch (error) {
     console.error('Deposit creation error:', error)
-    return NextResponse.json(
-      { error: 'Failed to create deposit' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to create deposit' }, { status: 500 })
   }
 }

@@ -9,9 +9,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { depositId } = body
-
+    const { depositId } = await request.json()
     if (!depositId) {
       return NextResponse.json({ error: 'depositId is required' }, { status: 400 })
     }
@@ -20,7 +18,6 @@ export async function POST(request: NextRequest) {
     if (!deposit) {
       return NextResponse.json({ error: 'Deposit not found' }, { status: 404 })
     }
-
     if (deposit.userId !== user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
@@ -35,19 +32,15 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Still pending — webhook hasn't processed yet
     return NextResponse.json({
       status: deposit.status,
       walletBalance,
       message: deposit.status === 'pending'
-        ? 'Payment processing. This usually takes a few seconds — try again shortly.'
+        ? 'Payment processing. This usually takes a few seconds.'
         : `Deposit is ${deposit.status}`,
     })
   } catch (error) {
-    console.error('Deposit verification error:', error)
-    return NextResponse.json(
-      { error: 'Failed to verify deposit' },
-      { status: 500 }
-    )
+    console.error('Verify error:', error)
+    return NextResponse.json({ error: 'Failed to verify deposit' }, { status: 500 })
   }
 }

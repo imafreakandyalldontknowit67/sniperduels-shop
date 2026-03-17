@@ -274,7 +274,7 @@ export default function DepositPage() {
         <div className="bg-dark-800/50 rounded-xl p-6 mb-6">
           <label className="block text-sm text-gray-400 mb-4 text-center">Payment methods</label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {['Venmo', 'CashApp', 'Google Pay', 'Apple Pay', 'Bank'].map((method) => (
+            {['CashApp', 'Google Pay', 'Apple Pay', 'Bank'].map((method) => (
               <div
                 key={method}
                 className="flex items-center justify-center px-4 py-3 bg-dark-800 border border-dark-500 rounded-lg"
