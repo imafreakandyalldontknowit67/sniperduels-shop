@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create Pandabase checkout
-    const { checkoutUrl, invoiceId, refId } = await createDepositIntent(roundedAmount)
+    const { checkoutUrl, invoiceId, refId, sessionId } = await createDepositIntent(roundedAmount)
 
     // Store deposit record
     const deposit = await createDeposit({
@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       depositId: deposit.id,
       checkoutUrl,
+      sessionId,
     })
   } catch (error) {
     console.error('Deposit creation error:', error)

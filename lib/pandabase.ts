@@ -21,7 +21,7 @@ function getConfig() {
 
 export async function createDepositIntent(
   amount: number
-): Promise<{ checkoutUrl: string; invoiceId: string; refId: string }> {
+): Promise<{ checkoutUrl: string; invoiceId: string; refId: string; sessionId: string }> {
   if (isDevMode()) {
     console.warn('[PANDABASE DEV MODE] Returning mock checkout — no real charge')
     const invoiceId = `dev_inv_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
@@ -29,6 +29,7 @@ export async function createDepositIntent(
       checkoutUrl: `/dev/checkout-success?amount=${amount}&invoiceId=${invoiceId}`,
       invoiceId,
       refId: 'DEV_REF',
+      sessionId: 'dev_session',
     }
   }
 
@@ -60,8 +61,11 @@ export async function createDepositIntent(
   }
 
   const data = await response.json()
-  const checkoutUrl = data.data?.pay_redirect_url
-  const checkoutId = data.data?.id || checkoutUrl?.match(/cs_[a-zA-Z0-9]+/)?.[0]
+  const checkoutUrl = data.data?.checkout_url || data.data?.pay_redirect_url
+  const sessionId = data.data?.session_id || ''
+  const checkoutId = sessionId || data.data?.id || checkoutUrl?.match(/sids\/([^/]+)/)?.[1] || checkoutUrl?.match(/cs_[a-zA-Z0-9]+/)?.[0]
+
+  console.log('[Pandabase] Checkout response:', JSON.stringify(data).slice(0, 500))
 
   if (!checkoutUrl) {
     console.error('Pandabase response missing checkout URL:', JSON.stringify(data).slice(0, 500))
@@ -72,6 +76,7 @@ export async function createDepositIntent(
     checkoutUrl,
     invoiceId: checkoutId,
     refId,
+    sessionId,
   }
 }
 

@@ -55,6 +55,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`dark ${pixelEmulator.variable}`}>
       <head>
+        <script src="https://secure.pandabase.io/sdk.js" async />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

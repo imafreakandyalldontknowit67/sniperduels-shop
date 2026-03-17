@@ -79,15 +79,49 @@ export default function DepositPage() {
       }
 
       posthog.capture('deposit_initiated', { amount: numAmount })
-      // On mobile, navigate directly (popups are often blocked)
-      // On desktop, open in new tab
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-      if (isMobile) {
-        window.location.href = data.checkoutUrl
-        return
+
+      // Use Pandabase SDK modal if available, fallback to redirect
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const Pandabase = (window as any).Pandabase as {
+        checkout: (opts: Record<string, unknown>) => { open: () => void; destroy: () => void }
+      } | undefined
+
+      if (Pandabase && data.sessionId) {
+        const storeId = process.env.NEXT_PUBLIC_PANDABASE_SHOP_ID || 'shp_UVDwXuE1xeCwHk2k'
+        const checkout = Pandabase.checkout({
+          storeId,
+          sessionId: data.sessionId,
+          mode: 'modal',
+          theme: 'dark',
+          onPaymentSuccess: () => {
+            setMessage({ type: 'success', text: `$${numAmount.toFixed(2)} payment received! Crediting your wallet...` })
+            setAmount('')
+            // Auto-verify after a short delay to let webhook process
+            setTimeout(() => {
+              handleVerify(data.depositId)
+              fetchDeposits()
+            }, 2000)
+            checkout.destroy()
+          },
+          onPaymentFailed: () => {
+            setMessage({ type: 'error', text: 'Payment failed. Please try again.' })
+            checkout.destroy()
+          },
+          onClose: () => {
+            fetchDeposits()
+          },
+        })
+        checkout.open()
+      } else {
+        // Fallback: redirect to checkout URL
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+        if (isMobile) {
+          window.location.href = data.checkoutUrl
+          return
+        }
+        window.open(data.checkoutUrl, '_blank')
+        setMessage({ type: 'success', text: 'Checkout opened in a new tab. Complete payment then click "Verify Payment" below.' })
       }
-      window.open(data.checkoutUrl, '_blank')
-      setMessage({ type: 'success', text: 'Checkout opened in a new tab. Complete payment then click "Verify Payment" below.' })
       setAmount('')
       fetchDeposits()
     } catch {
