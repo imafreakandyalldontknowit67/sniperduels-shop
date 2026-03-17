@@ -62,8 +62,8 @@ export async function createDepositIntent(
 
   const data = await response.json()
   const checkoutUrl = data.data?.checkout_url || data.data?.pay_redirect_url
-  const sessionId = data.data?.session_id || ''
-  const checkoutId = sessionId || data.data?.id || checkoutUrl?.match(/sids\/([^/]+)/)?.[1] || checkoutUrl?.match(/cs_[a-zA-Z0-9]+/)?.[0]
+  const sessionId = data.data?.session_id || data.data?.id || checkoutUrl?.match(/sids\/([^/]+)/)?.[1] || ''
+  const checkoutId = sessionId || checkoutUrl?.match(/cs_[a-zA-Z0-9]+/)?.[0]
 
   console.log('[Pandabase] Checkout response:', JSON.stringify(data).slice(0, 500))
 
