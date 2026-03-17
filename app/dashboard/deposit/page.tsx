@@ -7,14 +7,7 @@ import { useAuth } from '@/components/providers'
 import type { Deposit } from '@/lib/storage'
 
 const PRESET_AMOUNTS = [5, 10, 25, 50, 100]
-const CRYPTO_CURRENCIES = [
-  { id: 'btc', name: 'Bitcoin', symbol: 'BTC', network: 'Bitcoin' },
-  { id: 'eth', name: 'Ethereum', symbol: 'ETH', network: 'ERC-20' },
-  { id: 'sol', name: 'Solana', symbol: 'SOL', network: 'Solana' },
-  { id: 'usdtsol', name: 'USDT', symbol: 'USDT', network: 'Solana' },
-  { id: 'usdcsol', name: 'USDC', symbol: 'USDC', network: 'Solana' },
-  { id: 'ltc', name: 'Litecoin', symbol: 'LTC', network: 'Litecoin' },
-]
+const POPULAR_CURRENCIES = ['btc', 'eth', 'sol', 'usdtsol', 'usdcsol', 'ltc']
 
 type Tab = 'card' | 'crypto'
 
@@ -32,6 +25,9 @@ export default function DepositPage() {
   const [hpField, setHpField] = useState('')
 
   // Crypto-specific state
+  const [allCurrencies, setAllCurrencies] = useState<string[]>([])
+  const [cryptoSearch, setCryptoSearch] = useState('')
+  const [showCryptoDropdown, setShowCryptoDropdown] = useState(false)
   const [cryptoCurrency, setCryptoCurrency] = useState('btc')
   const [cryptoPayment, setCryptoPayment] = useState<{
     depositId: string
@@ -45,9 +41,19 @@ export default function DepositPage() {
   useEffect(() => {
     if (!isLoading) {
       setWalletBalance(authWalletBalance)
-      if (user) fetchDeposits()
+      if (user) {
+        fetchDeposits()
+        fetchCurrencies()
+      }
     }
   }, [isLoading, user, authWalletBalance])
+
+  async function fetchCurrencies() {
+    try {
+      const res = await fetch('/api/crypto-currencies')
+      if (res.ok) setAllCurrencies(await res.json())
+    } catch { /* fallback to popular only */ }
+  }
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -306,18 +312,52 @@ export default function DepositPage() {
           <>
             <div className="bg-dark-800/50 rounded-xl p-6 mb-6">
               <label className="block text-sm text-gray-400 mb-3 text-center">Select cryptocurrency</label>
-              <div className="grid grid-cols-3 gap-2">
-                {CRYPTO_CURRENCIES.map((c) => (
+              {/* Popular coins */}
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {POPULAR_CURRENCIES.map((id) => (
                   <button
-                    key={c.id}
-                    onClick={() => setCryptoCurrency(c.id)}
-                    className={`py-3 px-2 text-xs font-medium rounded-lg transition-colors text-center ${cryptoCurrency === c.id ? 'bg-accent text-white' : 'bg-dark-600 hover:bg-dark-500 text-gray-300'}`}
+                    key={id}
+                    onClick={() => { setCryptoCurrency(id); setCryptoSearch(''); setShowCryptoDropdown(false) }}
+                    className={`py-3 px-2 text-xs font-bold rounded-lg transition-colors text-center uppercase ${cryptoCurrency === id ? 'bg-accent text-white' : 'bg-dark-600 hover:bg-dark-500 text-gray-300'}`}
                   >
-                    <div className="font-bold">{c.symbol}</div>
-                    <div className="text-[10px] text-gray-400 mt-0.5">{c.network}</div>
+                    {id}
                   </button>
                 ))}
               </div>
+              {/* Search all currencies */}
+              <div className="relative">
+                <input
+                  type="text"
+                  value={cryptoSearch || (showCryptoDropdown ? '' : cryptoCurrency.toUpperCase())}
+                  onChange={(e) => { setCryptoSearch(e.target.value); setShowCryptoDropdown(true) }}
+                  onFocus={() => setShowCryptoDropdown(true)}
+                  placeholder="Search all 280+ currencies..."
+                  className="w-full bg-dark-800 border border-dark-500 rounded-lg px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-accent"
+                />
+                {showCryptoDropdown && (
+                  <div className="absolute z-10 w-full mt-1 bg-dark-800 border border-dark-500 rounded-lg max-h-48 overflow-y-auto">
+                    {allCurrencies
+                      .filter(c => !cryptoSearch || c.toLowerCase().includes(cryptoSearch.toLowerCase()))
+                      .slice(0, 50)
+                      .map(c => (
+                        <button
+                          key={c}
+                          onClick={() => { setCryptoCurrency(c); setCryptoSearch(''); setShowCryptoDropdown(false) }}
+                          className={`w-full text-left px-4 py-2 text-sm hover:bg-dark-600 transition-colors uppercase ${c === cryptoCurrency ? 'text-accent font-bold' : 'text-gray-300'}`}
+                        >
+                          {c}
+                        </button>
+                      ))
+                    }
+                    {allCurrencies.filter(c => !cryptoSearch || c.toLowerCase().includes(cryptoSearch.toLowerCase())).length === 0 && (
+                      <div className="px-4 py-3 text-sm text-gray-500">No currencies found</div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 text-center mt-2">
+                Selected: <span className="text-white font-bold uppercase">{cryptoCurrency}</span>
+              </p>
             </div>
 
             <button

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { getUserDeposits, createDeposit, expireStaleDeposits, getSiteSettings } from '@/lib/storage'
-import { createCryptoPayment, SUPPORTED_CURRENCIES } from '@/lib/nearpayments'
+import { createCryptoPayment } from '@/lib/nearpayments'
 import { flagAndBlacklist } from '@/lib/blacklist'
 
 export async function POST(request: NextRequest) {
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Amount must be between $5 and $500' }, { status: 400 })
     }
 
-    if (!currency || !SUPPORTED_CURRENCIES.some(c => c.id === currency)) {
+    if (!currency || typeof currency !== 'string' || currency.length > 20) {
       return NextResponse.json({ error: 'Invalid cryptocurrency' }, { status: 400 })
     }
 
