@@ -21,13 +21,14 @@ function getConfig() {
 
 export async function createDepositIntent(
   amount: number
-): Promise<{ checkoutUrl: string; invoiceId: string }> {
+): Promise<{ checkoutUrl: string; invoiceId: string; refId: string }> {
   if (isDevMode()) {
     console.warn('[PANDABASE DEV MODE] Returning mock checkout — no real charge')
     const invoiceId = `dev_inv_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
     return {
       checkoutUrl: `/dev/checkout-success?amount=${amount}&invoiceId=${invoiceId}`,
       invoiceId,
+      refId: 'DEV_REF',
     }
   }
 
@@ -70,6 +71,7 @@ export async function createDepositIntent(
   return {
     checkoutUrl,
     invoiceId: checkoutId,
+    refId,
   }
 }
 

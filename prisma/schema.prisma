@@ -90,6 +90,7 @@ model Deposit {
   amount                Decimal       @db.Decimal(12, 2)
   status                DepositStatus @default(pending)
   pandabaseInvoiceId    String        @unique
+  pandabaseRefId        String?
   pandabaseCheckoutUrl  String
   createdAt             String
   updatedAt             String

@@ -554,6 +554,7 @@ export interface Deposit {
   amount: number
   status: DepositStatus
   pandabaseInvoiceId: string
+  pandabaseRefId?: string
   pandabaseCheckoutUrl: string
   createdAt: string
   updatedAt: string
@@ -566,6 +567,7 @@ function toDeposit(row: {
   amount: Decimal
   status: string
   pandabaseInvoiceId: string
+  pandabaseRefId: string | null
   pandabaseCheckoutUrl: string
   createdAt: string
   updatedAt: string
@@ -577,6 +579,7 @@ function toDeposit(row: {
     amount: d(row.amount),
     status: row.status as DepositStatus,
     pandabaseInvoiceId: row.pandabaseInvoiceId,
+    pandabaseRefId: row.pandabaseRefId ?? undefined,
     pandabaseCheckoutUrl: row.pandabaseCheckoutUrl,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -601,6 +604,11 @@ export async function getDepositByInvoiceId(pandabaseInvoiceId: string): Promise
   return row ? toDeposit(row) : undefined
 }
 
+export async function getDepositByRefId(refId: string): Promise<Deposit | undefined> {
+  const row = await prisma.deposit.findFirst({ where: { pandabaseRefId: refId } })
+  return row ? toDeposit(row) : undefined
+}
+
 export async function getUserDeposits(userId: string): Promise<Deposit[]> {
   const rows = await prisma.deposit.findMany({ where: { userId } })
   return rows.map(toDeposit)
@@ -619,6 +627,7 @@ export async function createDeposit(
       amount: deposit.amount,
       status: deposit.status,
       pandabaseInvoiceId: deposit.pandabaseInvoiceId,
+      pandabaseRefId: deposit.pandabaseRefId,
       pandabaseCheckoutUrl: deposit.pandabaseCheckoutUrl,
       createdAt: now,
       updatedAt: now,

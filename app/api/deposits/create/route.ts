@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create Pandabase checkout
-    const { checkoutUrl, invoiceId } = await createDepositIntent(roundedAmount)
+    const { checkoutUrl, invoiceId, refId } = await createDepositIntent(roundedAmount)
 
     // Store deposit record
     const deposit = await createDeposit({
@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
       amount: roundedAmount,
       status: 'pending',
       pandabaseInvoiceId: invoiceId,
+      pandabaseRefId: refId,
       pandabaseCheckoutUrl: checkoutUrl,
     })
 
