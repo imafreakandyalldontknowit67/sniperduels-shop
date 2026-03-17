@@ -57,8 +57,8 @@ export interface Session {
   lastActivity?: number // Unix timestamp (seconds) of last activity
 }
 
-// Idle timeout: 30 minutes of inactivity invalidates session
-const IDLE_TIMEOUT_MS = 30 * 60 * 1000
+// Idle timeout: 4 hours of inactivity invalidates session
+const IDLE_TIMEOUT_MS = 4 * 60 * 60 * 1000
 
 export async function createSession(session: Session): Promise<string> {
   const jti = randomUUID()

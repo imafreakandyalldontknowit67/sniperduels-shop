@@ -7,7 +7,7 @@ const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
 // Tracks failed/excessive auth attempts for lockout
 const authLockoutStore = new Map<string, { attempts: number; firstAttempt: number; lockedUntil: number }>()
 
-const AUTH_LOCKOUT_THRESHOLD = 15  // Lock after 15 auth requests in window
+const AUTH_LOCKOUT_THRESHOLD = 25  // Lock after 25 auth requests in window
 const AUTH_LOCKOUT_WINDOW = 5 * 60_000  // 5 minute window
 const AUTH_LOCKOUT_DURATION = 15 * 60_000  // 15 minute lockout
 
@@ -39,7 +39,7 @@ function getRateLimit(pathname: string): { max: number; windowMs: number } {
     return { max: 10, windowMs: 60_000 } // 10 per minute for Discord link/unlink (account management)
   }
   if (pathname.startsWith('/api/auth') || pathname === '/redirect') {
-    return { max: 5, windowMs: 60_000 } // 5 per minute for auth (stricter)
+    return { max: 10, windowMs: 60_000 } // 10 per minute for auth
   }
   if (pathname.startsWith('/api/deposits')) {
     return { max: 10, windowMs: 60_000 } // 10 per minute for payment operations
