@@ -6,7 +6,7 @@ const blacklistedIps = new Set<string>()
 // API path enumeration tracker: IP -> { paths: Set, firstSeen: timestamp }
 const apiProbeTracker = new Map<string, { paths: Set<string>; firstSeen: number }>()
 const PROBE_WINDOW = 60_000 // 60 seconds
-const PROBE_THRESHOLD = 8 // 8+ unique API paths in 60s = flagged
+const PROBE_THRESHOLD = 15 // 15+ unique API paths in 60s = flagged
 
 // Scanner trap paths — no legitimate user would hit these
 const SCANNER_TRAPS = new Set([
@@ -269,8 +269,11 @@ export function middleware(request: NextRequest) {
   }
 
   // API path enumeration detection: flag IPs probing many unique endpoints
-  if (request.nextUrl.pathname.startsWith('/api/')) {
-    const isProbing = trackApiProbe(ip, request.nextUrl.pathname)
+  // Skip admin/auth/bot paths — legitimate users hit many of these at once
+  const apiPath = request.nextUrl.pathname
+  const isExemptPath = apiPath.startsWith('/api/admin/') || apiPath.startsWith('/api/auth/') || apiPath.startsWith('/api/bot/')
+  if (apiPath.startsWith('/api/') && !isExemptPath) {
+    const isProbing = trackApiProbe(ip, apiPath)
     if (isProbing) {
       blacklistedIps.add(ip)
       const ua = request.headers.get('user-agent') || ''
