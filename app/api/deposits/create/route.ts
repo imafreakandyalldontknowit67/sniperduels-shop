@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { getUserDeposits, createDeposit, expireStaleDeposits, getSiteSettings } from '@/lib/storage'
 import { createDepositIntent } from '@/lib/pandabase'
+import { flagAndBlacklist } from '@/lib/blacklist'
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +17,21 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { amount } = body
+    const { amount, website } = body
+
+    // Honeypot: hidden field that real users never fill
+    if (website) {
+      const ip = request.headers.get('cf-connecting-ip') || request.ip || request.headers.get('x-real-ip') || '127.0.0.1'
+      await flagAndBlacklist({
+        ip,
+        userId: user.id,
+        reason: 'Filled honeypot field on deposit form',
+        endpoint: '/api/deposits/create',
+        userAgent: request.headers.get('user-agent') || undefined,
+      })
+      // Return fake success so they don't know they're caught
+      return NextResponse.json({ depositId: `dep_${Date.now()}`, checkoutUrl: '/dashboard/deposit' })
+    }
 
     if (!amount || typeof amount !== 'number' || amount < 1 || amount > 500) {
       return NextResponse.json(

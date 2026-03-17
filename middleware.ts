@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// In-memory blacklist (populated via /api/internal/blacklist-sync from honeypot triggers)
+const blacklistedIps = new Set<string>()
+
 // In-memory rate limit store: key -> { count, resetTime }
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
 
@@ -146,6 +149,29 @@ export function middleware(request: NextRequest) {
   // Webhook endpoints: skip CSRF and rate limiting (signature verification handles security)
   if (request.nextUrl.pathname.startsWith('/api/webhooks/')) {
     return NextResponse.next()
+  }
+
+  // Internal blacklist sync endpoint (called by honeypot routes to update middleware's in-memory set)
+  if (request.nextUrl.pathname === '/api/internal/blacklist-sync') {
+    const syncIp = request.nextUrl.searchParams.get('ip')
+    const syncSecret = request.nextUrl.searchParams.get('secret')
+    if (syncIp && syncSecret === process.env.SESSION_SECRET) {
+      blacklistedIps.add(syncIp)
+    }
+    return new NextResponse(null, { status: 204 })
+  }
+
+  // Blacklist check: silently return fake/empty responses for blacklisted IPs
+  if (blacklistedIps.has(ip)) {
+    const pathname = request.nextUrl.pathname
+    // API requests get fake empty data
+    if (pathname.startsWith('/api/')) {
+      return new NextResponse(
+        JSON.stringify({ users: [], orders: [], items: [], total: 0 }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+    // Page requests pass through (they see the site but API calls return nothing)
   }
 
   // CSRF protection: reject state-changing requests from foreign origins

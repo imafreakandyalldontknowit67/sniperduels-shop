@@ -18,6 +18,7 @@ export default function DepositPage() {
   const [deposits, setDeposits] = useState<Deposit[]>([])
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [hpField, setHpField] = useState('')
 
   useEffect(() => {
     if (!isLoading) {
@@ -67,7 +68,7 @@ export default function DepositPage() {
       const res = await fetch('/api/deposits/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: numAmount }),
+        body: JSON.stringify({ amount: numAmount, website: hpField }),
       })
 
       const data = await res.json()
@@ -251,6 +252,18 @@ export default function DepositPage() {
           <p className="text-xs text-gray-500 text-center mt-3">
             Powered by Pandabase. All fiat methods accepted.
           </p>
+        </div>
+
+        {/* Honeypot field — invisible to real users, bots auto-fill it */}
+        <div className="absolute opacity-0 h-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
+          <input
+            type="text"
+            name="website"
+            value={hpField}
+            onChange={(e) => setHpField(e.target.value)}
+            autoComplete="off"
+            tabIndex={-1}
+          />
         </div>
 
         {/* Submit Button */}

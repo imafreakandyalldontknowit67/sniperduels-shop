@@ -132,6 +132,20 @@ model SiteSettings {
   updatedAt        String
 }
 
+// ─── Honeypot Blacklist ──────────────────────────────────────────────────────
+model Blacklist {
+  id        String   @id @default(cuid())
+  ip        String?
+  userId    String?
+  reason    String
+  endpoint  String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([ip])
+  @@index([userId])
+}
+
 // ─── Session Blacklist ───────────────────────────────────────────────────────
 model SessionBlacklist {
   jti       String @id // JWT ID
