@@ -326,14 +326,20 @@ export default function DepositPage() {
               </div>
               {/* Search all currencies */}
               <div className="relative">
-                <input
-                  type="text"
-                  value={cryptoSearch || (showCryptoDropdown ? '' : cryptoCurrency.toUpperCase())}
-                  onChange={(e) => { setCryptoSearch(e.target.value); setShowCryptoDropdown(true) }}
-                  onFocus={() => setShowCryptoDropdown(true)}
-                  placeholder="Search all 280+ currencies..."
-                  className="w-full bg-dark-800 border border-dark-500 rounded-lg px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-accent"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={cryptoSearch || (showCryptoDropdown ? '' : cryptoCurrency.toUpperCase())}
+                    onChange={(e) => { setCryptoSearch(e.target.value); setShowCryptoDropdown(true) }}
+                    onFocus={() => setShowCryptoDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowCryptoDropdown(false), 150)}
+                    placeholder="Search all 280+ currencies..."
+                    className="w-full bg-dark-800 border border-dark-500 rounded-lg px-4 py-3 pr-10 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-accent"
+                  />
+                  <svg className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 transition-transform ${showCryptoDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
                 {showCryptoDropdown && (
                   <div className="absolute z-10 w-full mt-1 bg-dark-800 border border-dark-500 rounded-lg max-h-48 overflow-y-auto">
                     {allCurrencies
