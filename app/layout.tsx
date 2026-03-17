@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import localFont from 'next/font/local'
+import Script from 'next/script'
 import './globals.css'
 import { Suspense } from 'react'
 import { Header, Footer } from '@/components/layout'
@@ -55,7 +56,6 @@ export default function RootLayout({
   return (
     <html lang="en" className={`dark ${pixelEmulator.variable}`}>
       <head>
-        <script src="https://secure.pandabase.io/sdk.js" async />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -94,6 +94,7 @@ export default function RootLayout({
         />
       </head>
       <body>
+        <Script src="https://secure.pandabase.io/sdk.js" strategy="beforeInteractive" />
         <PostHogProvider>
           <Suspense fallback={null}>
             <PostHogPageView />
