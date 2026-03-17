@@ -80,7 +80,7 @@ export default function DepositPage() {
   // ── Card/CashApp deposit (Pandabase) ──
   async function handleCardDeposit() {
     const numAmount = parseFloat(amount)
-    if (!numAmount || numAmount < 5 || numAmount > 500) {
+    if (!numAmount || numAmount < 1 || numAmount > 500) {
       setMessage({ type: 'error', text: 'Amount must be between $5 and $500' })
       return
     }
@@ -127,7 +127,7 @@ export default function DepositPage() {
   // ── Crypto deposit (NearPayments) ──
   async function handleCryptoDeposit() {
     const numAmount = parseFloat(amount)
-    if (!numAmount || numAmount < 5 || numAmount > 500) {
+    if (!numAmount || numAmount < 1 || numAmount > 500) {
       setMessage({ type: 'error', text: 'Amount must be between $5 and $500' })
       return
     }
@@ -294,7 +294,7 @@ export default function DepositPage() {
 
             <button
               onClick={handleCardDeposit}
-              disabled={loading || !amount || parseFloat(amount) < 5}
+              disabled={loading || !amount || parseFloat(amount) < 1}
               className="w-full py-4 bg-accent hover:bg-accent-light disabled:bg-accent/50 disabled:cursor-not-allowed text-white font-medium rounded-xl text-lg transition-colors"
             >
               {loading ? (
@@ -368,7 +368,7 @@ export default function DepositPage() {
 
             <button
               onClick={handleCryptoDeposit}
-              disabled={loading || !amount || parseFloat(amount) < 5}
+              disabled={loading || !amount || parseFloat(amount) < 1}
               className="w-full py-4 bg-green-600 hover:bg-green-500 disabled:bg-green-600/50 disabled:cursor-not-allowed text-white font-medium rounded-xl text-lg transition-colors"
             >
               {loading ? (

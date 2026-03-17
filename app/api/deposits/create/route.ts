@@ -31,8 +31,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ depositId: `dep_${Date.now()}`, checkoutUrl: '/dashboard/deposit', sessionId: '' })
     }
 
-    if (!amount || typeof amount !== 'number' || amount < 5 || amount > 500) {
-      return NextResponse.json({ error: 'Amount must be between $5 and $500' }, { status: 400 })
+    if (!amount || typeof amount !== 'number' || amount < 1 || amount > 500) {
+      return NextResponse.json({ error: 'Amount must be between $1 and $500' }, { status: 400 })
     }
 
     const roundedAmount = Math.round(amount * 100) / 100
