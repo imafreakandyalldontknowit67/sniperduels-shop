@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
-import { getDeposit, claimPendingDeposit, addToWallet, getWalletBalance } from '@/lib/storage'
-import { verifyInvoice } from '@/lib/pandabase'
-import { notifyDeposit } from '@/lib/discord-webhook'
+import { getDeposit, getWalletBalance } from '@/lib/storage'
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,60 +25,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
+    const walletBalance = await getWalletBalance(user.id)
+
     if (deposit.status === 'completed') {
       return NextResponse.json({
         status: 'completed',
-        walletBalance: await getWalletBalance(user.id),
-        message: 'Deposit already completed',
-      })
-    }
-
-    if (deposit.status !== 'pending') {
-      return NextResponse.json({
-        status: deposit.status,
-        walletBalance: await getWalletBalance(user.id),
-        message: `Deposit is ${deposit.status}`,
-      })
-    }
-
-    // Verify with Pandabase
-    const { isPaid, error } = await verifyInvoice(deposit.pandabaseInvoiceId)
-
-    if (error) {
-      return NextResponse.json(
-        { status: 'pending', error, walletBalance: await getWalletBalance(user.id) },
-        { status: 200 }
-      )
-    }
-
-    if (isPaid) {
-      // Atomically claim the deposit — only the first caller (verify or webhook) wins.
-      // If the webhook already completed it, this returns false and we skip crediting.
-      const claimed = await claimPendingDeposit(deposit.id)
-
-      if (!claimed) {
-        return NextResponse.json({
-          status: 'completed',
-          walletBalance: await getWalletBalance(user.id),
-          message: 'Deposit already completed',
-        })
-      }
-
-      await addToWallet(user.id, deposit.amount)
-
-      await notifyDeposit(user.name, deposit.amount)
-
-      return NextResponse.json({
-        status: 'completed',
-        walletBalance: await getWalletBalance(user.id),
+        walletBalance,
         message: `$${deposit.amount.toFixed(2)} added to your wallet!`,
       })
     }
 
+    // Still pending — webhook hasn't processed yet
     return NextResponse.json({
-      status: 'pending',
-      walletBalance: await getWalletBalance(user.id),
-      message: 'Payment not yet completed. Please complete checkout.',
+      status: deposit.status,
+      walletBalance,
+      message: deposit.status === 'pending'
+        ? 'Payment processing. This usually takes a few seconds — try again shortly.'
+        : `Deposit is ${deposit.status}`,
     })
   } catch (error) {
     console.error('Deposit verification error:', error)

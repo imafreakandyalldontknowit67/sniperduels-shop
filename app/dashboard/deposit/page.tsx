@@ -87,7 +87,7 @@ export default function DepositPage() {
       } | undefined
 
       if (Pandabase && data.sessionId) {
-        const storeId = process.env.NEXT_PUBLIC_PANDABASE_SHOP_ID || 'shp_UVDwXuE1xeCwHk2k'
+        const storeId = process.env.NEXT_PUBLIC_PANDABASE_SHOP_ID || 'shp_szumqvgl22fkw6m5030elu6dgi'
         const checkout = Pandabase.checkout({
           storeId,
           sessionId: data.sessionId,

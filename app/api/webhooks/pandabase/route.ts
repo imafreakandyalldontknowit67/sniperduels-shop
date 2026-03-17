@@ -77,14 +77,19 @@ export async function POST(request: NextRequest) {
     const event = payload.event || payload.type
 
     // Replay protection: reject if timestamp is >5 minutes old
-    // Pandabase sends timestamp as ISO string in payload or Unix seconds in header
+    // Pandabase sends timestamp as ISO string, Unix ms, or Unix seconds
     const tsRaw = timestamp || payload.timestamp
     if (tsRaw) {
-      const webhookTime = typeof tsRaw === 'string' && tsRaw.includes('T')
-        ? new Date(tsRaw).getTime()
-        : parseInt(tsRaw, 10) * 1000
+      let webhookTime: number
+      if (typeof tsRaw === 'string' && tsRaw.includes('T')) {
+        webhookTime = new Date(tsRaw).getTime()
+      } else {
+        const parsed = typeof tsRaw === 'number' ? tsRaw : parseInt(tsRaw, 10)
+        // If it's already in ms (13+ digits), use directly. Otherwise multiply by 1000.
+        webhookTime = parsed > 9999999999999 ? parsed : parsed > 9999999999 ? parsed : parsed * 1000
+      }
       if (!isNaN(webhookTime) && Math.abs(Date.now() - webhookTime) > 5 * 60 * 1000) {
-        console.error(`[Pandabase Webhook] Timestamp too old: ${tsRaw}`)
+        console.error(`[Pandabase Webhook] Timestamp too old: ${tsRaw} (parsed: ${webhookTime}, now: ${Date.now()})`)
         return NextResponse.json({ error: 'Stale webhook' }, { status: 401 })
       }
     }
