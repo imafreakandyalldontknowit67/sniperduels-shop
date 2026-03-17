@@ -73,17 +73,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
 
+    const payload = JSON.parse(rawBody)
+    const event = payload.event || payload.type
+
     // Replay protection: reject if timestamp is >5 minutes old
-    if (timestamp) {
-      const webhookTime = parseInt(timestamp, 10) * 1000
+    // Pandabase sends timestamp as ISO string in payload or Unix seconds in header
+    const tsRaw = timestamp || payload.timestamp
+    if (tsRaw) {
+      const webhookTime = typeof tsRaw === 'string' && tsRaw.includes('T')
+        ? new Date(tsRaw).getTime()
+        : parseInt(tsRaw, 10) * 1000
       if (!isNaN(webhookTime) && Math.abs(Date.now() - webhookTime) > 5 * 60 * 1000) {
-        console.error('[Pandabase Webhook] Timestamp too old')
+        console.error(`[Pandabase Webhook] Timestamp too old: ${tsRaw}`)
         return NextResponse.json({ error: 'Stale webhook' }, { status: 401 })
       }
     }
-
-    const payload = JSON.parse(rawBody)
-    const event = payload.event || payload.type
 
     // Log full payload for debugging (truncated to avoid log spam)
     console.log(`[Pandabase Webhook] Event: ${event}`)
