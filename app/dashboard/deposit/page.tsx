@@ -6,7 +6,7 @@ import posthog from 'posthog-js'
 import { useAuth } from '@/components/providers'
 import type { Deposit } from '@/lib/storage'
 
-const PRESET_AMOUNTS = [1, 3, 5, 10, 25, 50]
+const PRESET_AMOUNTS = [5, 10, 25, 50, 100]
 
 export default function DepositPage() {
   const router = useRouter()
@@ -56,8 +56,8 @@ export default function DepositPage() {
 
   async function handleDeposit() {
     const numAmount = parseFloat(amount)
-    if (!numAmount || numAmount < 1 || numAmount > 500) {
-      setMessage({ type: 'error', text: 'Amount must be between $1 and $500' })
+    if (!numAmount || numAmount < 5 || numAmount > 500) {
+      setMessage({ type: 'error', text: 'Amount must be between $5 and $500' })
       return
     }
 
@@ -303,7 +303,7 @@ export default function DepositPage() {
         {/* Submit Button */}
         <button
           onClick={handleDeposit}
-          disabled={loading || !amount || parseFloat(amount) < 1}
+          disabled={loading || !amount || parseFloat(amount) < 5}
           className="w-full py-4 bg-accent hover:bg-accent-light disabled:bg-accent/50 disabled:cursor-not-allowed text-white font-medium rounded-xl text-lg transition-colors"
         >
           {loading ? (
