@@ -16,6 +16,9 @@ RUN npx prisma generate
 # Dummy env vars needed at build time for Next.js static page generation
 ENV SESSION_SECRET=build-placeholder
 ENV DATABASE_URL=postgres://x:x@localhost:5432/x
+# NEXT_PUBLIC_ vars must be present at build time — Next.js inlines them into the JS bundle
+ENV NEXT_PUBLIC_POSTHOG_KEY=phc_JNX3y0tEnskYO8rfQxV9vJXWKt2jMgZd49kx3snK71A
+ENV NEXT_PUBLIC_POSTHOG_HOST=https://ph.sniperduels.shop
 RUN npm run build
 
 # Production image
