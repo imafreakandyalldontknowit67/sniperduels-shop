@@ -6,7 +6,7 @@ import posthog from 'posthog-js'
 import { useAuth } from '@/components/providers'
 import type { Deposit } from '@/lib/storage'
 
-const PRESET_AMOUNTS = [5, 10, 25, 50, 100]
+const PRESET_AMOUNTS = [1, 3, 5, 10, 25, 50]
 
 export default function DepositPage() {
   const router = useRouter()
