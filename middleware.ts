@@ -143,6 +143,11 @@ export function middleware(request: NextRequest) {
     || request.headers.get('x-real-ip')
     || '127.0.0.1'
 
+  // Webhook endpoints: skip CSRF and rate limiting (signature verification handles security)
+  if (request.nextUrl.pathname.startsWith('/api/webhooks/')) {
+    return NextResponse.next()
+  }
+
   // CSRF protection: reject state-changing requests from foreign origins
   const method = request.method
   if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {

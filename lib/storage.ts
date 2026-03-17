@@ -629,7 +629,7 @@ export async function createDeposit(
   return toDeposit(row)
 }
 
-const DEPOSIT_EXPIRY_MS = 30 * 60 * 1000 // 30 minutes
+const DEPOSIT_EXPIRY_MS = 6 * 60 * 60 * 1000 // 6 hours (matches Pandabase checkout session lifetime)
 
 export async function expireStaleDeposits(): Promise<number> {
   const cutoff = new Date(Date.now() - DEPOSIT_EXPIRY_MS).toISOString()

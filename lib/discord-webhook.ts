@@ -34,6 +34,30 @@ export async function notifyDeposit(userName: string, amount: number): Promise<v
   })
 }
 
+export async function notifyRefund(userName: string, amount: number, invoiceId: string): Promise<void> {
+  await sendEmbed({
+    title: 'Payment Refunded',
+    color: 0xe67e22, // orange
+    fields: [
+      { name: 'User', value: userName, inline: true },
+      { name: 'Amount', value: `$${amount.toFixed(2)}`, inline: true },
+      { name: 'Invoice', value: invoiceId, inline: false },
+    ],
+  })
+}
+
+export async function notifyDispute(userName: string, amount: number, invoiceId: string): Promise<void> {
+  await sendEmbed({
+    title: 'Payment Disputed',
+    color: 0xe74c3c, // red
+    fields: [
+      { name: 'User', value: userName, inline: true },
+      { name: 'Amount', value: `$${amount.toFixed(2)}`, inline: true },
+      { name: 'Invoice', value: invoiceId, inline: false },
+    ],
+  })
+}
+
 export async function notifyPurchase(userName: string, itemName: string, quantity: number, totalPrice: number): Promise<void> {
   await sendEmbed({
     title: 'Order Placed',
