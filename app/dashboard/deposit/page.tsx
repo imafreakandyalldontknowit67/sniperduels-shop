@@ -18,13 +18,6 @@ export default function DepositPage() {
   const [deposits, setDeposits] = useState<Deposit[]>([])
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-  const [billingEmail, setBillingEmail] = useState('')
-  const [billingAddress, setBillingAddress] = useState('')
-  const [billingAddress2, setBillingAddress2] = useState('')
-  const [billingCity, setBillingCity] = useState('')
-  const [billingState, setBillingState] = useState('')
-  const [billingZip, setBillingZip] = useState('')
-  const [billingCountry, setBillingCountry] = useState('United States')
 
   useEffect(() => {
     if (!isLoading) {
@@ -74,18 +67,7 @@ export default function DepositPage() {
       const res = await fetch('/api/deposits/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: numAmount,
-          billing: {
-            email: billingEmail,
-            address: billingAddress,
-            address2: billingAddress2,
-            city: billingCity,
-            state: billingState,
-            zip: billingZip,
-            country: billingCountry,
-          },
-        }),
+        body: JSON.stringify({ amount: numAmount }),
       })
 
       const data = await res.json()
@@ -271,69 +253,10 @@ export default function DepositPage() {
           </p>
         </div>
 
-        {/* Billing Information */}
-        <div className="bg-dark-800/50 rounded-xl p-6 mb-6">
-          <label className="block text-sm text-gray-400 mb-1 text-center">Billing information</label>
-          <p className="text-xs text-gray-500 mb-4 text-center">We do not save this information. It is only used to process your payment.</p>
-          <div className="space-y-3">
-            <input
-              type="email"
-              value={billingEmail}
-              onChange={(e) => setBillingEmail(e.target.value)}
-              placeholder="Email"
-              className="w-full bg-dark-800 border border-dark-500 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-accent"
-            />
-            <input
-              type="text"
-              value={billingAddress}
-              onChange={(e) => setBillingAddress(e.target.value)}
-              placeholder="Address"
-              className="w-full bg-dark-800 border border-dark-500 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-accent"
-            />
-            <input
-              type="text"
-              value={billingAddress2}
-              onChange={(e) => setBillingAddress2(e.target.value)}
-              placeholder="Address Line 2 (optional)"
-              className="w-full bg-dark-800 border border-dark-500 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-accent"
-            />
-            <input
-              type="text"
-              value={billingCity}
-              onChange={(e) => setBillingCity(e.target.value)}
-              placeholder="City"
-              className="w-full bg-dark-800 border border-dark-500 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-accent"
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <input
-                type="text"
-                value={billingState}
-                onChange={(e) => setBillingState(e.target.value)}
-                placeholder="State"
-                className="w-full bg-dark-800 border border-dark-500 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-accent"
-              />
-              <input
-                type="text"
-                value={billingZip}
-                onChange={(e) => setBillingZip(e.target.value)}
-                placeholder="Zip Code"
-                className="w-full bg-dark-800 border border-dark-500 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-accent"
-              />
-            </div>
-            <input
-              type="text"
-              value={billingCountry}
-              onChange={(e) => setBillingCountry(e.target.value)}
-              placeholder="Country"
-              className="w-full bg-dark-800 border border-dark-500 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-accent"
-            />
-          </div>
-        </div>
-
         {/* Submit Button */}
         <button
           onClick={handleDeposit}
-          disabled={loading || !amount || parseFloat(amount) < 1 || !billingEmail || !billingAddress || !billingCity || !billingState || !billingZip}
+          disabled={loading || !amount || parseFloat(amount) < 1}
           className="w-full py-4 bg-accent hover:bg-accent-light disabled:bg-accent/50 disabled:cursor-not-allowed text-white font-medium rounded-xl text-lg transition-colors"
         >
           {loading ? (

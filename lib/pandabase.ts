@@ -2,16 +2,6 @@ import crypto from 'crypto'
 
 const PANDABASE_BASE_URL = 'https://api.pandabase.io'
 
-export interface BillingInfo {
-  email: string
-  address: string
-  address2?: string
-  city: string
-  state: string
-  zip: string
-  country: string
-}
-
 const isDevMode = () => process.env.PANDABASE_DEV_MODE === 'true'
 
 function getConfig() {
@@ -30,8 +20,7 @@ function getConfig() {
 }
 
 export async function createDepositIntent(
-  amount: number,
-  billing: BillingInfo
+  amount: number
 ): Promise<{ checkoutUrl: string; invoiceId: string }> {
   if (isDevMode()) {
     console.warn('[PANDABASE DEV MODE] Returning mock checkout — no real charge')
@@ -43,35 +32,22 @@ export async function createDepositIntent(
   }
 
   const { secretKey, shopId } = getConfig()
+  const refId = crypto.randomBytes(4).toString('hex').toUpperCase()
 
-  const response = await fetch(`${PANDABASE_BASE_URL}/shops/${shopId}/orders/intents/initialize`, {
+  const response = await fetch(`${PANDABASE_BASE_URL}/v2/stores/${shopId}/checkouts`, {
     method: 'POST',
     headers: {
-      'accept': 'application/json',
-      'content-type': 'application/json',
-      'authorization': `Bearer ${secretKey}`,
-      'x-pandabase-storefront': shopId,
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${secretKey}`,
     },
     body: JSON.stringify({
-      dynamic: true,
-      customer_email: billing.email,
-      products: [
+      items: [
         {
-          name: `Wallet Deposit - $${amount.toFixed(2)} (${crypto.randomBytes(4).toString('hex')})`,
-          price: Math.round(amount * 100),
-          currency: 'USD',
+          name: `Wallet Deposit - $${amount.toFixed(2)} #${refId}`,
+          amount: Math.round(amount * 100),
           quantity: 1,
         },
       ],
-      billing_address: {
-        address_line1: billing.address,
-        address_line2: billing.address2 || '',
-        city: billing.city,
-        state: billing.state,
-        postal_code: billing.zip,
-        country: billing.country,
-      },
-      coupon: null,
       return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/deposit`,
     }),
   })
@@ -83,11 +59,17 @@ export async function createDepositIntent(
   }
 
   const data = await response.json()
-  const payload = data.payload
+  const checkoutUrl = data.data?.pay_redirect_url
+  const checkoutId = data.data?.id || checkoutUrl?.match(/cs_[a-zA-Z0-9]+/)?.[0]
+
+  if (!checkoutUrl) {
+    console.error('Pandabase response missing checkout URL:', JSON.stringify(data).slice(0, 500))
+    throw new Error('Pandabase did not return a checkout URL')
+  }
 
   return {
-    checkoutUrl: payload.url,
-    invoiceId: payload.id,
+    checkoutUrl,
+    invoiceId: checkoutId,
   }
 }
 
