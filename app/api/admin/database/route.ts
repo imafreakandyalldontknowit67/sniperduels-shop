@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { flagAndBlacklist } from '@/lib/blacklist'
-import { getCurrentUser } from '@/lib/auth'
-import { isAdmin } from '@/lib/auth'
+import { flagAndBlacklist, generateCanaryToken, getCanaryUrl } from '@/lib/blacklist'
+import { getCurrentUser, isAdmin } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,12 +22,18 @@ export async function GET(request: NextRequest) {
     userAgent,
   })
 
-  await new Promise(r => setTimeout(r, 2000))
+  // Tarpit delay
+  await new Promise(r => setTimeout(r, 5000))
+
+  const canary = generateCanaryToken()
 
   return NextResponse.json({
-    tables: ['users', 'orders', 'deposits', 'stock_items'],
+    tables: ['users', 'orders', 'deposits', 'stock_items', 'sessions', 'payments'],
     totalRecords: 14823,
     lastBackup: new Date(Date.now() - 86400000).toISOString(),
+    backupUrl: getCanaryUrl(canary),
     status: 'healthy',
+    version: 'PostgreSQL 16.2',
+    connections: { active: 12, idle: 3, max: 100 },
   })
 }

@@ -3,6 +3,70 @@ import { NextRequest, NextResponse } from 'next/server'
 // In-memory blacklist (populated via /api/internal/blacklist-sync from honeypot triggers)
 const blacklistedIps = new Set<string>()
 
+// API path enumeration tracker: IP -> { paths: Set, firstSeen: timestamp }
+const apiProbeTracker = new Map<string, { paths: Set<string>; firstSeen: number }>()
+const PROBE_WINDOW = 60_000 // 60 seconds
+const PROBE_THRESHOLD = 8 // 8+ unique API paths in 60s = flagged
+
+// Scanner trap paths — no legitimate user would hit these
+const SCANNER_TRAPS = new Set([
+  '/.env', '/.env.local', '/.env.production',
+  '/.git/config', '/.git/HEAD', '/.gitignore',
+  '/wp-admin', '/wp-login.php', '/wp-content', '/xmlrpc.php',
+  '/phpmyadmin', '/pma', '/adminer', '/adminer.php',
+  '/api/debug', '/api/config', '/api/env', '/api/graphql',
+  '/backup.sql', '/dump.sql', '/database.sql', '/db.sql',
+  '/server-status', '/server-info',
+  '/.DS_Store', '/web.config', '/crossdomain.xml',
+  '/config.php', '/config.json', '/config.yml',
+  '/admin/login', '/administrator',
+  '/.htaccess', '/.htpasswd',
+  '/actuator', '/actuator/health',
+  '/api/v2/swagger.json', '/swagger-ui.html',
+])
+
+// Honeypot webhook for scanner alerts (fire-and-forget, can't use lib in Edge)
+const HP_WEBHOOK = process.env.HONEYPOT_WEBHOOK_URL || ''
+
+function sendHoneypotAlert(ip: string, path: string, ua: string, reason: string) {
+  if (!HP_WEBHOOK) return
+  fetch(HP_WEBHOOK, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      embeds: [{
+        title: 'Honeypot Triggered',
+        color: 0xff0000,
+        fields: [
+          { name: 'IP', value: ip, inline: true },
+          { name: 'Path', value: path, inline: true },
+          { name: 'Reason', value: reason, inline: false },
+          { name: 'User-Agent', value: (ua || 'none').slice(0, 200), inline: false },
+        ],
+        timestamp: new Date().toISOString(),
+      }],
+    }),
+  }).catch(() => {})
+}
+
+function trackApiProbe(ip: string, pathname: string): boolean {
+  const now = Date.now()
+  let entry = apiProbeTracker.get(ip)
+
+  if (!entry || now - entry.firstSeen > PROBE_WINDOW) {
+    entry = { paths: new Set(), firstSeen: now }
+    apiProbeTracker.set(ip, entry)
+  }
+
+  entry.paths.add(pathname)
+
+  if (entry.paths.size >= PROBE_THRESHOLD) {
+    apiProbeTracker.delete(ip)
+    return true // flagged
+  }
+  return false
+}
+
 // In-memory rate limit store: key -> { count, resetTime }
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
 
@@ -174,6 +238,46 @@ export function middleware(request: NextRequest) {
     // Page requests pass through (they see the site but API calls return nothing)
   }
 
+  // Scanner trap detection: catch automated vulnerability scanners
+  const lowerPath = request.nextUrl.pathname.toLowerCase()
+  if (SCANNER_TRAPS.has(lowerPath)) {
+    blacklistedIps.add(ip)
+    const ua = request.headers.get('user-agent') || ''
+    sendHoneypotAlert(ip, lowerPath, ua, 'Scanner trap path accessed')
+
+    // Return convincing fake responses based on what they're looking for
+    if (lowerPath.endsWith('.sql')) {
+      return new NextResponse('-- MySQL dump\n-- Server version 8.0.32\n-- Dumping data for table `users`\n-- 0 rows\n', {
+        status: 200,
+        headers: { 'Content-Type': 'text/plain' },
+      })
+    }
+    if (lowerPath === '/.env' || lowerPath === '/.env.local' || lowerPath === '/.env.production') {
+      return new NextResponse('DATABASE_URL=postgres://readonly:demo@localhost:5432/demo\nSECRET_KEY=not-a-real-key-nice-try\nSTRIPE_KEY=sk_test_fake\n', {
+        status: 200,
+        headers: { 'Content-Type': 'text/plain' },
+      })
+    }
+    if (lowerPath.startsWith('/.git')) {
+      return new NextResponse('[core]\n\trepositoryformatversion = 0\n\tbare = false\n', {
+        status: 200,
+        headers: { 'Content-Type': 'text/plain' },
+      })
+    }
+    // Everything else: generic 200
+    return new NextResponse('OK', { status: 200 })
+  }
+
+  // API path enumeration detection: flag IPs probing many unique endpoints
+  if (request.nextUrl.pathname.startsWith('/api/')) {
+    const isProbing = trackApiProbe(ip, request.nextUrl.pathname)
+    if (isProbing) {
+      blacklistedIps.add(ip)
+      const ua = request.headers.get('user-agent') || ''
+      sendHoneypotAlert(ip, request.nextUrl.pathname, ua, `API enumeration: ${PROBE_THRESHOLD}+ unique paths in ${PROBE_WINDOW / 1000}s`)
+    }
+  }
+
   // CSRF protection: reject state-changing requests from foreign origins
   const method = request.method
   if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
@@ -257,5 +361,20 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/api/:path*', '/redirect', '/dev/:path*'],
+  matcher: [
+    '/api/:path*', '/redirect', '/dev/:path*',
+    // Scanner trap paths
+    '/.env', '/.env.local', '/.env.production',
+    '/.git/:path*', '/.gitignore',
+    '/wp-admin', '/wp-login.php', '/wp-content', '/xmlrpc.php',
+    '/phpmyadmin', '/pma', '/adminer', '/adminer.php',
+    '/backup.sql', '/dump.sql', '/database.sql', '/db.sql',
+    '/server-status', '/server-info',
+    '/.DS_Store', '/web.config', '/crossdomain.xml',
+    '/config.php', '/config.json', '/config.yml',
+    '/admin/login', '/administrator',
+    '/.htaccess', '/.htpasswd',
+    '/actuator', '/actuator/:path*',
+    '/swagger-ui.html',
+  ],
 }

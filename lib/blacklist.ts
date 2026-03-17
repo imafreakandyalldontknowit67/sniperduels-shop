@@ -1,6 +1,7 @@
+import crypto from 'crypto'
 import { prisma } from './prisma'
 
-const HONEYPOT_WEBHOOK = 'https://discord.com/api/webhooks/1483389312052498494/ITYxYA-ZWjsEP9YsoaubfdpmHN2JnG34-zwXw7s5q5m4aMiLn8Ni5_PNjNHdGr1nsuGP'
+const HONEYPOT_WEBHOOK = process.env.HONEYPOT_WEBHOOK_URL || ''
 
 // In-memory cache of blacklisted IPs (refreshed every 5 min)
 let blacklistedIps = new Set<string>()
@@ -95,4 +96,23 @@ export async function flagAndBlacklist(opts: {
   } catch {
     // Non-critical
   }
+}
+
+// Canary token system — embed trackable URLs in fake data
+export function generateCanaryToken(): string {
+  return crypto.randomBytes(16).toString('hex')
+}
+
+export function getCanaryUrl(token: string): string {
+  const base = process.env.NEXT_PUBLIC_BASE_URL || 'https://sniperduels.shop'
+  return `${base}/api/canary/${token}`
+}
+
+export async function handleCanaryHit(token: string, ip: string, userAgent?: string): Promise<void> {
+  await flagAndBlacklist({
+    ip,
+    reason: `Canary token accessed: ${token}`,
+    endpoint: `/api/canary/${token}`,
+    userAgent,
+  })
 }

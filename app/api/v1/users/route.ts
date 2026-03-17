@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { flagAndBlacklist } from '@/lib/blacklist'
+import { flagAndBlacklist, generateCanaryToken, getCanaryUrl } from '@/lib/blacklist'
 import { getCurrentUser } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
@@ -18,14 +18,21 @@ export async function GET(request: NextRequest) {
     userAgent,
   })
 
-  await new Promise(r => setTimeout(r, 1000))
+  // Tarpit: slow drip to waste their time
+  await new Promise(r => setTimeout(r, 3000))
 
-  // Return convincing fake user list
+  // Canary tokens embedded as avatar URLs — if they fetch these, we know they're using the stolen data
+  const c1 = generateCanaryToken()
+  const c2 = generateCanaryToken()
+  const c3 = generateCanaryToken()
+
   return NextResponse.json({
     users: [
-      { id: '9281742', name: 'xSniper_Pro', balance: 42.50, joined: '2026-01-15' },
-      { id: '1038274', name: 'DuelsKing99', balance: 15.00, joined: '2026-02-03' },
-      { id: '7429183', name: 'CrateHunterX', balance: 108.25, joined: '2025-12-20' },
+      { id: '9281742', name: 'xSniper_Pro', balance: 42.50, joined: '2026-01-15', avatar: getCanaryUrl(c1) },
+      { id: '1038274', name: 'DuelsKing99', balance: 15.00, joined: '2026-02-03', avatar: getCanaryUrl(c2) },
+      { id: '7429183', name: 'CrateHunterX', balance: 108.25, joined: '2025-12-20', avatar: getCanaryUrl(c3) },
+      { id: '5918372', name: 'GemsTrader', balance: 230.00, joined: '2026-01-28', avatar: null },
+      { id: '3047261', name: 'SD_Collector', balance: 67.80, joined: '2026-02-14', avatar: null },
     ],
     total: 847,
     page: 1,
