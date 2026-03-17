@@ -8,7 +8,12 @@ export default async function UsersPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-white mb-8">Users</h1>
+      <div className="flex items-center gap-4 mb-8">
+        <h1 className="text-3xl font-bold text-white">Users</h1>
+        <span className="px-3 py-1 bg-dark-700 border-[2px] border-accent text-accent text-sm font-bold uppercase">
+          {users.length} total
+        </span>
+      </div>
       <UsersTable initialUsers={users} />
     </div>
   )
