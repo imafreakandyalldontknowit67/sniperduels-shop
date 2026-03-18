@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
-import { getOrder, updateOrder, addToWallet, addToLifetimeSpend, getStock, updateStockItem, addGemStock } from '@/lib/storage'
+import { getOrder, updateOrder, addToWallet, addToLifetimeSpend, getStock, updateStockItem, addGemStock, updateVendorDepositStatus } from '@/lib/storage'
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -58,6 +58,13 @@ export async function POST(
       { error: 'Order was already processed by another request' },
       { status: 409 }
     )
+  }
+
+  // Vendor deposit orders: just mark deposit as failed, no refund needed
+  if (order.notes?.startsWith('vendor-deposit:')) {
+    const depositId = order.notes.replace('vendor-deposit:', '')
+    await updateVendorDepositStatus(depositId, 'failed')
+    return NextResponse.json({ order: updated })
   }
 
   // Safe to refund — order is locked as failed by us

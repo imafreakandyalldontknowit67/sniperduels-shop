@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
-import { getOrders, getUser, updateOrder, addToWallet, addToLifetimeSpend, addGemStock, getStock, updateStockItem } from '@/lib/storage'
+import { getOrders, getUser, updateOrder, addToWallet, addToLifetimeSpend, addGemStock, getStock, updateStockItem, updateVendorDepositStatus } from '@/lib/storage'
 import type { Order } from '@/lib/storage'
 
 // Orders older than this are auto-expired (in milliseconds)
@@ -22,7 +22,18 @@ function authenticateBot(request: NextRequest): boolean {
   }
 }
 
-async function expireOrder(order: { id: string; userId: string; totalPrice: number; type: string; itemName: string; quantity: number }) {
+async function expireOrder(order: { id: string; userId: string; totalPrice: number; type: string; itemName: string; quantity: number; notes?: string }) {
+  // Vendor deposit orders: just mark as failed, no refund needed (vendor didn't pay anything)
+  if (order.notes?.startsWith('vendor-deposit:')) {
+    await updateOrder(order.id, {
+      status: 'failed',
+      notes: 'Auto-expired: vendor deposit timed out after 30 minutes',
+    })
+    const depositId = order.notes.replace('vendor-deposit:', '')
+    await updateVendorDepositStatus(depositId, 'failed')
+    return
+  }
+
   await updateOrder(order.id, {
     status: 'failed',
     notes: 'Auto-expired: order timed out after 30 minutes',
@@ -127,6 +138,7 @@ export async function GET(request: NextRequest) {
         playerReady: o.playerReady || false,
         skippedAt: o.skippedAt || null,
         createdAt: o.createdAt,
+        isVendorDeposit: !!o.notes?.startsWith('vendor-deposit:'),
       }
     })
   )

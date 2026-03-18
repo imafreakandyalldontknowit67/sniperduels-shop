@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
-import { getOrder, updateOrder } from '@/lib/storage'
+import { getOrder, updateOrder, addVendorStock, updateVendorDepositStatus } from '@/lib/storage'
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -49,6 +49,13 @@ export async function POST(
       { error: 'Order was cancelled before completion could finalize' },
       { status: 409 }
     )
+  }
+
+  // If this is a vendor deposit order, credit the vendor's stock
+  if (order.notes?.startsWith('vendor-deposit:')) {
+    const depositId = order.notes.replace('vendor-deposit:', '')
+    await updateVendorDepositStatus(depositId, 'completed')
+    await addVendorStock(order.userId, order.quantity)
   }
 
   return NextResponse.json({ order: updated })

@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Send, Clock, CheckCircle, XCircle, AlertCircle, Package, Loader2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Send, Clock, CheckCircle, XCircle, AlertCircle, Package, Loader2, ExternalLink } from 'lucide-react'
+import Link from 'next/link'
 
 interface VendorDeposit {
   id: string
@@ -14,12 +16,13 @@ interface VendorDeposit {
 
 const statusConfig = {
   pending: { icon: Clock, color: '#eab308', label: 'Pending' },
-  queued: { icon: AlertCircle, color: '#3b82f6', label: 'Queued' },
+  queued: { icon: AlertCircle, color: '#3b82f6', label: 'In Queue' },
   completed: { icon: CheckCircle, color: '#22c55e', label: 'Completed' },
   failed: { icon: XCircle, color: '#ef4444', label: 'Failed' },
 }
 
 export default function VendorDepositPage() {
+  const router = useRouter()
   const [deposits, setDeposits] = useState<VendorDeposit[]>([])
   const [loading, setLoading] = useState(true)
   const [amountK, setAmountK] = useState('50')
@@ -65,9 +68,8 @@ export default function VendorDepositPage() {
         setToast({ type: 'error', text: data.error })
         return
       }
-      setToast({ type: 'success', text: `Deposit of ${amount}k gems queued. Join the private server to trade.` })
-      setAmountK('50')
-      fetchDeposits()
+      // Redirect to the order tracking page — same queue as customer orders
+      router.push(`/dashboard/orders/${data.order.id}`)
     } catch {
       setToast({ type: 'error', text: 'Failed to create deposit' })
     } finally {
@@ -106,7 +108,8 @@ export default function VendorDepositPage() {
       <div className="p-6 mb-8" style={{ background: '#1a1a1e', border: '2px solid #2a2a2e' }}>
         <h2 className="text-sm font-bold text-white uppercase mb-4">New Deposit</h2>
         <p className="text-xs text-gray-400 mb-4">
-          Enter the amount of gems you want to deposit. After submitting, join the private server and trade the gems to the stock bot. The bot will confirm receipt and add them to your stock.
+          Enter the amount of gems you want to deposit. Your deposit will be added to the order queue.
+          When it&apos;s your turn, you&apos;ll get the private server link to join and trade your gems to the stock bot.
         </p>
         <form onSubmit={handleSubmit} className="flex gap-3 items-end">
           <div>
@@ -128,7 +131,7 @@ export default function VendorDepositPage() {
             <img src="/images/pixel/pngs/asset-59.png" alt="" className="h-[44px] w-auto" style={{ imageRendering: 'pixelated' }} />
             <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-[10px] uppercase tracking-wider gap-1">
               <Send className="w-3 h-3" />
-              {submitting ? 'Submitting...' : 'Queue Deposit'}
+              {submitting ? 'Queuing...' : 'Queue Deposit'}
             </span>
           </button>
         </form>

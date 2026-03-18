@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
-import { getUser, createVendorDeposit, getVendorDeposits, getVendorListing } from '@/lib/storage'
+import { getUser, createVendorDeposit, getVendorDeposits, getVendorListing, createOrder } from '@/lib/storage'
 
 export async function GET() {
   try {
@@ -47,8 +47,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'amountK must be a positive integer' }, { status: 400 })
     }
 
+    // Create a VendorDeposit record to track the deposit
     const deposit = await createVendorDeposit(user.id, amountK)
-    return NextResponse.json({ deposit })
+
+    // Create a regular Order so it enters the bot queue
+    // The bot will process this like any order — vendor joins server, bot receives gems
+    const order = await createOrder({
+      userId: user.id,
+      userName: user.name,
+      type: 'gems',
+      itemName: `Vendor Deposit: ${amountK}k Gems`,
+      quantity: amountK,
+      pricePerUnit: 0,
+      totalPrice: 0,
+      status: 'pending',
+      notes: `vendor-deposit:${deposit.id}`,
+    })
+
+    return NextResponse.json({ deposit, order })
   } catch (error) {
     console.error('Vendor deposits POST error:', error)
     return NextResponse.json({ error: 'Failed to create deposit' }, { status: 500 })
