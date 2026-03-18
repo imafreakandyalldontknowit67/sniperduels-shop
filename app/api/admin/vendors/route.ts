@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser, isAdmin } from '@/lib/auth'
-import { getVendors, getUser, setVendorStatus, getVendorListing, getVendorEarningsSummary } from '@/lib/storage'
+import { getVendors, getUser, setVendorStatus, getVendorListing, getVendorEarningsSummary, deleteVendorListing } from '@/lib/storage'
 
 export async function GET() {
   try {
@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
       const updated = await setVendorStatus(userId, true)
       return NextResponse.json({ user: updated })
     } else if (action === 'remove') {
+      await deleteVendorListing(userId)
       const updated = await setVendorStatus(userId, false)
       return NextResponse.json({ user: updated })
     }

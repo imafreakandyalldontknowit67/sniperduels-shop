@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { exchangeCodeForTokens, getRobloxUserInfo, createSession, isAdmin, isAccountTooYoung, validateOAuthState, retrieveCodeVerifier } from '@/lib/auth'
+import { exchangeCodeForTokens, getRobloxUserInfo, createSession, isAdmin, isAccountTooYoung, validateOAuthState, retrieveCodeVerifier, getSession } from '@/lib/auth'
 import { upsertUser } from '@/lib/storage'
 
 export async function GET(request: NextRequest) {
@@ -22,6 +22,11 @@ export async function GET(request: NextRequest) {
   // Validate OAuth state to prevent CSRF
   const validState = await validateOAuthState('roblox', state)
   if (!validState) {
+    // If already logged in (duplicate callback from browser prefetch/back-forward cache), just redirect home
+    const existingSession = await getSession()
+    if (existingSession) {
+      return NextResponse.redirect(new URL('/', baseUrl))
+    }
     return NextResponse.redirect(new URL('/?error=invalid_state', baseUrl))
   }
 

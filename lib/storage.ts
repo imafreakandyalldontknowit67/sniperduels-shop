@@ -890,6 +890,20 @@ export async function upsertVendorListing(
   return toVendorGemListing(row)
 }
 
+export async function deleteVendorListing(vendorId: string): Promise<boolean> {
+  try {
+    await prisma.vendorGemListing.delete({ where: { vendorId } })
+    // Also fail any pending deposits
+    await prisma.vendorDeposit.updateMany({
+      where: { vendorId, status: { in: ['pending', 'queued'] } },
+      data: { status: 'failed', updatedAt: new Date().toISOString() },
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
 export async function updateVendorListingActive(vendorId: string, active: boolean): Promise<VendorGemListing | null> {
   try {
     const row = await prisma.vendorGemListing.update({
