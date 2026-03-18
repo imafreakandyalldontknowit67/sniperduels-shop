@@ -15,6 +15,7 @@ interface OrderStatus {
   showServerLink: boolean
   skipDeadline: string | null
   serverLink: string | null
+  serverLinkMobile: string | null
 }
 
 function useCountdown(deadline: string | null): string | null {
@@ -192,7 +193,9 @@ export default function OrderTrackingPage() {
     )
   }
 
-  const { order, queuePosition, estimatedMinutes, showServerLink, serverLink } = status
+  const { order, queuePosition, estimatedMinutes, showServerLink, serverLink, serverLinkMobile } = status
+  const isMobile = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+  const activeServerLink = isMobile ? (serverLinkMobile || serverLink) : serverLink
 
   const toastColors = {
     success: 'bg-green-500/20 border-green-500/30 text-green-400',
@@ -250,9 +253,9 @@ export default function OrderTrackingPage() {
           {!order.playerReady ? (
             <>
               <div className="bg-dark-800/50 border border-dark-600 rounded-xl p-5 mb-4">
-                {serverLink && (
+                {activeServerLink && (
                   <a
-                    href={serverLink}
+                    href={activeServerLink}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-block w-full py-3 mb-4 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-xl text-center transition-colors"
@@ -385,9 +388,9 @@ export default function OrderTrackingPage() {
             <p className="text-blue-400 text-sm font-medium mb-3">
               Make sure you&apos;re in the private server and accept the trade request!
             </p>
-            {serverLink && (
+            {activeServerLink && (
               <a
-                href={serverLink}
+                href={activeServerLink}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-block w-full py-3 bg-blue-500 hover:bg-blue-400 text-white font-medium rounded-xl text-center transition-colors"

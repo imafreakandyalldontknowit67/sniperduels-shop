@@ -80,6 +80,7 @@ export async function GET(
 
     // Only include server link URL when gated
     const serverLink = showServerLink ? (process.env.PRIVATE_SERVER_URL || null) : null
+    const serverLinkMobile = showServerLink ? (process.env.PRIVATE_SERVER_URL_MOBILE || null) : null
 
     return NextResponse.json({
       order,
@@ -89,6 +90,7 @@ export async function GET(
       showServerLink,
       skipDeadline,
       serverLink,
+      serverLinkMobile,
     })
   } catch (error) {
     console.error('Order status error:', error)
