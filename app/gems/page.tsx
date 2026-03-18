@@ -3,29 +3,22 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
-import { Minus, Plus, X, Wallet } from 'lucide-react'
+import { Minus, Plus, X, Wallet, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import { PixelButton } from '@/components/ui'
 
-const PRICING_TIERS = [
-  { min: 1, max: 99, rate: 2.90, label: '1k-99k' },
-  { min: 100, max: Infinity, rate: 2.65, label: '100k+' },
-]
+interface GemListing {
+  id: string
+  vendorId: string | null
+  pricePerK: number
+  minOrderK: number
+  maxOrderK: number
+  stockK: number
+  bulkTiers: Array<{ minK: number; pricePerK: number }> | null
+  type: 'platform' | 'vendor'
+}
 
 const PRESET_AMOUNTS = [10, 25, 50, 100]
-
-function getRate(amountInK: number): number {
-  const tier = PRICING_TIERS.find(t => amountInK >= t.min && amountInK <= t.max)
-  return tier?.rate ?? PRICING_TIERS[0].rate
-}
-
-function calculatePrice(amountInK: number): number {
-  return amountInK * getRate(amountInK)
-}
-
-function getCurrentTier(amountInK: number): typeof PRICING_TIERS[0] | undefined {
-  return PRICING_TIERS.find(t => amountInK >= t.min && amountInK <= t.max)
-}
 
 interface UserInfo {
   user: { id: string; name: string } | null
@@ -38,14 +31,16 @@ export default function GemsPage() {
   const router = useRouter()
   const [amount, setAmount] = useState(15)
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
-  const [gemStock, setGemStock] = useState<number | null>(null)
+  const [listings, setListings] = useState<GemListing[]>([])
+  const [selectedListing, setSelectedListing] = useState<GemListing | null>(null)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [purchasing, setPurchasing] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   useEffect(() => {
     fetchUser()
-    fetchGemStock()
+    fetchListings()
   }, [])
 
   useEffect(() => {
@@ -69,21 +64,31 @@ export default function GemsPage() {
           })
         }
       }
-    } catch {
-      // Not logged in
-    }
+    } catch { /* Not logged in */ }
   }
 
-  async function fetchGemStock() {
+  async function fetchListings() {
     try {
-      const res = await fetch('/api/gems/stock')
+      const res = await fetch('/api/gems/listings')
       if (res.ok) {
         const data = await res.json()
-        setGemStock(data.balanceInK)
+        setListings(data.listings)
+        // Auto-select cheapest with stock
+        if (data.listings.length > 0) {
+          const available = data.listings.filter((l: GemListing) => l.stockK > 0)
+          setSelectedListing(available[0] || data.listings[0])
+        }
       }
-    } catch {
-      // Non-critical
+    } catch { /* fallback */ }
+  }
+
+  function getEffectiveRate(listing: GemListing, amountK: number): number {
+    if (listing.bulkTiers && listing.bulkTiers.length > 0) {
+      const sorted = [...listing.bulkTiers].sort((a, b) => b.minK - a.minK)
+      const tier = sorted.find(t => amountK >= t.minK)
+      if (tier) return tier.pricePerK
     }
+    return listing.pricePerK
   }
 
   const handleAmountChange = (newAmount: number) => {
@@ -97,6 +102,19 @@ export default function GemsPage() {
     handleAmountChange(value)
   }
 
+  const currentRate = selectedListing ? getEffectiveRate(selectedListing, amount) : 2.90
+  const totalPrice = amount * currentRate
+  const combinedDiscount = (userInfo?.loyaltyDiscount || 0) + (userInfo?.canUseDiscordDiscount ? 0.025 : 0)
+  const discountedPrice = combinedDiscount > 0
+    ? Math.round(totalPrice * (1 - combinedDiscount) * 100) / 100
+    : totalPrice
+
+  const totalStockK = listings.reduce((sum, l) => sum + l.stockK, 0)
+  const selectedStockK = selectedListing?.stockK ?? 0
+  const cheapestRate = listings.length > 0
+    ? Math.min(...listings.filter(l => l.stockK > 0).map(l => l.pricePerK))
+    : 2.90
+
   function handlePurchaseClick() {
     posthog.capture('gems_buy_clicked', { amount_k: amount, total_price: discountedPrice })
     if (!userInfo?.user) {
@@ -107,14 +125,17 @@ export default function GemsPage() {
   }
 
   async function handleConfirmPurchase() {
-    if (!userInfo) return
+    if (!userInfo || !selectedListing) return
 
     setPurchasing(true)
     try {
       const res = await fetch('/api/orders/purchase-gems', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amountInK: amount }),
+        body: JSON.stringify({
+          amountInK: amount,
+          vendorListingId: selectedListing.type === 'vendor' ? selectedListing.vendorId : 'platform',
+        }),
       })
 
       const data = await res.json()
@@ -123,9 +144,9 @@ export default function GemsPage() {
         posthog.capture('gems_purchase_failed', { amount_k: amount, error: data.error })
         if (data.error === 'Insufficient wallet balance') {
           setToast({ type: 'error', text: `Not enough balance ($${data.balance.toFixed(2)}). Add funds first!` })
-        } else if (data.error === 'Not enough gems in stock') {
-          setToast({ type: 'error', text: `Only ${data.available}k gems available right now.` })
-          setGemStock(data.available)
+        } else if (data.error?.includes('stock')) {
+          setToast({ type: 'error', text: data.error })
+          fetchListings() // Refresh stock
         } else {
           setToast({ type: 'error', text: data.error || 'Purchase failed' })
         }
@@ -143,14 +164,6 @@ export default function GemsPage() {
       setPurchasing(false)
     }
   }
-
-  const currentRate = getRate(amount)
-  const totalPrice = calculatePrice(amount)
-  const combinedDiscount = (userInfo?.loyaltyDiscount || 0) + (userInfo?.canUseDiscordDiscount ? 0.025 : 0)
-  const discountedPrice = combinedDiscount > 0
-    ? Math.round(totalPrice * (1 - combinedDiscount) * 100) / 100
-    : totalPrice
-  const currentTier = getCurrentTier(amount)
 
   return (
     <div className="min-h-screen bg-dark-900">
@@ -181,24 +194,31 @@ export default function GemsPage() {
             Gems
           </h1>
 
-          {gemStock !== null && (
-            <div
-              className="inline-flex items-center gap-2 mt-2 px-3 sm:px-4 py-1.5 sm:py-2 text-[10px] sm:text-xs uppercase"
-              style={{
-                border: `2px solid ${gemStock === 0 ? '#ef4444' : gemStock <= 50 ? '#eab308' : '#22c55e'}`,
-                color: gemStock === 0 ? '#f87171' : gemStock <= 50 ? '#facc15' : '#4ade80',
-              }}
-            >
-              <span
-                className="w-2 h-2"
-                style={{ background: gemStock === 0 ? '#f87171' : gemStock <= 50 ? '#facc15' : '#4ade80' }}
-              />
-              {gemStock === 0 ? 'Out of stock' : `${gemStock.toLocaleString()}k gems in stock`}
+          {totalStockK > 0 && (
+            <div className="flex items-center justify-center gap-3 mt-2">
+              <div
+                className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-[10px] sm:text-xs uppercase"
+                style={{
+                  border: `2px solid ${totalStockK === 0 ? '#ef4444' : totalStockK <= 50 ? '#eab308' : '#22c55e'}`,
+                  color: totalStockK === 0 ? '#f87171' : totalStockK <= 50 ? '#facc15' : '#4ade80',
+                }}
+              >
+                <span
+                  className="w-2 h-2"
+                  style={{ background: totalStockK === 0 ? '#f87171' : totalStockK <= 50 ? '#facc15' : '#4ade80' }}
+                />
+                {totalStockK === 0 ? 'Out of stock' : `${totalStockK.toLocaleString()}k gems available`}
+              </div>
+              {cheapestRate < 2.90 && (
+                <span className="text-[10px] sm:text-xs text-accent uppercase font-bold">
+                  From ${cheapestRate.toFixed(2)}/k
+                </span>
+              )}
             </div>
           )}
         </div>
 
-        {/* Two column layout - stacks on mobile */}
+        {/* Two column layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-10">
           {/* Left column - Selection */}
           <div>
@@ -299,7 +319,7 @@ export default function GemsPage() {
             <div className="flex justify-center">
               <button
                 onClick={handlePurchaseClick}
-                disabled={gemStock !== null && gemStock < amount}
+                disabled={selectedStockK < amount}
                 className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <img
@@ -309,10 +329,10 @@ export default function GemsPage() {
                   style={{ imageRendering: 'pixelated' }}
                 />
                 <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-[10px] sm:text-xs uppercase tracking-wider">
-                  {gemStock !== null && gemStock === 0
+                  {totalStockK === 0
                     ? 'Out of Stock'
-                    : gemStock !== null && gemStock < amount
-                      ? `Only ${gemStock.toLocaleString()}k available`
+                    : selectedStockK < amount
+                      ? `Only ${selectedStockK.toLocaleString()}k available`
                       : 'Finish Purchase'
                   }
                 </span>
@@ -320,36 +340,54 @@ export default function GemsPage() {
             </div>
           </div>
 
-          {/* Right column - Pricing Tiers */}
+          {/* Right column - Pricing Selector */}
           <div>
+            {/* Vendor/Platform Price Selector */}
             <div className="mb-6">
-              <h3 className="text-lg sm:text-xl font-bold text-accent mb-2 uppercase text-center">Pricing Tiers</h3>
-              <p className="text-gray-400 text-[10px] sm:text-xs uppercase text-center mb-4 sm:mb-6">The more you buy, the better the price</p>
+              <h3 className="text-lg sm:text-xl font-bold text-accent mb-2 uppercase text-center">Select Price</h3>
+              <p className="text-gray-400 text-[10px] sm:text-xs uppercase text-center mb-4 sm:mb-6">Choose a price tier &mdash; cheapest first</p>
               <div className="space-y-2 sm:space-y-3">
-                {PRICING_TIERS.map((tier) => {
-                  const isActive = currentTier === tier
+                {listings.map((listing) => {
+                  const rate = getEffectiveRate(listing, amount)
+                  const isSelected = selectedListing?.id === listing.id
+                  const hasStock = listing.stockK > 0
+                  const inRange = amount >= listing.minOrderK && amount <= listing.maxOrderK
+
                   return (
-                    <div
-                      key={tier.label}
-                      className="flex justify-between items-center px-4 sm:px-5 py-3 sm:py-4"
+                    <button
+                      key={listing.id}
+                      onClick={() => { if (hasStock && inRange) setSelectedListing(listing) }}
+                      disabled={!hasStock || !inRange}
+                      className={`w-full flex justify-between items-center px-4 sm:px-5 py-3 sm:py-4 text-left transition-colors disabled:opacity-40`}
                       style={{
-                        border: `2px solid ${isActive ? '#e1ad2d' : '#2a2a2e'}`,
-                        background: isActive ? 'rgba(225,173,45,0.05)' : 'transparent',
+                        border: `2px solid ${isSelected ? '#e1ad2d' : '#2a2a2e'}`,
+                        background: isSelected ? 'rgba(225,173,45,0.05)' : 'transparent',
                       }}
                     >
-                      <span
-                        className="text-xs sm:text-sm uppercase"
-                        style={{ color: isActive ? '#ffffff' : '#9ca3af', fontWeight: isActive ? 'bold' : 'normal' }}
-                      >
-                        {tier.label}
-                      </span>
-                      <span
-                        className="text-xs sm:text-sm"
-                        style={{ color: isActive ? '#e1ad2d' : '#d1d5db', fontWeight: isActive ? 'bold' : 'normal' }}
-                      >
-                        $ {tier.rate.toFixed(2)}/k
-                      </span>
-                    </div>
+                      <div>
+                        <span
+                          className="text-xs sm:text-sm uppercase block"
+                          style={{ color: isSelected ? '#ffffff' : '#9ca3af', fontWeight: isSelected ? 'bold' : 'normal' }}
+                        >
+                          {listing.type === 'platform' ? 'Official Stock' : `Vendor`}
+                        </span>
+                        <span className="text-[10px] text-gray-500">
+                          {listing.stockK}k available
+                          {listing.bulkTiers && listing.bulkTiers.length > 1 && ' · bulk pricing'}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span
+                          className="text-xs sm:text-sm block"
+                          style={{ color: isSelected ? '#e1ad2d' : '#d1d5db', fontWeight: isSelected ? 'bold' : 'normal' }}
+                        >
+                          $ {rate.toFixed(2)}/k
+                        </span>
+                        <span className="text-[10px] text-gray-500">
+                          ${(amount * rate).toFixed(0)} total
+                        </span>
+                      </div>
+                    </button>
                   )
                 })}
               </div>
@@ -383,7 +421,7 @@ export default function GemsPage() {
       </div>
 
       {/* Confirmation Modal */}
-      {showConfirm && userInfo && (
+      {showConfirm && userInfo && selectedListing && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4">
           <div className="w-full sm:max-w-md p-4 sm:p-6" style={{ background: '#1a1a1e', border: '3px solid #e1ad2d', boxShadow: '4px 4px 0px #000' }}>
             <div className="flex items-center justify-between mb-4">
@@ -397,6 +435,12 @@ export default function GemsPage() {
               <div className="flex justify-between">
                 <span className="text-gray-400 text-xs uppercase">Gems</span>
                 <span className="text-white font-medium text-sm">{amount.toLocaleString()}k</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400 text-xs uppercase">Source</span>
+                <span className="text-white font-medium text-sm">
+                  {selectedListing.type === 'platform' ? 'Official Stock' : 'Vendor'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400 text-xs uppercase">Price</span>

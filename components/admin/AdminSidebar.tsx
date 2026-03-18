@@ -17,6 +17,7 @@ import {
   BarChart3,
   TrendingDown,
   GitBranch,
+  Store,
 } from 'lucide-react'
 
 const navItems = [
@@ -25,6 +26,7 @@ const navItems = [
   { href: '/admin/stock', label: 'Stock', icon: Package },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/admin/users', label: 'Users', icon: Users },
+  { href: '/admin/vendors', label: 'Vendors', icon: Store },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 

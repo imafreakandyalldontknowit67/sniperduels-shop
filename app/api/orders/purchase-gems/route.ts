@@ -11,6 +11,9 @@ import {
   markDiscordFirstPurchaseUsed,
   getGemStock,
   deductGemStock,
+  getVendorListing,
+  deductVendorStock,
+  createVendorEarning,
 } from '@/lib/storage'
 import { notifyPurchase } from '@/lib/discord-webhook'
 
@@ -32,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { amountInK } = body
+    const { amountInK, vendorListingId } = body
 
     if (!amountInK || typeof amountInK !== 'number' || !Number.isInteger(amountInK) || amountInK < 1 || amountInK > 500) {
       return NextResponse.json(
@@ -43,21 +46,55 @@ export async function POST(request: NextRequest) {
 
     const roundedAmount = amountInK
 
-    // Check gem stock
-    const gemStock = await getGemStock()
-    if (gemStock < roundedAmount) {
-      return NextResponse.json(
-        {
-          error: 'Not enough gems in stock',
-          available: gemStock,
-          requested: roundedAmount,
-        },
-        { status: 400 }
-      )
+    // Determine source: vendor or platform
+    let rate: number
+    let vendorId: string | null = null
+    let isVendorPurchase = false
+
+    if (vendorListingId && vendorListingId !== 'platform') {
+      // Vendor purchase
+      const listing = await getVendorListing(vendorListingId)
+      if (!listing || !listing.active) {
+        return NextResponse.json({ error: 'Vendor listing not found or inactive' }, { status: 404 })
+      }
+      if (listing.stockK < roundedAmount) {
+        return NextResponse.json(
+          { error: 'Not enough vendor stock', available: listing.stockK, requested: roundedAmount },
+          { status: 400 }
+        )
+      }
+      if (roundedAmount < listing.minOrderK || roundedAmount > listing.maxOrderK) {
+        return NextResponse.json(
+          { error: `Order must be between ${listing.minOrderK}k and ${listing.maxOrderK}k for this vendor` },
+          { status: 400 }
+        )
+      }
+
+      // Check vendor bulk tiers
+      rate = listing.pricePerK
+      if (listing.bulkTiers && listing.bulkTiers.length > 0) {
+        const sortedTiers = [...listing.bulkTiers].sort((a, b) => b.minK - a.minK)
+        const applicableTier = sortedTiers.find(t => roundedAmount >= t.minK)
+        if (applicableTier) {
+          rate = applicableTier.pricePerK
+        }
+      }
+
+      vendorId = listing.vendorId
+      isVendorPurchase = true
+    } else {
+      // Platform purchase
+      const gemStock = await getGemStock()
+      if (gemStock < roundedAmount) {
+        return NextResponse.json(
+          { error: 'Not enough gems in stock', available: gemStock, requested: roundedAmount },
+          { status: 400 }
+        )
+      }
+      rate = getRate(roundedAmount)
     }
 
     // Calculate price with loyalty + discord discounts
-    const rate = getRate(roundedAmount)
     const loyalty = await getUserLoyaltyInfo(user.id)
     const discordEligible = await canUseDiscordFirstPurchaseDiscount(user.id)
     const combinedDiscount = loyalty.discount + (discordEligible ? 0.025 : 0)
@@ -79,15 +116,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to deduct wallet balance' }, { status: 500 })
     }
 
-    // Deduct gem stock (re-check freshly to avoid stale data)
-    const deducted = await deductGemStock(roundedAmount)
-    if (!deducted) {
-      // Refund wallet since gems went out of stock between check and deduction
-      await addToWallet(user.id, totalPrice)
-      return NextResponse.json(
-        { error: 'Gems went out of stock. Wallet refunded.' },
-        { status: 409 }
-      )
+    // Deduct stock from appropriate source
+    if (isVendorPurchase && vendorId) {
+      const deducted = await deductVendorStock(vendorId, roundedAmount)
+      if (!deducted) {
+        const refunded = await addToWallet(user.id, totalPrice)
+        if (!refunded) {
+          console.error(`CRITICAL: Refund failed for user ${user.id}, amount $${totalPrice}. Wallet at max.`)
+          return NextResponse.json(
+            { error: 'Vendor stock went out. Refund could not be processed - contact support.' },
+            { status: 409 }
+          )
+        }
+        return NextResponse.json(
+          { error: 'Vendor stock went out. Wallet refunded.' },
+          { status: 409 }
+        )
+      }
+    } else {
+      const deducted = await deductGemStock(roundedAmount)
+      if (!deducted) {
+        const refunded = await addToWallet(user.id, totalPrice)
+        if (!refunded) {
+          console.error(`CRITICAL: Refund failed for user ${user.id}, amount $${totalPrice}. Wallet at max.`)
+          return NextResponse.json(
+            { error: 'Gems went out of stock. Refund could not be processed - contact support.' },
+            { status: 409 }
+          )
+        }
+        return NextResponse.json(
+          { error: 'Gems went out of stock. Wallet refunded.' },
+          { status: 409 }
+        )
+      }
     }
 
     // Create gems order
@@ -100,12 +161,23 @@ export async function POST(request: NextRequest) {
       pricePerUnit: rate,
       totalPrice,
       status: 'pending',
+      vendorListingId: isVendorPurchase ? vendorListingId : undefined,
     })
 
     // Track lifetime spend + consume discord first-purchase bonus
     await addToLifetimeSpend(user.id, totalPrice)
     if (discordEligible) {
       await markDiscordFirstPurchaseUsed(user.id)
+    }
+
+    // Create vendor earning if applicable (with TOCTOU double-check)
+    if (isVendorPurchase && vendorId) {
+      const verifyListing = await getVendorListing(vendorId)
+      if (verifyListing && verifyListing.vendorId === vendorId) {
+        await createVendorEarning(vendorId, order.id, totalPrice)
+      } else {
+        console.error(`CRITICAL: Vendor ID mismatch at earning creation for order ${order.id}`)
+      }
     }
 
     await notifyPurchase(user.name, `${roundedAmount}k Gems`, 1, totalPrice)

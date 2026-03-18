@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
 import { NAV_LINKS } from '@/lib/constants'
-import { Menu, X, LogOut, Shield, User, Eye, EyeOff, ChevronDown, ShoppingBag, UserCircle, Check, Wallet, Plus, ArrowDownToLine, Crown } from 'lucide-react'
+import { Menu, X, LogOut, Shield, User, Eye, EyeOff, ChevronDown, ShoppingBag, UserCircle, Check, Wallet, Plus, ArrowDownToLine, Crown, Store } from 'lucide-react'
 import { useAuth } from '@/components/providers'
 import { LOYALTY_TIERS } from '@/lib/loyalty'
 import { PixelButton } from '@/components/ui'
@@ -24,7 +24,7 @@ export function Header() {
   const [balanceHidden, setBalanceHidden] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
-  const { user, isAdmin, isViewingAsConsumer, isLoading, discordLinked, discordUsername, walletBalance, loyaltyTier, loyaltyDiscount, login, logout, toggleViewMode } = useAuth()
+  const { user, isAdmin, isVendor, isViewingAsConsumer, isLoading, discordLinked, discordUsername, walletBalance, loyaltyTier, loyaltyDiscount, login, logout, toggleViewMode } = useAuth()
 
   const showAdminFeatures = isAdmin && !isViewingAsConsumer
 
@@ -38,7 +38,7 @@ export function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const isAppSection = pathname?.startsWith('/dashboard') || pathname?.startsWith('/admin')
+  const isAppSection = pathname?.startsWith('/dashboard') || pathname?.startsWith('/admin') || pathname?.startsWith('/vendor')
   if (isAppSection) return null
 
   return (
@@ -170,6 +170,16 @@ export function Header() {
                         <UserCircle className="w-4 h-4" />
                         Profile
                       </Link>
+                      {isVendor && (
+                        <Link
+                          href="/vendor"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2 text-xs text-accent hover:bg-dark-700 uppercase"
+                        >
+                          <Store className="w-4 h-4" />
+                          Vendor Dashboard
+                        </Link>
+                      )}
                       {discordLinked ? (
                         <Link
                           href="/dashboard/profile"
@@ -337,6 +347,16 @@ export function Header() {
                     <UserCircle className="w-4 h-4" />
                     Profile
                   </Link>
+                  {isVendor && (
+                    <Link
+                      href="/vendor"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-2 py-2 text-accent hover:text-accent-light text-xs uppercase"
+                    >
+                      <Store className="w-4 h-4" />
+                      Vendor Dashboard
+                    </Link>
+                  )}
                   {discordLinked ? (
                     <Link
                       href="/dashboard/profile"

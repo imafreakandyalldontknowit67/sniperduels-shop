@@ -18,6 +18,7 @@ export async function GET() {
   const response = NextResponse.json({
     user,
     isAdmin: isAdmin(user.id),
+    isVendor: storedUser?.isVendor || false,
     discordLinked: !!storedUser?.discordId,
     discordUsername: storedUser?.discordUsername,
     walletBalance: storedUser?.walletBalance || 0,

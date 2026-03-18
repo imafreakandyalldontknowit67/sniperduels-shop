@@ -14,6 +14,7 @@ interface User {
 interface AuthContextType {
   user: User | null
   isAdmin: boolean
+  isVendor: boolean
   isViewingAsConsumer: boolean
   isLoading: boolean
   discordLinked: boolean
@@ -35,6 +36,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isVendor, setIsVendor] = useState(false)
   const [isViewingAsConsumer, setIsViewingAsConsumer] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [discordLinked, setDiscordLinked] = useState(false)
@@ -52,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await res.json()
       setUser(data.user)
       setIsAdmin(data.isAdmin)
+      setIsVendor(data.isVendor || false)
       setDiscordLinked(data.discordLinked || false)
       setDiscordUsername(data.discordUsername)
       setWalletBalance(data.walletBalance || 0)
@@ -74,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Failed to fetch user:', error)
       setUser(null)
       setIsAdmin(false)
+      setIsVendor(false)
       setDiscordLinked(false)
       setDiscordUsername(undefined)
       setWalletBalance(0)
@@ -114,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAdmin, isViewingAsConsumer, isLoading, discordLinked, discordUsername, walletBalance, loyaltyTier, loyaltyDiscount, lifetimeSpend, canUseDiscordDiscount, login, logout, refresh, toggleViewMode }}>
+    <AuthContext.Provider value={{ user, isAdmin, isVendor, isViewingAsConsumer, isLoading, discordLinked, discordUsername, walletBalance, loyaltyTier, loyaltyDiscount, lifetimeSpend, canUseDiscordDiscount, login, logout, refresh, toggleViewMode }}>
       {children}
     </AuthContext.Provider>
   )

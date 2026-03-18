@@ -23,6 +23,10 @@ const SCANNER_TRAPS = new Set([
   '/.htaccess', '/.htpasswd',
   '/actuator', '/actuator/health',
   '/api/v2/swagger.json', '/swagger-ui.html',
+  // Vendor honeypots
+  '/api/vendor/admin', '/api/vendor/config', '/api/vendor/debug',
+  '/api/vendor/settings', '/api/vendor/export',
+  '/vendor/debug', '/vendor/admin', '/vendor/config',
 ])
 
 // Honeypot webhook for scanner alerts (fire-and-forget, can't use lib in Edge)
@@ -117,8 +121,14 @@ function getRateLimit(pathname: string): { max: number; windowMs: number } {
   if (pathname.startsWith('/api/orders')) {
     return { max: 30, windowMs: 60_000 } // 30 per minute (order tracking polls every 5s)
   }
+  if (pathname === '/api/bot/vendor-deposit') {
+    return { max: 20, windowMs: 60_000 } // 20 per minute for sensitive vendor deposit endpoint
+  }
   if (pathname.startsWith('/api/bot')) {
     return { max: 60, windowMs: 60_000 } // 60 per minute for bot polling
+  }
+  if (pathname.startsWith('/api/vendor')) {
+    return { max: 20, windowMs: 60_000 } // 20 per minute for vendor dashboard
   }
   if (pathname.startsWith('/api/admin')) {
     return { max: 20, windowMs: 60_000 } // 20 per minute for admin
@@ -195,7 +205,7 @@ function isAuthEndpoint(pathname: string): boolean {
   return pathname.startsWith('/api/auth') || pathname === '/redirect'
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   // Block dev pages in production
   if (request.nextUrl.pathname.startsWith('/dev')) {
     return new NextResponse(null, { status: 404 })
@@ -245,6 +255,9 @@ export function middleware(request: NextRequest) {
     const ua = request.headers.get('user-agent') || ''
     sendHoneypotAlert(ip, lowerPath, ua, 'Scanner trap path accessed')
 
+    // Random delay (1-3s) to make honeypot indistinguishable from real responses
+    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000))
+
     // Return convincing fake responses based on what they're looking for
     if (lowerPath.endsWith('.sql')) {
       return new NextResponse('-- MySQL dump\n-- Server version 8.0.32\n-- Dumping data for table `users`\n-- 0 rows\n', {
@@ -263,6 +276,13 @@ export function middleware(request: NextRequest) {
         status: 200,
         headers: { 'Content-Type': 'text/plain' },
       })
+    }
+    // Vendor probe traps: return convincing fake config
+    if (lowerPath.includes('/vendor')) {
+      return new NextResponse(
+        JSON.stringify({ vendors: [], config: { feeRate: 0.05, maxStock: 500, payoutSchedule: 'weekly' }, debug: false }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
     }
     // Everything else: generic 200
     return new NextResponse('OK', { status: 200 })
@@ -379,5 +399,7 @@ export const config = {
     '/.htaccess', '/.htpasswd',
     '/actuator', '/actuator/:path*',
     '/swagger-ui.html',
+    // Vendor honeypot traps
+    '/vendor/debug', '/vendor/admin', '/vendor/config',
   ],
 }

@@ -41,6 +41,7 @@ export interface StoredUser {
   createdAt: string
   lastLogin: string
   isAdmin: boolean
+  isVendor: boolean
 }
 
 function toStoredUser(row: {
@@ -59,6 +60,7 @@ function toStoredUser(row: {
   createdAt: string
   lastLogin: string
   isAdmin: boolean
+  isVendor: boolean
 }): StoredUser {
   return {
     id: row.id,
@@ -76,6 +78,7 @@ function toStoredUser(row: {
     createdAt: row.createdAt,
     lastLogin: row.lastLogin,
     isAdmin: row.isAdmin,
+    isVendor: row.isVendor,
   }
 }
 
@@ -92,7 +95,7 @@ export async function getUser(id: string): Promise<StoredUser | undefined> {
 }
 
 export async function upsertUser(
-  user: Omit<StoredUser, 'createdAt' | 'lastLogin' | 'walletBalance' | 'lifetimeSpend' | 'discordFirstPurchaseUsed'> & { isAdmin?: boolean }
+  user: Omit<StoredUser, 'createdAt' | 'lastLogin' | 'walletBalance' | 'lifetimeSpend' | 'discordFirstPurchaseUsed' | 'isVendor'> & { isAdmin?: boolean }
 ): Promise<StoredUser> {
   const now = new Date().toISOString()
 
@@ -112,6 +115,7 @@ export async function upsertUser(
       lifetimeSpend: 0,
       discordFirstPurchaseUsed: false,
       isAdmin: user.isAdmin || false,
+      isVendor: false,
       createdAt: now,
       lastLogin: now,
     },
@@ -323,6 +327,7 @@ export interface Order {
   updatedAt: string
   completedAt?: string
   notes?: string
+  vendorListingId?: string
 }
 
 function toOrder(row: {
@@ -341,6 +346,7 @@ function toOrder(row: {
   updatedAt: string
   completedAt: string | null
   notes: string | null
+  vendorListingId: string | null
 }): Order {
   return {
     id: row.id,
@@ -358,6 +364,7 @@ function toOrder(row: {
     updatedAt: row.updatedAt,
     completedAt: row.completedAt ?? undefined,
     notes: row.notes ?? undefined,
+    vendorListingId: row.vendorListingId ?? undefined,
   }
 }
 
@@ -400,6 +407,7 @@ export async function createOrder(
       updatedAt: now,
       completedAt: order.completedAt,
       notes: order.notes,
+      vendorListingId: order.vendorListingId,
     },
   })
 
@@ -772,6 +780,305 @@ export async function updateSiteSettings(settings: Partial<SiteSettings>): Promi
 }
 
 // ─── Analytics helpers ───────────────────────────────────────────────────────
+
+// ─── Vendor functions ───────────────────────────────────────────────────────
+
+export interface VendorGemListing {
+  id: string
+  vendorId: string
+  pricePerK: number
+  minOrderK: number
+  maxOrderK: number
+  stockK: number
+  bulkTiers: Array<{ minK: number; pricePerK: number }> | null
+  active: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+function toVendorGemListing(row: {
+  id: string
+  vendorId: string
+  pricePerK: Decimal
+  minOrderK: number
+  maxOrderK: number
+  stockK: number
+  bulkTiers: string | null
+  active: boolean
+  createdAt: string
+  updatedAt: string
+}): VendorGemListing {
+  let bulkTiers: Array<{ minK: number; pricePerK: number }> | null = null
+  if (row.bulkTiers) {
+    try { bulkTiers = JSON.parse(row.bulkTiers) } catch { /* ignore */ }
+  }
+  return {
+    id: row.id,
+    vendorId: row.vendorId,
+    pricePerK: d(row.pricePerK),
+    minOrderK: row.minOrderK,
+    maxOrderK: row.maxOrderK,
+    stockK: row.stockK,
+    bulkTiers,
+    active: row.active,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  }
+}
+
+export async function getVendors(): Promise<StoredUser[]> {
+  const rows = await prisma.user.findMany({ where: { isVendor: true } })
+  return rows.map(toStoredUser)
+}
+
+export async function setVendorStatus(userId: string, isVendor: boolean): Promise<StoredUser | null> {
+  try {
+    const row = await prisma.user.update({
+      where: { id: userId },
+      data: { isVendor },
+    })
+    return toStoredUser(row)
+  } catch {
+    return null
+  }
+}
+
+export async function getVendorListing(vendorId: string): Promise<VendorGemListing | null> {
+  const row = await prisma.vendorGemListing.findUnique({ where: { vendorId } })
+  return row ? toVendorGemListing(row) : null
+}
+
+export async function getActiveVendorListings(): Promise<(VendorGemListing & { vendorName: string })[]> {
+  const rows = await prisma.vendorGemListing.findMany({
+    where: { active: true, stockK: { gt: 0 } },
+    include: { vendor: { select: { name: true } } },
+    orderBy: { pricePerK: 'asc' },
+  })
+  return rows.map(row => ({
+    ...toVendorGemListing(row),
+    vendorName: row.vendor.name,
+  }))
+}
+
+export async function upsertVendorListing(
+  vendorId: string,
+  data: { pricePerK: number; minOrderK?: number; maxOrderK?: number; bulkTiers?: Array<{ minK: number; pricePerK: number }> | null }
+): Promise<VendorGemListing> {
+  const now = new Date().toISOString()
+  const bulkTiersJson = data.bulkTiers ? JSON.stringify(data.bulkTiers) : null
+  const row = await prisma.vendorGemListing.upsert({
+    where: { vendorId },
+    create: {
+      vendorId,
+      pricePerK: data.pricePerK,
+      minOrderK: data.minOrderK ?? 1,
+      maxOrderK: data.maxOrderK ?? 500,
+      stockK: 0,
+      bulkTiers: bulkTiersJson,
+      active: true,
+      createdAt: now,
+      updatedAt: now,
+    },
+    update: {
+      pricePerK: data.pricePerK,
+      ...(data.minOrderK !== undefined ? { minOrderK: data.minOrderK } : {}),
+      ...(data.maxOrderK !== undefined ? { maxOrderK: data.maxOrderK } : {}),
+      ...(data.bulkTiers !== undefined ? { bulkTiers: bulkTiersJson } : {}),
+      updatedAt: now,
+    },
+  })
+  return toVendorGemListing(row)
+}
+
+export async function updateVendorListingActive(vendorId: string, active: boolean): Promise<VendorGemListing | null> {
+  try {
+    const row = await prisma.vendorGemListing.update({
+      where: { vendorId },
+      data: { active, updatedAt: new Date().toISOString() },
+    })
+    return toVendorGemListing(row)
+  } catch {
+    return null
+  }
+}
+
+export async function addVendorStock(vendorId: string, amountK: number): Promise<VendorGemListing | null> {
+  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const listing = await tx.vendorGemListing.findUnique({ where: { vendorId } })
+    if (!listing) return null
+    const row = await tx.vendorGemListing.update({
+      where: { vendorId },
+      data: { stockK: listing.stockK + amountK, updatedAt: new Date().toISOString() },
+    })
+    return toVendorGemListing(row)
+  })
+}
+
+export async function deductVendorStock(vendorId: string, amountK: number): Promise<boolean> {
+  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const locked: Array<{ stockK: number }> = await tx.$queryRawUnsafe(
+      'SELECT "stockK" FROM "VendorGemListing" WHERE "vendorId" = $1 FOR UPDATE', vendorId
+    )
+    if (!locked.length || locked[0].stockK < amountK) return false
+    await tx.vendorGemListing.update({
+      where: { vendorId },
+      data: { stockK: locked[0].stockK - amountK, updatedAt: new Date().toISOString() },
+    })
+    return true
+  })
+}
+
+// Vendor deposits
+export interface VendorDeposit {
+  id: string
+  vendorId: string
+  amountK: number
+  status: 'pending' | 'queued' | 'completed' | 'failed'
+  createdAt: string
+  updatedAt: string
+}
+
+function toVendorDeposit(row: {
+  id: string
+  vendorId: string
+  amountK: number
+  status: string
+  createdAt: string
+  updatedAt: string
+}): VendorDeposit {
+  return {
+    id: row.id,
+    vendorId: row.vendorId,
+    amountK: row.amountK,
+    status: row.status as VendorDeposit['status'],
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  }
+}
+
+export async function createVendorDeposit(vendorId: string, amountK: number): Promise<VendorDeposit> {
+  const now = new Date().toISOString()
+  const row = await prisma.vendorDeposit.create({
+    data: { vendorId, amountK, status: 'pending', createdAt: now, updatedAt: now },
+  })
+  return toVendorDeposit(row)
+}
+
+export async function getVendorDeposit(depositId: string): Promise<VendorDeposit | null> {
+  try {
+    const row = await prisma.vendorDeposit.findUnique({ where: { id: depositId } })
+    return row ? toVendorDeposit(row) : null
+  } catch {
+    return null
+  }
+}
+
+export async function getVendorDeposits(vendorId: string): Promise<VendorDeposit[]> {
+  const rows = await prisma.vendorDeposit.findMany({
+    where: { vendorId },
+    orderBy: { createdAt: 'desc' },
+  })
+  return rows.map(toVendorDeposit)
+}
+
+export async function updateVendorDepositStatus(
+  depositId: string,
+  status: VendorDeposit['status']
+): Promise<VendorDeposit | null> {
+  try {
+    const row = await prisma.vendorDeposit.update({
+      where: { id: depositId },
+      data: { status, updatedAt: new Date().toISOString() },
+    })
+    return toVendorDeposit(row)
+  } catch {
+    return null
+  }
+}
+
+export async function getPendingVendorDeposits(): Promise<(VendorDeposit & { vendorName: string })[]> {
+  const rows = await prisma.vendorDeposit.findMany({
+    where: { status: { in: ['pending', 'queued'] } },
+    include: { vendor: { select: { name: true } } },
+    orderBy: { createdAt: 'asc' },
+  })
+  return rows.map(row => ({
+    ...toVendorDeposit(row),
+    vendorName: row.vendor.name,
+  }))
+}
+
+// Vendor earnings
+export interface VendorEarningRecord {
+  id: string
+  vendorId: string
+  orderId: string
+  saleAmount: number
+  platformFee: number
+  netAmount: number
+  createdAt: string
+}
+
+function toVendorEarning(row: {
+  id: string
+  vendorId: string
+  orderId: string
+  saleAmount: Decimal
+  platformFee: Decimal
+  netAmount: Decimal
+  createdAt: string
+}): VendorEarningRecord {
+  return {
+    id: row.id,
+    vendorId: row.vendorId,
+    orderId: row.orderId,
+    saleAmount: d(row.saleAmount),
+    platformFee: d(row.platformFee),
+    netAmount: d(row.netAmount),
+    createdAt: row.createdAt,
+  }
+}
+
+const PLATFORM_FEE_RATE = 0.05 // 5%
+
+export async function createVendorEarning(
+  vendorId: string,
+  orderId: string,
+  saleAmount: number
+): Promise<VendorEarningRecord> {
+  const platformFee = Math.round(saleAmount * PLATFORM_FEE_RATE * 100) / 100
+  const netAmount = Math.round((saleAmount - platformFee) * 100) / 100
+  const now = new Date().toISOString()
+  const row = await prisma.vendorEarning.create({
+    data: { vendorId, orderId, saleAmount, platformFee, netAmount, createdAt: now },
+  })
+  // Credit vendor wallet
+  await addToWallet(vendorId, netAmount)
+  return toVendorEarning(row)
+}
+
+export async function getVendorEarnings(vendorId: string): Promise<VendorEarningRecord[]> {
+  const rows = await prisma.vendorEarning.findMany({
+    where: { vendorId },
+    orderBy: { createdAt: 'desc' },
+  })
+  return rows.map(toVendorEarning)
+}
+
+export async function getVendorEarningsSummary(vendorId: string): Promise<{
+  totalSales: number
+  totalFees: number
+  totalNet: number
+  count: number
+}> {
+  const earnings = await getVendorEarnings(vendorId)
+  return {
+    totalSales: earnings.reduce((sum, e) => sum + e.saleAmount, 0),
+    totalFees: earnings.reduce((sum, e) => sum + e.platformFee, 0),
+    totalNet: earnings.reduce((sum, e) => sum + e.netAmount, 0),
+    count: earnings.length,
+  }
+}
 
 export async function getOrderStats() {
   const orders = await getOrders()
