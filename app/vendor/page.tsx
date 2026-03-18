@@ -1,7 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Package, DollarSign, TrendingUp, Save, Loader2 } from 'lucide-react'
+import { Package, DollarSign, TrendingUp, Save, Loader2, Plus, Trash2 } from 'lucide-react'
+
+interface BulkTier {
+  minK: number
+  pricePerK: number
+}
 
 interface Listing {
   id: string
@@ -9,7 +14,7 @@ interface Listing {
   minOrderK: number
   maxOrderK: number
   stockK: number
-  bulkTiers: Array<{ minK: number; pricePerK: number }> | null
+  bulkTiers: BulkTier[] | null
   active: boolean
 }
 
@@ -32,6 +37,8 @@ export default function VendorDashboard() {
   const [minOrderK, setMinOrderK] = useState('1')
   const [maxOrderK, setMaxOrderK] = useState('500')
   const [active, setActive] = useState(true)
+  const [bulkEnabled, setBulkEnabled] = useState(false)
+  const [bulkTiers, setBulkTiers] = useState<Array<{ minK: string; pricePerK: string }>>([])
 
   useEffect(() => {
     Promise.all([fetchListing(), fetchEarnings()]).finally(() => setLoading(false))
@@ -55,6 +62,13 @@ export default function VendorDashboard() {
           setMinOrderK(data.listing.minOrderK.toString())
           setMaxOrderK(data.listing.maxOrderK.toString())
           setActive(data.listing.active)
+          if (data.listing.bulkTiers && data.listing.bulkTiers.length > 0) {
+            setBulkEnabled(true)
+            setBulkTiers(data.listing.bulkTiers.map((t: BulkTier) => ({
+              minK: t.minK.toString(),
+              pricePerK: t.pricePerK.toString(),
+            })))
+          }
         }
       }
     } catch { /* ignore */ }
@@ -74,14 +88,25 @@ export default function VendorDashboard() {
     e.preventDefault()
     setSaving(true)
     try {
+      const payload: Record<string, unknown> = {
+        pricePerK: parseFloat(pricePerK),
+        minOrderK: parseInt(minOrderK),
+        maxOrderK: parseInt(maxOrderK),
+      }
+
+      if (bulkEnabled && bulkTiers.length > 0) {
+        payload.bulkTiers = bulkTiers.map(t => ({
+          minK: parseInt(t.minK),
+          pricePerK: parseFloat(t.pricePerK),
+        }))
+      } else {
+        payload.bulkTiers = null
+      }
+
       const res = await fetch('/api/vendor/listings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pricePerK: parseFloat(pricePerK),
-          minOrderK: parseInt(minOrderK),
-          maxOrderK: parseInt(maxOrderK),
-        }),
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -113,6 +138,21 @@ export default function VendorDashboard() {
     } catch {
       setToast({ type: 'error', text: 'Failed to toggle' })
     }
+  }
+
+  function addBulkTier() {
+    if (bulkTiers.length >= 10) return
+    setBulkTiers([...bulkTiers, { minK: '100', pricePerK: '2.65' }])
+  }
+
+  function removeBulkTier(index: number) {
+    setBulkTiers(bulkTiers.filter((_, i) => i !== index))
+  }
+
+  function updateBulkTier(index: number, field: 'minK' | 'pricePerK', value: string) {
+    const updated = [...bulkTiers]
+    updated[index] = { ...updated[index], [field]: value }
+    setBulkTiers(updated)
   }
 
   if (loading) {
@@ -189,7 +229,7 @@ export default function VendorDashboard() {
         <form onSubmit={handleSaveListing} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-[10px] text-gray-400 uppercase mb-1">Price per 1k</label>
+              <label className="block text-[10px] text-gray-400 uppercase mb-1">Base Price per 1k</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
                 <input
@@ -229,6 +269,86 @@ export default function VendorDashboard() {
               />
             </div>
           </div>
+
+          {/* Bulk Pricing Toggle */}
+          <div className="pt-2">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={bulkEnabled}
+                onChange={e => {
+                  setBulkEnabled(e.target.checked)
+                  if (e.target.checked && bulkTiers.length === 0) {
+                    setBulkTiers([{ minK: '100', pricePerK: '2.65' }])
+                  }
+                }}
+                className="w-4 h-4 rounded border-dark-500 text-accent focus:ring-accent bg-dark-600"
+              />
+              <span className="text-xs text-white uppercase font-bold">Enable Bulk Pricing</span>
+              <span className="text-[10px] text-gray-500">(optional — offer discounts for larger orders)</span>
+            </label>
+          </div>
+
+          {/* Bulk Tiers */}
+          {bulkEnabled && (
+            <div className="space-y-3 pt-2">
+              <p className="text-[10px] text-gray-400 uppercase">
+                Bulk tiers — customers ordering at or above the minimum get the discounted rate
+              </p>
+              {bulkTiers.map((tier, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <label className="block text-[10px] text-gray-500 mb-1">Min {i === 0 ? '(k)' : ''}</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={tier.minK}
+                        onChange={e => updateBulkTier(i, 'minK', e.target.value)}
+                        min="1"
+                        max="500"
+                        className="w-full px-3 py-2 text-sm text-white focus:outline-none"
+                        style={{ background: '#1a1a1e', border: '2px solid #2a2a2e' }}
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-[10px]">k+</span>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-[10px] text-gray-500 mb-1">Price {i === 0 ? '(/k)' : ''}</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                      <input
+                        type="number"
+                        value={tier.pricePerK}
+                        onChange={e => updateBulkTier(i, 'pricePerK', e.target.value)}
+                        step="0.01"
+                        min="0.01"
+                        max="100"
+                        className="w-full pl-7 pr-3 py-2 text-sm text-white focus:outline-none"
+                        style={{ background: '#1a1a1e', border: '2px solid #2a2a2e' }}
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeBulkTier(i)}
+                    className="mt-4 p-2 text-gray-500 hover:text-red-400 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+              {bulkTiers.length < 10 && (
+                <button
+                  type="button"
+                  onClick={addBulkTier}
+                  className="flex items-center gap-2 text-[10px] text-accent hover:text-accent-light uppercase font-bold transition-colors"
+                >
+                  <Plus className="w-3 h-3" />
+                  Add Tier
+                </button>
+              )}
+            </div>
+          )}
 
           <button
             type="submit"
