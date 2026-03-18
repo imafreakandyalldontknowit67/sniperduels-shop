@@ -352,42 +352,88 @@ export default function GemsPage() {
                   const isSelected = selectedListing?.id === listing.id
                   const hasStock = listing.stockK > 0
                   const inRange = amount >= listing.minOrderK && amount <= listing.maxOrderK
+                  const hasBulk = listing.bulkTiers && listing.bulkTiers.length > 1
+                  const lowestRate = hasBulk
+                    ? Math.min(...listing.bulkTiers!.map(t => t.pricePerK))
+                    : listing.pricePerK
 
                   return (
-                    <button
-                      key={listing.id}
-                      onClick={() => { if (hasStock && inRange) setSelectedListing(listing) }}
-                      disabled={!hasStock || !inRange}
-                      className={`w-full flex justify-between items-center px-4 sm:px-5 py-3 sm:py-4 text-left transition-colors disabled:opacity-40`}
-                      style={{
-                        border: `2px solid ${isSelected ? '#e1ad2d' : '#2a2a2e'}`,
-                        background: isSelected ? 'rgba(225,173,45,0.05)' : 'transparent',
-                      }}
-                    >
-                      <div>
-                        <span
-                          className="text-xs sm:text-sm uppercase block"
-                          style={{ color: isSelected ? '#ffffff' : '#9ca3af', fontWeight: isSelected ? 'bold' : 'normal' }}
+                    <div key={listing.id}>
+                      <button
+                        onClick={() => { if (hasStock && inRange) setSelectedListing(listing) }}
+                        disabled={!hasStock || !inRange}
+                        className={`w-full flex justify-between items-center px-4 sm:px-5 py-3 sm:py-4 text-left transition-colors disabled:opacity-40`}
+                        style={{
+                          border: `2px solid ${isSelected ? '#e1ad2d' : '#2a2a2e'}`,
+                          borderBottom: isSelected && hasBulk ? 'none' : undefined,
+                          background: isSelected ? 'rgba(225,173,45,0.05)' : 'transparent',
+                        }}
+                      >
+                        <div>
+                          <span
+                            className="text-xs sm:text-sm uppercase block"
+                            style={{ color: isSelected ? '#ffffff' : '#9ca3af', fontWeight: isSelected ? 'bold' : 'normal' }}
+                          >
+                            {listing.type === 'platform' ? 'Official Stock' : 'Vendor'}
+                          </span>
+                          <span className="text-[10px] text-gray-500">
+                            {listing.stockK}k available
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span
+                            className="text-xs sm:text-sm block"
+                            style={{ color: isSelected ? '#e1ad2d' : '#d1d5db', fontWeight: isSelected ? 'bold' : 'normal' }}
+                          >
+                            $ {rate.toFixed(2)}/k
+                          </span>
+                          {hasBulk && rate > lowestRate && (
+                            <span className="text-[10px] text-green-400">
+                              as low as ${lowestRate.toFixed(2)}/k
+                            </span>
+                          )}
+                          {(!hasBulk || rate === lowestRate) && (
+                            <span className="text-[10px] text-gray-500">
+                              ${(amount * rate).toFixed(0)} total
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                      {/* Show bulk tier breakdown when selected */}
+                      {isSelected && hasBulk && (
+                        <div
+                          className="px-4 sm:px-5 pb-3 pt-1"
+                          style={{
+                            border: '2px solid #e1ad2d',
+                            borderTop: 'none',
+                            background: 'rgba(225,173,45,0.05)',
+                          }}
                         >
-                          {listing.type === 'platform' ? 'Official Stock' : `Vendor`}
-                        </span>
-                        <span className="text-[10px] text-gray-500">
-                          {listing.stockK}k available
-                          {listing.bulkTiers && listing.bulkTiers.length > 1 && ' · bulk pricing'}
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <span
-                          className="text-xs sm:text-sm block"
-                          style={{ color: isSelected ? '#e1ad2d' : '#d1d5db', fontWeight: isSelected ? 'bold' : 'normal' }}
-                        >
-                          $ {rate.toFixed(2)}/k
-                        </span>
-                        <span className="text-[10px] text-gray-500">
-                          ${(amount * rate).toFixed(0)} total
-                        </span>
-                      </div>
-                    </button>
+                          <p className="text-[10px] text-gray-500 uppercase mb-2">Bulk pricing tiers</p>
+                          {[...listing.bulkTiers!]
+                            .sort((a, b) => a.minK - b.minK)
+                            .map((tier, i) => {
+                              const isActiveTier = rate === tier.pricePerK
+                              return (
+                                <div
+                                  key={i}
+                                  className="flex justify-between items-center py-1"
+                                >
+                                  <span className={`text-[10px] ${isActiveTier ? 'text-accent font-bold' : 'text-gray-400'}`}>
+                                    {tier.minK}k{i < listing.bulkTiers!.length - 1
+                                      ? `–${listing.bulkTiers!.sort((a, b) => a.minK - b.minK)[i + 1]?.minK - 1 || ''}k`
+                                      : '+'}
+                                  </span>
+                                  <span className={`text-[10px] ${isActiveTier ? 'text-accent font-bold' : 'text-gray-400'}`}>
+                                    ${tier.pricePerK.toFixed(2)}/k
+                                    {isActiveTier && ' ←'}
+                                  </span>
+                                </div>
+                              )
+                            })}
+                        </div>
+                      )}
+                    </div>
                   )
                 })}
               </div>
