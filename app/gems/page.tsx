@@ -352,9 +352,13 @@ export default function GemsPage() {
                   const isSelected = selectedListing?.id === listing.id
                   const hasStock = listing.stockK > 0
                   const inRange = amount >= listing.minOrderK && amount <= listing.maxOrderK
-                  const hasBulk = listing.bulkTiers && listing.bulkTiers.length > 1
+                  const hasBulk = listing.bulkTiers && listing.bulkTiers.length > 0
+                  // For display, include base price as a tier so the dropdown shows the full range
+                  const allTiers = hasBulk
+                    ? [{ minK: 1, pricePerK: listing.pricePerK }, ...listing.bulkTiers!.filter(t => t.pricePerK !== listing.pricePerK)]
+                    : null
                   const lowestRate = hasBulk
-                    ? Math.min(...listing.bulkTiers!.map(t => t.pricePerK))
+                    ? Math.min(listing.pricePerK, ...listing.bulkTiers!.map(t => t.pricePerK))
                     : listing.pricePerK
 
                   return (
@@ -401,10 +405,10 @@ export default function GemsPage() {
                             background: 'rgba(225,173,45,0.05)',
                           }}
                         >
-                          <p className="text-[10px] text-gray-500 uppercase mb-2">Bulk pricing tiers</p>
-                          {[...listing.bulkTiers!]
+                          <p className="text-[10px] text-gray-500 uppercase mb-2">Pricing tiers</p>
+                          {allTiers!
                             .sort((a, b) => a.minK - b.minK)
-                            .map((tier, i) => {
+                            .map((tier, i, arr) => {
                               const isActiveTier = rate === tier.pricePerK
                               return (
                                 <div
@@ -412,8 +416,8 @@ export default function GemsPage() {
                                   className="flex justify-between items-center py-1"
                                 >
                                   <span className={`text-[10px] ${isActiveTier ? 'text-accent font-bold' : 'text-gray-400'}`}>
-                                    {tier.minK}k{i < listing.bulkTiers!.length - 1
-                                      ? `–${listing.bulkTiers!.sort((a, b) => a.minK - b.minK)[i + 1]?.minK - 1 || ''}k`
+                                    {tier.minK}k{i < arr.length - 1
+                                      ? `–${arr[i + 1].minK - 1}k`
                                       : '+'}
                                   </span>
                                   <span className={`text-[10px] ${isActiveTier ? 'text-accent font-bold' : 'text-gray-400'}`}>
