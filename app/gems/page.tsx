@@ -376,17 +376,20 @@ export default function GemsPage() {
                         <div>
                           <span
                             className="text-xs sm:text-sm uppercase block"
-                            style={{ color: isSelected ? '#e1ad2d' : '#d1d5db', fontWeight: isSelected ? 'bold' : 'normal' }}
+                            style={{ color: isSelected ? '#ffffff' : '#9ca3af', fontWeight: isSelected ? 'bold' : 'normal' }}
                           >
-                            $ {rate.toFixed(2)}/k
+                            {listing.type === 'platform' ? 'Official Stock' : 'Vendor'}
                           </span>
                           <span className="text-[10px] text-gray-500">
                             {listing.stockK > 0 ? `${listing.stockK}k available` : 'Out of stock'}
                           </span>
                         </div>
                         <div className="text-right">
-                          <span className="text-[10px] text-gray-500 block">
-                            ${(amount * rate).toFixed(0)} total
+                          <span
+                            className="text-xs sm:text-sm block"
+                            style={{ color: isSelected ? '#e1ad2d' : '#d1d5db', fontWeight: isSelected ? 'bold' : 'normal' }}
+                          >
+                            $ {rate.toFixed(2)}/k
                           </span>
                           {hasBulk && rate > lowestRate && (
                             <span className="text-[10px] text-green-400">
@@ -477,6 +480,12 @@ export default function GemsPage() {
               <div className="flex justify-between">
                 <span className="text-gray-400 text-xs uppercase">Gems</span>
                 <span className="text-white font-medium text-sm">{amount.toLocaleString()}k</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400 text-xs uppercase">Source</span>
+                <span className="text-white font-medium text-sm">
+                  {selectedListing.type === 'platform' ? 'Official Stock' : 'Vendor'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400 text-xs uppercase">Price</span>
