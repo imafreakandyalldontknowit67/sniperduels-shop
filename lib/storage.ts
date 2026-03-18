@@ -850,7 +850,7 @@ export async function getVendorListing(vendorId: string): Promise<VendorGemListi
 
 export async function getActiveVendorListings(): Promise<(VendorGemListing & { vendorName: string })[]> {
   const rows = await prisma.vendorGemListing.findMany({
-    where: { active: true, stockK: { gt: 0 } },
+    where: { active: true },
     include: { vendor: { select: { name: true } } },
     orderBy: { pricePerK: 'asc' },
   })
