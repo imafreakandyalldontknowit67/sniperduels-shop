@@ -234,7 +234,7 @@ export default function DepositPage() {
           >
             Crypto
             <span className="absolute -top-2 -right-2 px-1.5 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded-full">
-              +5%
+              +3%
             </span>
           </button>
         </div>
@@ -268,8 +268,24 @@ export default function DepositPage() {
           </div>
           {tab === 'crypto' && amount && parseFloat(amount) >= 5 && (
             <p className="text-green-400 text-xs text-center mt-3">
-              You&apos;ll receive ${(parseFloat(amount) * 1.05).toFixed(2)} in your wallet (5% bonus)
+              You&apos;ll receive ${(parseFloat(amount) * 1.03).toFixed(2)} in your wallet (3% bonus)
             </p>
+          )}
+          {tab === 'card' && amount && parseFloat(amount) >= 1 && (
+            <div className="text-xs text-center mt-3 space-y-1">
+              <div className="flex justify-between text-gray-400 px-4">
+                <span>Deposit</span>
+                <span>${parseFloat(amount).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-gray-400 px-4">
+                <span>Processing fee (6%)</span>
+                <span>+${(parseFloat(amount) * 0.06).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-white font-medium px-4 pt-1 border-t border-dark-600">
+                <span>Total charge</span>
+                <span>${(parseFloat(amount) * 1.06).toFixed(2)}</span>
+              </div>
+            </div>
           )}
         </div>
 
@@ -376,7 +392,7 @@ export default function DepositPage() {
                   <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   Creating payment...
                 </span>
-              ) : 'Pay with Crypto (+5% bonus)'}
+              ) : 'Pay with Crypto (+3% bonus)'}
             </button>
           </>
         )}
@@ -409,7 +425,7 @@ export default function DepositPage() {
                   <span className="text-white">${amount}</span>
                 </div>
                 <div className="flex justify-between text-sm mt-1">
-                  <span className="text-green-400">5% Bonus</span>
+                  <span className="text-green-400">3% Bonus</span>
                   <span className="text-green-400">+${cryptoPayment.bonusAmount.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm mt-1 font-bold">

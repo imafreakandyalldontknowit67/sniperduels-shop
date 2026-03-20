@@ -5,7 +5,7 @@ import { notifyDeposit } from '@/lib/discord-webhook'
 
 export const dynamic = 'force-dynamic'
 
-const CRYPTO_BONUS = 0.05 // 5% bonus for crypto deposits
+const CRYPTO_BONUS = 0.03 // 3% bonus for crypto deposits
 
 export async function POST(request: NextRequest) {
   try {

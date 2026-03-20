@@ -37,6 +37,11 @@ export async function POST(request: NextRequest) {
 
     const roundedAmount = Math.round(amount * 100) / 100
 
+    // 6% processing fee on card/fiat deposits to cover Pandabase fees
+    const PROCESSING_FEE_RATE = 0.06
+    const processingFee = Math.round(roundedAmount * PROCESSING_FEE_RATE * 100) / 100
+    const chargeAmount = Math.round((roundedAmount + processingFee) * 100) / 100
+
     await expireStaleDeposits()
 
     const pendingDeposits = (await getUserDeposits(user.id)).filter(d => d.status === 'pending')
@@ -47,9 +52,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { sessionId, checkoutUrl, refId } = await createCheckout(roundedAmount)
+    // Charge the customer the deposit amount + processing fee
+    const { sessionId, checkoutUrl, refId } = await createCheckout(chargeAmount)
 
-    // Store sessionId as pandabaseInvoiceId — webhook sends it back as orderNumber
+    // Store the original deposit amount (what gets credited to wallet)
     const deposit = await createDeposit({
       userId: user.id,
       amount: roundedAmount,
@@ -63,6 +69,8 @@ export async function POST(request: NextRequest) {
       depositId: deposit.id,
       sessionId,
       checkoutUrl,
+      processingFee,
+      chargeAmount,
     })
   } catch (error) {
     console.error('Deposit creation error:', error)

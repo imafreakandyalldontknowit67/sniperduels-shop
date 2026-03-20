@@ -37,9 +37,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { amountInK, vendorListingId } = body
 
-    if (!amountInK || typeof amountInK !== 'number' || !Number.isInteger(amountInK) || amountInK < 1 || amountInK > 500) {
+    if (!amountInK || typeof amountInK !== 'number' || !Number.isInteger(amountInK) || amountInK < 5 || amountInK > 500) {
       return NextResponse.json(
-        { error: 'amountInK must be an integer between 1 and 500' },
+        { error: 'amountInK must be an integer between 5 and 500' },
         { status: 400 }
       )
     }
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
     // Calculate price with loyalty + discord discounts
     const loyalty = await getUserLoyaltyInfo(user.id)
     const discordEligible = await canUseDiscordFirstPurchaseDiscount(user.id)
-    const combinedDiscount = loyalty.discount + (discordEligible ? 0.025 : 0)
+    const combinedDiscount = loyalty.discount + (discordEligible ? 0.01 : 0)
     const basePrice = roundedAmount * rate
     const totalPrice = Math.round(basePrice * (1 - combinedDiscount) * 100) / 100
 

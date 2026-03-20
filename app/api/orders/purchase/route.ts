@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     // Calculate price with loyalty + discord discounts
     const loyalty = await getUserLoyaltyInfo(user.id)
     const discordEligible = await canUseDiscordFirstPurchaseDiscount(user.id)
-    const combinedDiscount = loyalty.discount + (discordEligible ? 0.025 : 0)
+    const combinedDiscount = loyalty.discount + (discordEligible ? 0.01 : 0)
     const pricePerUnit = item.priceUsd * (1 - combinedDiscount)
     const totalPrice = Math.round(pricePerUnit * quantity * 100) / 100
 
