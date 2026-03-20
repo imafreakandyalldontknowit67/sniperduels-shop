@@ -362,11 +362,11 @@ export default function GemsPage() {
                     : listing.pricePerK
 
                   return (
-                    <div key={listing.id}>
+                    <div key={listing.id} className={!hasStock || !inRange ? 'opacity-40' : ''}>
                       <button
                         onClick={() => { if (hasStock && inRange) setSelectedListing(listing) }}
                         disabled={!hasStock || !inRange}
-                        className={`w-full flex justify-between items-center px-4 sm:px-5 py-3 sm:py-4 text-left transition-colors disabled:opacity-40`}
+                        className={`w-full flex justify-between items-center px-4 sm:px-5 py-3 sm:py-4 text-left transition-colors`}
                         style={{
                           border: `2px solid ${isSelected ? '#e1ad2d' : '#2a2a2e'}`,
                           borderBottom: isSelected && hasBulk ? 'none' : undefined,
