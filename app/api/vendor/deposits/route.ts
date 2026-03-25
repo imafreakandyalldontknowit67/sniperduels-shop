@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { getUser, createVendorDeposit, getVendorDeposits, getVendorListing, createOrder } from '@/lib/storage'
+import { getBotLastHeartbeat } from '@/lib/bot-heartbeat'
 
 export async function GET() {
   try {
@@ -38,6 +39,14 @@ export async function POST(request: NextRequest) {
     const listing = await getVendorListing(user.id)
     if (!listing) {
       return NextResponse.json({ error: 'Set up your listing first before depositing gems' }, { status: 400 })
+    }
+
+    const lastHeartbeat = getBotLastHeartbeat()
+    if (Date.now() - lastHeartbeat > 60_000) {
+      return NextResponse.json(
+        { error: 'The trade bot is currently offline. Please try again later.' },
+        { status: 503 }
+      )
     }
 
     const body = await request.json()
