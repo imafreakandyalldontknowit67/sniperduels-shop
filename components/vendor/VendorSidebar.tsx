@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
   Plus,
+  ArrowUpRight,
   DollarSign,
   Store,
   ArrowLeft,
@@ -16,6 +17,7 @@ import {
 const navItems = [
   { href: '/vendor', label: 'Overview', icon: LayoutDashboard },
   { href: '/vendor/deposit', label: 'Deposit Gems', icon: Plus },
+  { href: '/vendor/withdraw', label: 'Withdraw Gems', icon: ArrowUpRight },
   { href: '/vendor/earnings', label: 'Earnings', icon: DollarSign },
 ]
 
