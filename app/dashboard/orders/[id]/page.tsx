@@ -56,6 +56,7 @@ export default function OrderTrackingPage() {
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null)
   const [confirmingReady, setConfirmingReady] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
   const [tradesEnabled, setTradesEnabled] = useState(false)
   const [inServer, setInServer] = useState(false)
   const prevStatusRef = useRef<string | null>(null)
@@ -64,6 +65,30 @@ export default function OrderTrackingPage() {
 
   const canConfirm = tradesEnabled && inServer
   const skipCountdown = useCountdown(status?.skipDeadline ?? null)
+
+  async function cancelOrder() {
+    if (!confirm('Are you sure you want to cancel this order?')) return
+    setCancelling(true)
+    try {
+      const res = await fetch(`/api/orders/${orderId}/cancel`, { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) {
+        setToast({ type: 'error', text: data.error || 'Failed to cancel order' })
+        return
+      }
+      setToast({ type: 'success', text: 'Order cancelled successfully.' })
+      // Refresh status
+      const statusRes = await fetch(`/api/orders/${orderId}/status`)
+      if (statusRes.ok) {
+        const statusData = await statusRes.json()
+        setStatus(statusData)
+      }
+    } catch {
+      setToast({ type: 'error', text: 'Failed to cancel order' })
+    } finally {
+      setCancelling(false)
+    }
+  }
 
   async function markPlayerReady() {
     if (!canConfirm) return
@@ -315,6 +340,14 @@ export default function OrderTrackingPage() {
 
           <OrderInfo order={order} />
 
+          <button
+            onClick={cancelOrder}
+            disabled={cancelling}
+            className="mt-4 w-full py-3 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 font-medium rounded-xl text-center transition-colors disabled:opacity-50"
+          >
+            {cancelling ? 'Cancelling...' : 'Cancel Order'}
+          </button>
+
           <div className="flex items-center justify-center gap-2 mt-6 text-gray-500 text-sm">
             <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
             {order.playerReady ? 'Bot is looking for you in the server...' : 'Waiting for you to join and confirm...'}
@@ -362,6 +395,14 @@ export default function OrderTrackingPage() {
           </div>
 
           <OrderInfo order={order} />
+
+          <button
+            onClick={cancelOrder}
+            disabled={cancelling}
+            className="mt-4 w-full py-3 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 font-medium rounded-xl text-center transition-colors disabled:opacity-50"
+          >
+            {cancelling ? 'Cancelling...' : 'Cancel Order'}
+          </button>
 
           <div className="flex items-center justify-center gap-2 mt-6 text-gray-500 text-sm">
             <span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
