@@ -73,10 +73,10 @@ export default function GemsPage() {
       if (res.ok) {
         const data = await res.json()
         setListings(data.listings)
-        // Auto-select cheapest with stock
+        // Auto-select cheapest with enough stock for default amount
         if (data.listings.length > 0) {
-          const available = data.listings.filter((l: GemListing) => l.stockK > 0)
-          setSelectedListing(available[0] || data.listings[0])
+          const available = data.listings.filter((l: GemListing) => l.stockK >= amount && amount >= l.minOrderK && amount <= l.maxOrderK)
+          setSelectedListing(available[0] || data.listings.filter((l: GemListing) => l.stockK > 0)[0] || data.listings[0])
         }
       }
     } catch { /* fallback */ }
@@ -94,12 +94,21 @@ export default function GemsPage() {
   const handleAmountChange = (newAmount: number) => {
     if (newAmount >= 1 && newAmount <= 500) {
       setAmount(newAmount)
+      // Auto-switch listing if current one can't fulfill the new amount
+      if (selectedListing && (selectedListing.stockK < newAmount || newAmount < selectedListing.minOrderK || newAmount > selectedListing.maxOrderK)) {
+        const best = listings.find(l => l.stockK >= newAmount && newAmount >= l.minOrderK && newAmount <= l.maxOrderK)
+        if (best) setSelectedListing(best)
+      }
     }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value) || 1
-    handleAmountChange(value)
+    const raw = e.target.value
+    if (raw === '') { setAmount(0); return }
+    const value = parseInt(raw)
+    if (!isNaN(value) && value >= 0 && value <= 500) {
+      setAmount(value)
+    }
   }
 
   const currentRate = selectedListing ? getEffectiveRate(selectedListing, amount) : 2.90
@@ -350,7 +359,7 @@ export default function GemsPage() {
                 {listings.map((listing) => {
                   const rate = getEffectiveRate(listing, amount)
                   const isSelected = selectedListing?.id === listing.id
-                  const hasStock = listing.stockK > 0
+                  const hasStock = listing.stockK >= amount
                   const inRange = amount >= listing.minOrderK && amount <= listing.maxOrderK
                   const hasBulk = listing.bulkTiers && listing.bulkTiers.length > 0
                   // For display, include base price as a tier so the dropdown shows the full range
