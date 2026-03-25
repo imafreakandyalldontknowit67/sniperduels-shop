@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
-import { getOrders, getUser, updateOrder, addToWallet, addToLifetimeSpend, addGemStock, getStock, updateStockItem, updateVendorDepositStatus } from '@/lib/storage'
+import { getOrders, getUser, updateOrder, addToWallet, addToLifetimeSpend, addGemStock, getStock, updateStockItem, updateVendorDepositStatus, addVendorStock } from '@/lib/storage'
 import type { Order } from '@/lib/storage'
 
 // Orders older than this are auto-expired (in milliseconds)
@@ -31,6 +31,17 @@ async function expireOrder(order: { id: string; userId: string; totalPrice: numb
     })
     const depositId = order.notes.replace('vendor-deposit:', '')
     await updateVendorDepositStatus(depositId, 'failed')
+    return
+  }
+
+  // Vendor withdrawal orders: refund vendor stock (was deducted at submission time)
+  if (order.notes?.startsWith('vendor-withdrawal:')) {
+    await updateOrder(order.id, {
+      status: 'failed',
+      notes: 'Auto-expired: vendor withdrawal timed out after 30 minutes',
+    })
+    const vendorId = order.notes.replace('vendor-withdrawal:', '')
+    await addVendorStock(vendorId, order.quantity)
     return
   }
 
@@ -139,6 +150,7 @@ export async function GET(request: NextRequest) {
         skippedAt: o.skippedAt || null,
         createdAt: o.createdAt,
         isVendorDeposit: !!o.notes?.startsWith('vendor-deposit:'),
+        isVendorWithdrawal: !!o.notes?.startsWith('vendor-withdrawal:'),
       }
     })
   )

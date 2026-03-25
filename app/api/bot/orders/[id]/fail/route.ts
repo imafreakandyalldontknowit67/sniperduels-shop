@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
-import { getOrder, updateOrder, addToWallet, addToLifetimeSpend, getStock, updateStockItem, addGemStock, updateVendorDepositStatus } from '@/lib/storage'
+import { getOrder, updateOrder, addToWallet, addToLifetimeSpend, getStock, updateStockItem, addGemStock, updateVendorDepositStatus, addVendorStock } from '@/lib/storage'
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -64,6 +64,12 @@ export async function POST(
   if (order.notes?.startsWith('vendor-deposit:')) {
     const depositId = order.notes.replace('vendor-deposit:', '')
     await updateVendorDepositStatus(depositId, 'failed')
+    return NextResponse.json({ order: updated })
+  }
+
+  // Vendor withdrawal orders: refund vendor stock (was deducted at submission time)
+  if (order.notes?.startsWith('vendor-withdrawal:')) {
+    await addVendorStock(order.userId, order.quantity)
     return NextResponse.json({ order: updated })
   }
 
