@@ -113,12 +113,12 @@ export default function VendorDepositPage() {
         </p>
         <form onSubmit={handleSubmit} className="flex gap-3 items-end">
           <div>
-            <label className="block text-[10px] text-gray-400 uppercase mb-1">Amount (k gems)</label>
+            <label className="block text-[10px] text-gray-400 uppercase mb-1">Amount in thousands (k)</label>
             <input
               type="number"
               value={amountK}
               onChange={e => setAmountK(e.target.value)}
-              min="1"
+              min="1" max="500"
               className="w-32 px-3 py-2 text-sm text-white focus:outline-none"
               style={{ background: '#1a1a1e', border: '2px solid #2a2a2e' }}
             />
