@@ -58,5 +58,11 @@ export async function POST(
     await addVendorStock(order.userId, order.quantity)
   }
 
+  // Vendor withdrawal orders: stock was already deducted at submission time, so just mark complete
+  // No additional stock changes needed here
+  if (order.notes?.startsWith('vendor-withdrawal:')) {
+    // Nothing extra to do — completion is handled by the updateOrder above
+  }
+
   return NextResponse.json({ order: updated })
 }
