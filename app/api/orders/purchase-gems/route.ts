@@ -16,6 +16,7 @@ import {
   createVendorEarning,
 } from '@/lib/storage'
 import { notifyPurchase } from '@/lib/discord-webhook'
+import { getBotLastHeartbeat } from '@/lib/bot-heartbeat'
 
 const PRICING_TIERS = [
   { min: 1, max: 99, rate: 2.90 },
@@ -32,6 +33,14 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const lastHeartbeat = getBotLastHeartbeat()
+    if (Date.now() - lastHeartbeat > 60_000) {
+      return NextResponse.json(
+        { error: 'The trade bot is currently offline. Please try again later.' },
+        { status: 503 }
+      )
     }
 
     const body = await request.json()
