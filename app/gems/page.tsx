@@ -391,6 +391,7 @@ export default function GemsPage() {
                           </span>
                           <span className="text-[10px] text-gray-500">
                             {listing.stockK > 0 ? `${listing.stockK}k available` : 'Out of stock'}
+                            {listing.minOrderK > 1 && ` · Min ${listing.minOrderK}k`}
                           </span>
                         </div>
                         <div className="text-right">
