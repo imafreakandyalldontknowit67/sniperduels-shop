@@ -37,7 +37,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const body = await request.json()
+    let body
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+    }
     const { itemId, quantity = 1 } = body
 
     if (!itemId || typeof itemId !== 'string') {

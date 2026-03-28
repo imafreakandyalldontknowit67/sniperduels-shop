@@ -43,7 +43,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const body = await request.json()
+    let body
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+    }
     const { amountInK, vendorListingId } = body
 
     if (!amountInK || typeof amountInK !== 'number' || !Number.isInteger(amountInK) || amountInK < 5 || amountInK > 500) {
