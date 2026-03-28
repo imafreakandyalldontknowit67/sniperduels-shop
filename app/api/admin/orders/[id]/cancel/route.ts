@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser, isAdmin } from '@/lib/auth'
-import { getOrder, updateOrder, addToWallet, addToLifetimeSpend, getStock, updateStockItem, addGemStock } from '@/lib/storage'
+import { getOrder, updateOrder, addToWallet, addToLifetimeSpend, getStock, updateStockItem, addGemStock, updateVendorDepositStatus } from '@/lib/storage'
 
 export async function POST(
   request: NextRequest,
@@ -27,9 +27,13 @@ export async function POST(
 
   // Mark as failed FIRST to prevent race with bot complete.
   // If bot reads the order after this write, it will see "failed" and abort.
+  const isVendorDeposit = order.notes?.startsWith('vendor-deposit:')
+  const cancelNote = isVendorDeposit
+    ? 'Cancelled by admin — vendor deposit'
+    : 'Cancelled by admin — wallet refunded'
   const updated = await updateOrder(id, {
     status: 'failed',
-    notes: 'Cancelled by admin — wallet refunded',
+    notes: order.notes ? `${order.notes} | ${cancelNote}` : cancelNote,
   })
 
   // Re-read order to confirm we won the race (status is actually failed)
@@ -40,6 +44,13 @@ export async function POST(
       { error: 'Order was completed by bot before cancel could take effect' },
       { status: 409 }
     )
+  }
+
+  // Vendor deposit orders: just mark deposit as failed, no wallet refund needed
+  if (isVendorDeposit) {
+    const depositId = order.notes!.replace('vendor-deposit:', '')
+    await updateVendorDepositStatus(depositId, 'failed')
+    return NextResponse.json({ order: updated })
   }
 
   // Safe to refund — order is locked as failed

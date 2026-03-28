@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser, isAdmin } from '@/lib/auth'
-import { getOrder, updateOrder } from '@/lib/storage'
+import { getOrder, updateOrder, addVendorStock, updateVendorDepositStatus } from '@/lib/storage'
 
 export async function POST(
   request: NextRequest,
@@ -52,7 +52,7 @@ export async function POST(
   const updated = await updateOrder(id, {
     status: 'completed',
     completedAt: new Date().toISOString(),
-    notes: completionNotes,
+    notes: order.notes ? `${order.notes} | ${completionNotes}` : completionNotes,
   })
 
   // Verify our write stuck (cancel/fail may have raced us)
@@ -62,6 +62,13 @@ export async function POST(
       { error: 'Order was cancelled or failed before completion could finalize' },
       { status: 409 }
     )
+  }
+
+  // If this is a vendor deposit order, credit the vendor's stock
+  if (order.notes?.startsWith('vendor-deposit:')) {
+    const depositId = order.notes.replace('vendor-deposit:', '')
+    await updateVendorDepositStatus(depositId, 'completed')
+    await addVendorStock(order.userId, order.quantity)
   }
 
   return NextResponse.json({ order: updated })

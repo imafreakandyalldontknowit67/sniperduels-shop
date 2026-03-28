@@ -150,7 +150,7 @@ export default function VendorWithdrawPage() {
       <div className="p-6 mb-8" style={{ background: '#1a1a1e', border: '2px solid #2a2a2e' }}>
         <h2 className="text-sm font-bold text-white uppercase mb-4">New Withdrawal</h2>
         <p className="text-xs text-gray-400 mb-4">
-          Enter the amount of gems you want to withdraw from your shop stock. Your withdrawal will be added to the order queue.
+          Enter the amount of gems you want to withdraw from your shop stock. Your withdrawal will be added to the queue.
           When it&apos;s your turn, you&apos;ll get the private server link to join and receive the gems on your Roblox account.
         </p>
         <form onSubmit={handleSubmit} className="flex gap-3 items-end">

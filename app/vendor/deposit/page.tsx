@@ -68,7 +68,7 @@ export default function VendorDepositPage() {
         setToast({ type: 'error', text: data.error })
         return
       }
-      // Redirect to the order tracking page — same queue as customer orders
+      // Redirect to the tracking page — same queue as customer orders
       router.push(`/dashboard/orders/${data.order.id}`)
     } catch {
       setToast({ type: 'error', text: 'Failed to create deposit' })
@@ -108,7 +108,7 @@ export default function VendorDepositPage() {
       <div className="p-6 mb-8" style={{ background: '#1a1a1e', border: '2px solid #2a2a2e' }}>
         <h2 className="text-sm font-bold text-white uppercase mb-4">New Deposit</h2>
         <p className="text-xs text-gray-400 mb-4">
-          Enter the amount of gems you want to deposit. Your deposit will be added to the order queue.
+          Enter the amount of gems you want to deposit. Your deposit will be added to the queue.
           When it&apos;s your turn, you&apos;ll get the private server link to join and trade your gems to the stock bot.
         </p>
         <form onSubmit={handleSubmit} className="flex gap-3 items-end">

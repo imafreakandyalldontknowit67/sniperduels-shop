@@ -46,9 +46,14 @@ export async function POST(
   }
 
   // Mark as failed FIRST to prevent double-refund race with admin cancel.
+  // Preserve existing notes (e.g. vendor-deposit:{id}) and append failure reason
+  const failNote = reason ? `Failed: ${reason}` : 'Failed by trade bot'
+  const updatedNotes = order.notes
+    ? `${order.notes} | ${failNote}`
+    : failNote
   const updated = await updateOrder(id, {
     status: 'failed',
-    notes: reason ? `Failed: ${reason}` : 'Failed by trade bot',
+    notes: updatedNotes,
   })
 
   // Re-read to confirm we won the race (admin cancel may have already processed this)

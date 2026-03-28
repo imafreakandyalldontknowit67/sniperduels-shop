@@ -16,9 +16,9 @@ export async function POST(request: NextRequest) {
     console.log(`[NearPayments IPN] Status: ${payload.payment_status}, Order: ${payload.order_id}`)
     console.log(`[NearPayments IPN] Payload: ${rawBody.slice(0, 1000)}`)
 
-    // Verify signature
-    if (signature && !verifyIpnSignature(payload, signature)) {
-      console.error('[NearPayments IPN] Invalid signature')
+    // Verify signature (always required — reject if missing or invalid)
+    if (!signature || !verifyIpnSignature(payload, signature)) {
+      console.error('[NearPayments IPN] Missing or invalid signature')
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
 

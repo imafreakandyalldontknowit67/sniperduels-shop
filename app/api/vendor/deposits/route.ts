@@ -56,6 +56,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'amountK must be a positive integer' }, { status: 400 })
     }
 
+    if (amountK > 500) {
+      return NextResponse.json({ error: 'Maximum deposit is 500k gems per deposit' }, { status: 400 })
+    }
+
+    // Only allow 1 pending/queued deposit at a time to prevent queue spam
+    const existingDeposits = await getVendorDeposits(user.id)
+    const pendingDeposit = existingDeposits.find(d => d.status === 'pending' || d.status === 'queued')
+    if (pendingDeposit) {
+      return NextResponse.json({ error: 'You already have a pending deposit. Wait for it to complete or expire before creating another.' }, { status: 409 })
+    }
+
     // Create a VendorDeposit record to track the deposit
     const deposit = await createVendorDeposit(user.id, amountK)
 

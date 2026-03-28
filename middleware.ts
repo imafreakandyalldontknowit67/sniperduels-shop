@@ -218,34 +218,53 @@ export async function middleware(request: NextRequest) {
   const ip = request.headers.get('cf-connecting-ip')
     || request.ip
     || request.headers.get('x-real-ip')
-    || '127.0.0.1'
+    || '0.0.0.0'
 
-  // Webhook endpoints: skip CSRF and rate limiting (signature verification handles security)
+  // Webhook endpoints: skip CSRF but apply a generous rate limit to prevent DoS
+  // (signature verification handles authentication, this just caps volume)
   if (request.nextUrl.pathname.startsWith('/api/webhooks/')) {
+    const whKey = `${ip}:/api/webhooks`
+    const now = Date.now()
+    const whEntry = rateLimitStore.get(whKey)
+    if (!whEntry || now > whEntry.resetTime) {
+      rateLimitStore.set(whKey, { count: 1, resetTime: now + 60_000 })
+    } else {
+      whEntry.count++
+      if (whEntry.count > 120) { // 120 req/min — no real provider exceeds this
+        return new NextResponse(null, { status: 429 })
+      }
+    }
     return NextResponse.next()
   }
 
   // Internal blacklist sync endpoint (called by honeypot routes to update middleware's in-memory set)
+  // Locked to loopback only + secret in header (not query string, which leaks in logs/referer)
   if (request.nextUrl.pathname === '/api/internal/blacklist-sync') {
+    const isLoopback = ip === '127.0.0.1' || ip === '::1' || ip === 'localhost'
+    const syncSecret = request.headers.get('x-internal-secret')
+    if (!isLoopback || syncSecret !== process.env.SESSION_SECRET) {
+      return new NextResponse(null, { status: 404 })
+    }
     const syncIp = request.nextUrl.searchParams.get('ip')
-    const syncSecret = request.nextUrl.searchParams.get('secret')
-    if (syncIp && syncSecret === process.env.SESSION_SECRET) {
+    if (syncIp) {
       blacklistedIps.add(syncIp)
     }
     return new NextResponse(null, { status: 204 })
   }
 
   // Blacklist check: silently return fake/empty responses for blacklisted IPs
+  // Auth endpoints are exempt — never lock users out of logging in
   if (blacklistedIps.has(ip)) {
     const pathname = request.nextUrl.pathname
-    // API requests get fake empty data
-    if (pathname.startsWith('/api/')) {
+    const isAuthPath = pathname.startsWith('/api/auth') || pathname === '/redirect'
+    // API requests get fake empty data (except auth flows)
+    if (pathname.startsWith('/api/') && !isAuthPath) {
       return new NextResponse(
         JSON.stringify({ users: [], orders: [], items: [], total: 0 }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       )
     }
-    // Page requests pass through (they see the site but API calls return nothing)
+    // Page requests and auth flows pass through
   }
 
   // Scanner trap detection: catch automated vulnerability scanners
@@ -361,8 +380,9 @@ export async function middleware(request: NextRequest) {
   // Other auth endpoints (/api/auth/me, /api/auth/logout) are session management,
   // not login attempts — fall through to normal rate limiting with localhost bypass.
 
-  // Non-auth endpoints: skip rate limiting for localhost in development
-  const isLocal = ip === '127.0.0.1' || ip === '::1' || ip === 'localhost'
+  // Non-auth endpoints: skip rate limiting for localhost in development only
+  const isLocal = process.env.NODE_ENV !== 'production'
+    && (ip === '127.0.0.1' || ip === '::1' || ip === 'localhost')
   if (isLocal) return NextResponse.next()
 
   const { allowed, retryAfter } = checkRateLimit(ip, pathname)

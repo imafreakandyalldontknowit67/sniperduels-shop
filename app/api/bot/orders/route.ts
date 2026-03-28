@@ -27,7 +27,7 @@ async function expireOrder(order: { id: string; userId: string; totalPrice: numb
   if (order.notes?.startsWith('vendor-deposit:')) {
     await updateOrder(order.id, {
       status: 'failed',
-      notes: 'Auto-expired: vendor deposit timed out after 30 minutes',
+      notes: `${order.notes} | Auto-expired: vendor deposit timed out after 30 minutes`,
     })
     const depositId = order.notes.replace('vendor-deposit:', '')
     await updateVendorDepositStatus(depositId, 'failed')
@@ -47,7 +47,9 @@ async function expireOrder(order: { id: string; userId: string; totalPrice: numb
 
   await updateOrder(order.id, {
     status: 'failed',
-    notes: 'Auto-expired: order timed out after 30 minutes',
+    notes: order.notes
+      ? `${order.notes} | Auto-expired: order timed out after 30 minutes`
+      : 'Auto-expired: order timed out after 30 minutes',
   })
 
   // Refund wallet and reverse lifetime spend
