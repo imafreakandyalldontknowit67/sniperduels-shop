@@ -715,6 +715,7 @@ export async function setGemStock(balanceInK: number): Promise<number> {
 }
 
 export async function deductGemStock(amountInK: number): Promise<boolean> {
+  if (!Number.isFinite(amountInK) || amountInK <= 0) return false
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     // Lock the gem stock row to prevent concurrent reads (race condition fix)
     const locked: Array<{ balanceInK: number }> = await tx.$queryRawUnsafe(
@@ -731,15 +732,20 @@ export async function deductGemStock(amountInK: number): Promise<boolean> {
 }
 
 export async function addGemStock(amountInK: number): Promise<number> {
-  const row = await prisma.gemStock.findUnique({ where: { id: 'singleton' } })
-  const current = row?.balanceInK ?? 0
-  const newBalance = current + amountInK
-  await prisma.gemStock.upsert({
-    where: { id: 'singleton' },
-    create: { id: 'singleton', balanceInK: newBalance, updatedAt: new Date().toISOString() },
-    update: { balanceInK: newBalance, updatedAt: new Date().toISOString() },
+  if (!Number.isFinite(amountInK) || amountInK <= 0) return 0
+  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const locked: Array<{ balanceInK: number }> = await tx.$queryRawUnsafe(
+      'SELECT "balanceInK" FROM "GemStock" WHERE id = \'singleton\' FOR UPDATE'
+    )
+    const current = locked.length ? locked[0].balanceInK : 0
+    const newBalance = current + amountInK
+    await tx.gemStock.upsert({
+      where: { id: 'singleton' },
+      create: { id: 'singleton', balanceInK: newBalance, updatedAt: new Date().toISOString() },
+      update: { balanceInK: newBalance, updatedAt: new Date().toISOString() },
+    })
+    return newBalance
   })
-  return newBalance
 }
 
 // ─── Site Settings ──────────────────────────────────────────────────────────
@@ -917,18 +923,23 @@ export async function updateVendorListingActive(vendorId: string, active: boolea
 }
 
 export async function addVendorStock(vendorId: string, amountK: number): Promise<VendorGemListing | null> {
+  if (!Number.isFinite(amountK) || amountK <= 0) return null
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    const listing = await tx.vendorGemListing.findUnique({ where: { vendorId } })
-    if (!listing) return null
+    const locked: Array<{ stockK: number }> = await tx.$queryRawUnsafe(
+      'SELECT "stockK" FROM "VendorGemListing" WHERE "vendorId" = $1 FOR UPDATE', vendorId
+    )
+    if (!locked.length) return null
+    const newStock = locked[0].stockK + amountK
     const row = await tx.vendorGemListing.update({
       where: { vendorId },
-      data: { stockK: listing.stockK + amountK, updatedAt: new Date().toISOString() },
+      data: { stockK: newStock, updatedAt: new Date().toISOString() },
     })
     return toVendorGemListing(row)
   })
 }
 
 export async function deductVendorStock(vendorId: string, amountK: number): Promise<boolean> {
+  if (!Number.isFinite(amountK) || amountK <= 0) return false
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const locked: Array<{ stockK: number }> = await tx.$queryRawUnsafe(
       'SELECT "stockK" FROM "VendorGemListing" WHERE "vendorId" = $1 FOR UPDATE', vendorId

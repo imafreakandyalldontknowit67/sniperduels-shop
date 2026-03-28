@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser, isAdmin } from '@/lib/auth'
-import { getOrder, updateOrder, addToWallet, addToLifetimeSpend, getStock, updateStockItem, addGemStock, updateVendorDepositStatus } from '@/lib/storage'
+import { getOrder, updateOrder, addToWallet, addToLifetimeSpend, getStock, updateStockItem, addGemStock, updateVendorDepositStatus, addVendorStock } from '@/lib/storage'
 
 export async function POST(
   request: NextRequest,
@@ -50,6 +50,13 @@ export async function POST(
   if (isVendorDeposit) {
     const depositId = order.notes!.replace('vendor-deposit:', '')
     await updateVendorDepositStatus(depositId, 'failed')
+    return NextResponse.json({ order: updated })
+  }
+
+  // Vendor withdrawal: refund vendor stock (was deducted at submission)
+  const isVendorWithdrawal = order.notes?.startsWith('vendor-withdrawal:')
+  if (isVendorWithdrawal) {
+    await addVendorStock(order.userId, order.quantity)
     return NextResponse.json({ order: updated })
   }
 

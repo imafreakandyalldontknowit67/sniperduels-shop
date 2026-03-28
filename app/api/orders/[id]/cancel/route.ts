@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
-import { getOrder, updateOrder, addToWallet, addToLifetimeSpend, getStock, updateStockItem, addGemStock, updateVendorDepositStatus } from '@/lib/storage'
+import { getOrder, updateOrder, addToWallet, addToLifetimeSpend, getStock, updateStockItem, addGemStock, updateVendorDepositStatus, addVendorStock } from '@/lib/storage'
 
 export async function POST(
   request: NextRequest,
@@ -29,10 +29,14 @@ export async function POST(
     )
   }
 
+  // Detect vendor ops before overwriting notes
+  const isVendorDeposit = order.notes?.startsWith('vendor-deposit:')
+  const isVendorWithdrawal = order.notes?.startsWith('vendor-withdrawal:')
+
   // Mark as failed FIRST to prevent race with bot complete.
   const updated = await updateOrder(id, {
     status: 'failed',
-    notes: 'Cancelled by user',
+    notes: order.notes ? `${order.notes} | Cancelled by user` : 'Cancelled by user',
   })
 
   // Re-read order to confirm we won the race
@@ -44,12 +48,16 @@ export async function POST(
     )
   }
 
-  // Check if this is a vendor deposit order
-  const isVendorDeposit = order.notes?.startsWith('vendor-deposit:')
+  // Vendor deposit: mark deposit as failed, no wallet refund needed
   if (isVendorDeposit) {
     const depositId = order.notes!.split('vendor-deposit:')[1]
     await updateVendorDepositStatus(depositId, 'failed')
-    // No wallet refund for vendor deposits
+    return NextResponse.json({ order: updated })
+  }
+
+  // Vendor withdrawal: refund vendor stock (was deducted at submission)
+  if (isVendorWithdrawal) {
+    await addVendorStock(order.userId, order.quantity)
     return NextResponse.json({ order: updated })
   }
 
