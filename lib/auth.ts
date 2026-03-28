@@ -59,6 +59,8 @@ export interface Session {
 
 // Idle timeout: 4 hours of inactivity invalidates session
 const IDLE_TIMEOUT_MS = 4 * 60 * 60 * 1000
+// Absolute session lifetime: 24 hours from creation regardless of activity
+const MAX_SESSION_LIFETIME_S = 24 * 60 * 60
 
 export async function createSession(session: Session): Promise<string> {
   const jti = randomUUID()
@@ -66,6 +68,7 @@ export async function createSession(session: Session): Promise<string> {
   const token = await new SignJWT({ ...session, lastActivity: now })
     .setProtectedHeader({ alg: 'HS256' })
     .setJti(jti)
+    .setIssuedAt(now)
     .setExpirationTime('7d')
     .sign(SESSION_SECRET)
 
@@ -87,6 +90,18 @@ export async function getSession(): Promise<Session | null> {
 
     const session = payload as unknown as Session
 
+    const nowSec = Math.floor(Date.now() / 1000)
+
+    // Check absolute session lifetime (24h from creation)
+    const issuedAt = payload.iat as number | undefined
+    if (issuedAt && nowSec - issuedAt > MAX_SESSION_LIFETIME_S) {
+      if (payload.jti && payload.exp) {
+        await blacklistSession(payload.jti as string, payload.exp as number)
+      }
+      try { cookieStore.delete('session') } catch { /* Server Component context */ }
+      return null
+    }
+
     // Check idle timeout
     if (session.lastActivity) {
       const lastActivityMs = session.lastActivity * 1000
@@ -100,14 +115,14 @@ export async function getSession(): Promise<Session | null> {
       }
     }
 
-    // Refresh activity timestamp by issuing a new token
+    // Refresh activity timestamp by issuing a new token (preserves original iat)
     // Only refresh if more than 1 minute since last activity (avoid churning on every request)
-    const nowSec = Math.floor(Date.now() / 1000)
     if (!session.lastActivity || nowSec - session.lastActivity > 60) {
       try {
         const newToken = await new SignJWT({ ...session, lastActivity: nowSec })
           .setProtectedHeader({ alg: 'HS256' })
           .setJti(payload.jti as string)
+          .setIssuedAt(issuedAt || nowSec)
           .setExpirationTime('7d')
           .sign(SESSION_SECRET)
 

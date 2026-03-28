@@ -543,6 +543,21 @@ export async function updateStockItem(id: string, updates: Partial<StockItem>): 
   }
 }
 
+export async function deductItemStock(itemId: string, quantity: number): Promise<boolean> {
+  if (!Number.isFinite(quantity) || quantity <= 0) return false
+  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const locked: Array<{ stock: number }> = await tx.$queryRawUnsafe(
+      'SELECT "stock" FROM "StockItem" WHERE id = $1 FOR UPDATE', itemId
+    )
+    if (!locked.length || locked[0].stock < quantity) return false
+    await tx.stockItem.update({
+      where: { id: itemId },
+      data: { stock: locked[0].stock - quantity, updatedAt: new Date().toISOString() },
+    })
+    return true
+  })
+}
+
 export async function deleteStockItem(id: string): Promise<boolean> {
   try {
     await prisma.stockItem.delete({ where: { id } })
@@ -1078,7 +1093,10 @@ export async function createVendorEarning(
     data: { vendorId, orderId, saleAmount, platformFee, netAmount, createdAt: now },
   })
   // Credit vendor wallet
-  await addToWallet(vendorId, netAmount)
+  const credited = await addToWallet(vendorId, netAmount)
+  if (!credited) {
+    console.error(`CRITICAL: Vendor wallet credit failed for ${vendorId}, amount $${netAmount}. Wallet at max.`)
+  }
   return toVendorEarning(row)
 }
 

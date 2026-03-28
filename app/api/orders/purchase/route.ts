@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import {
   getStockItem,
-  updateStockItem,
+  deductItemStock,
   deductFromWallet,
   addToWallet,
   createOrder,
@@ -89,17 +89,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to deduct wallet balance' }, { status: 500 })
     }
 
-    // Atomically decrement stock (re-read current stock to avoid stale value)
-    const freshItem = await getStockItem(item.id)
-    if (!freshItem || freshItem.stock < quantity) {
-      // Refund the wallet since stock changed between check and deduction
-      await addToWallet(user.id, totalPrice)
+    // Atomically decrement stock with row-level lock
+    const deducted = await deductItemStock(item.id, quantity)
+    if (!deducted) {
+      const refunded = await addToWallet(user.id, totalPrice)
+      if (!refunded) {
+        console.error(`CRITICAL: Refund failed for user ${user.id}, amount $${totalPrice}. Wallet at max.`)
+        return NextResponse.json(
+          { error: 'Item went out of stock. Refund could not be processed - contact support.' },
+          { status: 409 }
+        )
+      }
       return NextResponse.json(
         { error: 'Item went out of stock. Wallet refunded.' },
         { status: 409 }
       )
     }
-    await updateStockItem(item.id, { stock: freshItem.stock - quantity })
 
     // Create order
     const order = await createOrder({
