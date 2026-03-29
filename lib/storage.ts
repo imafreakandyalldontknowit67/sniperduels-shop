@@ -1221,7 +1221,7 @@ export async function getFinanceStats(period?: 'today' | 'week' | 'month' | 'all
 
   const depositWhere: any = { status: 'completed' }
   const earningWhere: any = {}
-  const orderWhere: any = {}
+  const orderWhere: any = { status: 'completed' }
   if (since) {
     depositWhere.completedAt = { gte: since }
     earningWhere.createdAt = { gte: since }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
-import { getOrder, updateOrder, addVendorStock, updateVendorDepositStatus } from '@/lib/storage'
+import { getOrder, updateOrder, addVendorStock, updateVendorDepositStatus, createLedgerEntry } from '@/lib/storage'
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -62,6 +62,28 @@ export async function POST(
   // No additional stock changes needed here
   if (order.notes?.startsWith('vendor-withdrawal:')) {
     // Nothing extra to do — completion is handled by the updateOrder above
+  }
+
+  // Log completed purchase to ledger (only on successful delivery)
+  if (order.type === 'gems' && !order.notes?.startsWith('vendor-deposit:') && !order.notes?.startsWith('vendor-withdrawal:')) {
+    createLedgerEntry({
+      type: 'purchase',
+      userId: order.userId,
+      amount: order.totalPrice,
+      description: `Purchased ${order.quantity}k gems at $${order.pricePerUnit}/k`,
+      relatedId: order.id,
+    }).catch(err => console.error('Ledger write failed (purchase complete):', err))
+
+    // If vendor sale, also log vendor earning
+    if (order.vendorListingId && order.vendorListingId !== 'platform') {
+      createLedgerEntry({
+        type: 'vendor_earning',
+        userId: order.vendorListingId,
+        amount: order.totalPrice,
+        description: `Vendor sale: ${order.quantity}k gems`,
+        relatedId: order.id,
+      }).catch(err => console.error('Ledger write failed (vendor_earning complete):', err))
+    }
   }
 
   return NextResponse.json({ order: updated })

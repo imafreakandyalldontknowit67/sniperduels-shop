@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser, isAdmin } from '@/lib/auth'
-import { getOrder, updateOrder, addVendorStock, updateVendorDepositStatus } from '@/lib/storage'
+import { getOrder, updateOrder, addVendorStock, updateVendorDepositStatus, createLedgerEntry } from '@/lib/storage'
 
 export async function POST(
   request: NextRequest,
@@ -69,6 +69,17 @@ export async function POST(
     const depositId = order.notes.replace('vendor-deposit:', '')
     await updateVendorDepositStatus(depositId, 'completed')
     await addVendorStock(order.userId, order.quantity)
+  }
+
+  // Log completed purchase to ledger
+  if (order.type === 'gems' && !order.notes?.startsWith('vendor-deposit:') && !order.notes?.startsWith('vendor-withdrawal:')) {
+    createLedgerEntry({
+      type: 'purchase',
+      userId: order.userId,
+      amount: order.totalPrice,
+      description: `Purchased ${order.quantity}k gems at $${order.pricePerUnit}/k`,
+      relatedId: order.id,
+    }).catch(err => console.error('Ledger write failed (admin complete):', err))
   }
 
   return NextResponse.json({ order: updated })
