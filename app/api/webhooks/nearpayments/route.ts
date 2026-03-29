@@ -47,13 +47,13 @@ export async function POST(request: NextRequest) {
       const bonus = Math.round(deposit.amount * CRYPTO_BONUS * 100) / 100
       const totalCredit = deposit.amount + bonus
       await addToWallet(deposit.userId, totalCredit)
-      await createLedgerEntry({
+      createLedgerEntry({
         type: 'deposit',
         userId: deposit.userId,
         amount: totalCredit,
         description: `Crypto deposit: $${deposit.amount} + $${bonus} bonus`,
         relatedId: deposit.id,
-      })
+      }).catch(err => console.error('Ledger write failed (crypto deposit):', err))
 
       const user = await getUser(deposit.userId)
       await notifyDeposit(user?.name || deposit.userId, totalCredit)

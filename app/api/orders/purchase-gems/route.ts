@@ -185,27 +185,27 @@ export async function POST(request: NextRequest) {
       await markDiscordFirstPurchaseUsed(user.id)
     }
 
-    // Log purchase to ledger
-    await createLedgerEntry({
+    // Log purchase to ledger (non-blocking — don't let ledger failures break purchases)
+    createLedgerEntry({
       type: 'purchase',
       userId: user.id,
       amount: totalPrice,
       description: `Purchased ${roundedAmount}k gems at $${rate}/k`,
       relatedId: order.id,
-    })
+    }).catch(err => console.error('Ledger write failed (purchase):', err))
 
     // Create vendor earning if applicable (with TOCTOU double-check)
     if (isVendorPurchase && vendorId) {
       const verifyListing = await getVendorListing(vendorId)
       if (verifyListing && verifyListing.vendorId === vendorId) {
         await createVendorEarning(vendorId, order.id, totalPrice)
-        await createLedgerEntry({
+        createLedgerEntry({
           type: 'vendor_earning',
           userId: vendorId,
           amount: totalPrice,
           description: `Vendor sale: ${roundedAmount}k gems to ${user.name}`,
           relatedId: order.id,
-        })
+        }).catch(err => console.error('Ledger write failed (vendor_earning):', err))
       } else {
         console.error(`CRITICAL: Vendor ID mismatch at earning creation for order ${order.id}`)
       }

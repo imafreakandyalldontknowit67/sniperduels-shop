@@ -68,13 +68,13 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ received: true })
         }
         await addToWallet(deposit.userId, deposit.amount)
-        await createLedgerEntry({
+        createLedgerEntry({
           type: 'deposit',
           userId: deposit.userId,
           amount: deposit.amount,
           description: `Fiat deposit: $${deposit.amount}`,
           relatedId: deposit.id,
-        })
+        }).catch(err => console.error('Ledger write failed (fiat deposit):', err))
         const user = await getUser(deposit.userId)
         await notifyDeposit(user?.name || deposit.userId, deposit.amount)
         console.log(`[Webhook] Deposit completed: ${deposit.id} ($${deposit.amount})`)
