@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from 'react'
 import { NAV_LINKS } from '@/lib/constants'
 import { Menu, X, LogOut, Shield, User, Eye, EyeOff, ChevronDown, ShoppingBag, UserCircle, Check, Wallet, Plus, ArrowDownToLine, Crown, Store } from 'lucide-react'
 import { useAuth } from '@/components/providers'
+import posthog from 'posthog-js'
 import { LOYALTY_TIERS } from '@/lib/loyalty'
 import { PixelButton } from '@/components/ui'
 
@@ -72,6 +73,7 @@ export function Header() {
               href="https://discord.gg/sniperduels"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => posthog.capture('discord_link_clicked', { location: 'navbar_desktop' })}
               className="text-gray-400 hover:text-white transition-colors"
               title="Join our Discord"
             >
@@ -295,6 +297,7 @@ export function Header() {
                 href="https://discord.gg/sniperduels"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => posthog.capture('discord_link_clicked', { location: 'navbar_mobile' })}
                 className="flex items-center gap-2 uppercase tracking-wider text-sm py-2 text-pixel-blue hover:text-pixel-blue-light"
               >
                 <DiscordIcon className="w-4 h-4" />
