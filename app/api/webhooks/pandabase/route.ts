@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyWebhookSignature } from '@/lib/pandabase'
-import { getDepositByInvoiceId, getDepositByRefId, claimPendingDeposit, addToWallet, getUser } from '@/lib/storage'
+import { getDepositByInvoiceId, getDepositByRefId, claimPendingDeposit, addToWallet, getUser, createLedgerEntry } from '@/lib/storage'
 import type { Deposit } from '@/lib/storage'
 import { notifyDeposit, notifyDispute, notifyRefund } from '@/lib/discord-webhook'
 
@@ -68,6 +68,13 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ received: true })
         }
         await addToWallet(deposit.userId, deposit.amount)
+        await createLedgerEntry({
+          type: 'deposit',
+          userId: deposit.userId,
+          amount: deposit.amount,
+          description: `Fiat deposit: $${deposit.amount}`,
+          relatedId: deposit.id,
+        })
         const user = await getUser(deposit.userId)
         await notifyDeposit(user?.name || deposit.userId, deposit.amount)
         console.log(`[Webhook] Deposit completed: ${deposit.id} ($${deposit.amount})`)

@@ -64,6 +64,8 @@ export async function POST(request: NextRequest) {
     const deposit = await createDeposit({
       userId: user.id,
       amount: roundedAmount,
+      processingFee,
+      chargeAmount,
       status: 'pending',
       pandabaseInvoiceId: sessionId,
       pandabaseRefId: refId,

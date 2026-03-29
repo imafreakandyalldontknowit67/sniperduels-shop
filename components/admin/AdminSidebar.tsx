@@ -18,6 +18,7 @@ import {
   TrendingDown,
   GitBranch,
   Store,
+  Wallet,
 } from 'lucide-react'
 
 const navItems = [
@@ -27,6 +28,7 @@ const navItems = [
   { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/vendors', label: 'Vendors', icon: Store },
+  { href: '/admin/finance', label: 'Finance', icon: Wallet },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 

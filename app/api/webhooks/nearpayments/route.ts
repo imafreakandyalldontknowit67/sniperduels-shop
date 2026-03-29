@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyIpnSignature } from '@/lib/nearpayments'
-import { getDeposit, claimPendingDeposit, addToWallet, getUser } from '@/lib/storage'
+import { getDeposit, claimPendingDeposit, addToWallet, getUser, createLedgerEntry } from '@/lib/storage'
 import { notifyDeposit } from '@/lib/discord-webhook'
 
 export const dynamic = 'force-dynamic'
@@ -47,6 +47,13 @@ export async function POST(request: NextRequest) {
       const bonus = Math.round(deposit.amount * CRYPTO_BONUS * 100) / 100
       const totalCredit = deposit.amount + bonus
       await addToWallet(deposit.userId, totalCredit)
+      await createLedgerEntry({
+        type: 'deposit',
+        userId: deposit.userId,
+        amount: totalCredit,
+        description: `Crypto deposit: $${deposit.amount} + $${bonus} bonus`,
+        relatedId: deposit.id,
+      })
 
       const user = await getUser(deposit.userId)
       await notifyDeposit(user?.name || deposit.userId, totalCredit)

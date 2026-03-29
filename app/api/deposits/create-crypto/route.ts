@@ -57,9 +57,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Create deposit record first so we have the ID for order_id
+    // Crypto deposits have no processing fee (bonus instead)
     const deposit = await createDeposit({
       userId: user.id,
       amount: roundedAmount,
+      processingFee: 0,
+      chargeAmount: roundedAmount,
       status: 'pending',
       pandabaseInvoiceId: `crypto_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       pandabaseCheckoutUrl: '',

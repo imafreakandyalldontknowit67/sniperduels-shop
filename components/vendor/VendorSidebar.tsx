@@ -9,6 +9,7 @@ import {
   ArrowUpRight,
   DollarSign,
   Store,
+  Banknote,
   ArrowLeft,
   Menu,
   X,
@@ -19,6 +20,7 @@ const navItems = [
   { href: '/vendor/deposit', label: 'Deposit Gems', icon: Plus },
   { href: '/vendor/withdraw', label: 'Withdraw Gems', icon: ArrowUpRight },
   { href: '/vendor/earnings', label: 'Earnings', icon: DollarSign },
+  { href: '/vendor/payouts', label: 'Cash Out', icon: Banknote },
 ]
 
 export function VendorSidebar() {

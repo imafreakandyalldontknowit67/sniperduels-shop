@@ -575,6 +575,8 @@ export interface Deposit {
   id: string
   userId: string
   amount: number
+  processingFee?: number
+  chargeAmount?: number
   status: DepositStatus
   pandabaseInvoiceId: string
   pandabaseRefId?: string
@@ -584,29 +586,20 @@ export interface Deposit {
   completedAt?: string
 }
 
-function toDeposit(row: {
-  id: string
-  userId: string
-  amount: Decimal
-  status: string
-  pandabaseInvoiceId: string
-  pandabaseRefId: string | null
-  pandabaseCheckoutUrl: string
-  createdAt: string
-  updatedAt: string
-  completedAt: string | null
-}): Deposit {
+function toDeposit(row: Record<string, unknown>): Deposit {
   return {
-    id: row.id,
-    userId: row.userId,
-    amount: d(row.amount),
+    id: row.id as string,
+    userId: row.userId as string,
+    amount: d(row.amount as Decimal),
+    processingFee: row.processingFee != null ? d(row.processingFee as Decimal) : undefined,
+    chargeAmount: row.chargeAmount != null ? d(row.chargeAmount as Decimal) : undefined,
     status: row.status as DepositStatus,
-    pandabaseInvoiceId: row.pandabaseInvoiceId,
-    pandabaseRefId: row.pandabaseRefId ?? undefined,
-    pandabaseCheckoutUrl: row.pandabaseCheckoutUrl,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-    completedAt: row.completedAt ?? undefined,
+    pandabaseInvoiceId: row.pandabaseInvoiceId as string,
+    pandabaseRefId: (row.pandabaseRefId as string | null) ?? undefined,
+    pandabaseCheckoutUrl: row.pandabaseCheckoutUrl as string,
+    createdAt: row.createdAt as string,
+    updatedAt: row.updatedAt as string,
+    completedAt: (row.completedAt as string | null) ?? undefined,
   }
 }
 
@@ -648,6 +641,8 @@ export async function createDeposit(
       id,
       userId: deposit.userId,
       amount: deposit.amount,
+      processingFee: deposit.processingFee,
+      chargeAmount: deposit.chargeAmount,
       status: deposit.status,
       pandabaseInvoiceId: deposit.pandabaseInvoiceId,
       pandabaseRefId: deposit.pandabaseRefId,
@@ -1141,4 +1136,299 @@ export async function getOrderStats() {
     weekOrders: orders.filter(o => new Date(o.createdAt) >= thisWeek).length,
     monthOrders: orders.filter(o => new Date(o.createdAt) >= thisMonth).length,
   }
+}
+
+// ─── Transaction Ledger ──────────────────────────────────────────────────────
+
+export type LedgerType = 'deposit' | 'purchase' | 'vendor_earning' | 'vendor_payout' | 'refund'
+
+export interface LedgerEntry {
+  id: string
+  type: LedgerType
+  userId: string
+  amount: number
+  description: string
+  relatedId?: string
+  createdAt: string
+}
+
+export async function createLedgerEntry(entry: Omit<LedgerEntry, 'id' | 'createdAt'>): Promise<void> {
+  const now = new Date().toISOString()
+  await prisma.transactionLedger.create({
+    data: {
+      type: entry.type as any,
+      userId: entry.userId,
+      amount: entry.amount,
+      description: entry.description,
+      relatedId: entry.relatedId,
+      createdAt: now,
+    },
+  })
+}
+
+export async function getLedgerEntries(opts?: {
+  userId?: string
+  type?: LedgerType
+  since?: string
+  limit?: number
+}): Promise<LedgerEntry[]> {
+  const where: any = {}
+  if (opts?.userId) where.userId = opts.userId
+  if (opts?.type) where.type = opts.type
+  if (opts?.since) where.createdAt = { gte: opts.since }
+
+  const rows = await prisma.transactionLedger.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+    take: opts?.limit ?? 100,
+  })
+
+  return rows.map(row => ({
+    id: row.id,
+    type: row.type as LedgerType,
+    userId: row.userId,
+    amount: d(row.amount),
+    description: row.description,
+    relatedId: row.relatedId ?? undefined,
+    createdAt: row.createdAt,
+  }))
+}
+
+// ─── Finance Stats ───────────────────────────────────────────────────────────
+
+export interface FinanceStats {
+  totalDeposits: number
+  totalProcessingFees: number
+  totalPlatformFees: number
+  totalVendorEarnings: number
+  vendorPayoutsOwed: number
+  pendingPayoutCount: number
+  netRevenue: number
+  orderCount: number
+  depositCount: number
+}
+
+export async function getFinanceStats(period?: 'today' | 'week' | 'month' | 'all'): Promise<FinanceStats> {
+  let since: string | undefined
+  const now = new Date()
+  if (period === 'today') {
+    since = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
+  } else if (period === 'week') {
+    since = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  } else if (period === 'month') {
+    since = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
+  }
+
+  const depositWhere: any = { status: 'completed' }
+  const earningWhere: any = {}
+  const orderWhere: any = {}
+  if (since) {
+    depositWhere.completedAt = { gte: since }
+    earningWhere.createdAt = { gte: since }
+    orderWhere.createdAt = { gte: since }
+  }
+
+  const [depositAgg, earningAgg, orderCount, vendorBalances, pendingPayouts] = await Promise.all([
+    prisma.deposit.aggregate({
+      where: depositWhere,
+      _sum: { amount: true, processingFee: true },
+      _count: true,
+    }),
+    prisma.vendorEarning.aggregate({
+      where: earningWhere,
+      _sum: { platformFee: true, netAmount: true },
+    }),
+    prisma.order.count({ where: orderWhere }),
+    prisma.user.aggregate({
+      where: { isVendor: true },
+      _sum: { walletBalance: true },
+    }),
+    prisma.vendorPayout.count({ where: { status: 'pending' } }),
+  ])
+
+  const totalDeposits = d(depositAgg._sum.amount ?? 0)
+  const totalProcessingFees = d(depositAgg._sum.processingFee ?? 0)
+  const totalPlatformFees = d(earningAgg._sum.platformFee ?? 0)
+  const totalVendorEarnings = d(earningAgg._sum.netAmount ?? 0)
+  const vendorPayoutsOwed = d(vendorBalances._sum.walletBalance ?? 0)
+
+  return {
+    totalDeposits,
+    totalProcessingFees,
+    totalPlatformFees,
+    totalVendorEarnings,
+    vendorPayoutsOwed,
+    pendingPayoutCount: pendingPayouts,
+    netRevenue: Math.round((totalProcessingFees + totalPlatformFees) * 100) / 100,
+    orderCount,
+    depositCount: depositAgg._count,
+  }
+}
+
+// ─── Vendor Payouts ──────────────────────────────────────────────────────────
+
+export interface VendorPayout {
+  id: string
+  vendorId: string
+  amount: number
+  paymentMethod: string
+  status: 'pending' | 'completed' | 'rejected'
+  adminNotes?: string
+  createdAt: string
+  updatedAt: string
+  completedAt?: string
+}
+
+export async function createVendorPayout(
+  vendorId: string,
+  amount: number,
+  paymentMethod: string
+): Promise<VendorPayout | null> {
+  const now = new Date().toISOString()
+
+  return prisma.$transaction(async (tx) => {
+    // Lock the user row to prevent race conditions
+    const rows = await tx.$queryRawUnsafe<{ walletBalance: Decimal }[]>(
+      'SELECT "walletBalance" FROM "User" WHERE id = $1 FOR UPDATE',
+      vendorId
+    )
+    if (!rows.length) return null
+
+    const balance = d(rows[0].walletBalance)
+    if (balance < amount) return null
+
+    // Deduct wallet immediately
+    await tx.user.update({
+      where: { id: vendorId },
+      data: { walletBalance: Math.round((balance - amount) * 100) / 100 },
+    })
+
+    const payout = await tx.vendorPayout.create({
+      data: {
+        vendorId,
+        amount,
+        paymentMethod,
+        status: 'pending',
+        createdAt: now,
+        updatedAt: now,
+      },
+    })
+
+    // Ledger entry
+    await tx.transactionLedger.create({
+      data: {
+        type: 'vendor_payout',
+        userId: vendorId,
+        amount,
+        description: `Payout request: ${paymentMethod}`,
+        relatedId: payout.id,
+        createdAt: now,
+      },
+    })
+
+    return {
+      id: payout.id,
+      vendorId: payout.vendorId,
+      amount: d(payout.amount),
+      paymentMethod: payout.paymentMethod,
+      status: payout.status as 'pending',
+      adminNotes: payout.adminNotes ?? undefined,
+      createdAt: payout.createdAt,
+      updatedAt: payout.updatedAt,
+      completedAt: payout.completedAt ?? undefined,
+    }
+  })
+}
+
+export async function getVendorPayouts(vendorId?: string): Promise<VendorPayout[]> {
+  const where: any = {}
+  if (vendorId) where.vendorId = vendorId
+
+  const rows = await prisma.vendorPayout.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+  })
+
+  return rows.map(row => ({
+    id: row.id,
+    vendorId: row.vendorId,
+    amount: d(row.amount),
+    paymentMethod: row.paymentMethod,
+    status: row.status as 'pending' | 'completed' | 'rejected',
+    adminNotes: row.adminNotes ?? undefined,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    completedAt: row.completedAt ?? undefined,
+  }))
+}
+
+export async function getPendingPayouts(): Promise<(VendorPayout & { vendorName: string })[]> {
+  const rows = await prisma.vendorPayout.findMany({
+    where: { status: 'pending' },
+    include: { vendor: { select: { displayName: true } } },
+    orderBy: { createdAt: 'asc' },
+  })
+
+  return rows.map(row => ({
+    id: row.id,
+    vendorId: row.vendorId,
+    amount: d(row.amount),
+    paymentMethod: row.paymentMethod,
+    status: row.status as 'pending',
+    adminNotes: row.adminNotes ?? undefined,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    completedAt: row.completedAt ?? undefined,
+    vendorName: row.vendor.displayName,
+  }))
+}
+
+export async function completeVendorPayout(id: string, adminNotes?: string): Promise<boolean> {
+  const now = new Date().toISOString()
+  const result = await prisma.vendorPayout.updateMany({
+    where: { id, status: 'pending' },
+    data: { status: 'completed', adminNotes, updatedAt: now, completedAt: now },
+  })
+  return result.count === 1
+}
+
+export async function rejectVendorPayout(id: string, adminNotes?: string): Promise<boolean> {
+  const now = new Date().toISOString()
+
+  return prisma.$transaction(async (tx) => {
+    const payout = await tx.vendorPayout.findFirst({ where: { id, status: 'pending' } })
+    if (!payout) return false
+
+    await tx.vendorPayout.update({
+      where: { id },
+      data: { status: 'rejected', adminNotes, updatedAt: now },
+    })
+
+    // Refund the vendor's wallet
+    const rows = await tx.$queryRawUnsafe<{ walletBalance: Decimal }[]>(
+      'SELECT "walletBalance" FROM "User" WHERE id = $1 FOR UPDATE',
+      payout.vendorId
+    )
+    if (rows.length) {
+      const newBalance = d(rows[0].walletBalance) + d(payout.amount)
+      await tx.user.update({
+        where: { id: payout.vendorId },
+        data: { walletBalance: Math.round(newBalance * 100) / 100 },
+      })
+    }
+
+    // Ledger entry for refund
+    await tx.transactionLedger.create({
+      data: {
+        type: 'refund',
+        userId: payout.vendorId,
+        amount: d(payout.amount),
+        description: `Payout rejected${adminNotes ? ': ' + adminNotes : ''}`,
+        relatedId: id,
+        createdAt: now,
+      },
+    })
+
+    return true
+  })
 }
