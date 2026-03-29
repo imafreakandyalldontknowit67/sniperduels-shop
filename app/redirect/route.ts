@@ -27,7 +27,22 @@ export async function GET(request: NextRequest) {
     if (existingSession) {
       return NextResponse.redirect(new URL('/', baseUrl))
     }
-    return NextResponse.redirect(new URL('/?error=invalid_state', baseUrl))
+    // On mobile, cookies can get lost during cross-site OAuth redirect.
+    // Show a user-friendly retry page instead of a silent error redirect.
+    return new NextResponse(
+      `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login - Sniper Duels</title>
+<style>body{background:#1a1a1e;color:#fff;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;text-align:center}
+.box{max-width:400px;padding:32px}h2{color:#e1ad2d;margin-bottom:12px}p{color:#9ca3af;font-size:14px;margin-bottom:24px}
+a{display:inline-block;background:#e1ad2d;color:#1a1a1e;padding:12px 32px;text-decoration:none;font-weight:bold;font-size:14px;text-transform:uppercase}</style>
+</head><body><div class="box">
+<h2>Login didn't complete</h2>
+<p>This can happen on mobile. Tap below to try again.</p>
+<a href="/api/auth/roblox">Try Again</a>
+</div></body></html>`,
+      { status: 200, headers: { 'Content-Type': 'text/html' } }
+    )
   }
 
   // Retrieve PKCE code verifier
