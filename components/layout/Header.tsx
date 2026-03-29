@@ -68,6 +68,15 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
+            <a
+              href="https://discord.gg/sniperduels"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-white transition-colors"
+              title="Join our Discord"
+            >
+              <DiscordIcon className="w-5 h-5" />
+            </a>
             {showAdminFeatures && (
               <Link
                 href="/admin"
@@ -282,6 +291,15 @@ export function Header() {
                   {link.label}
                 </Link>
               ))}
+              <a
+                href="https://discord.gg/sniperduels"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 uppercase tracking-wider text-sm py-2 text-pixel-blue hover:text-pixel-blue-light"
+              >
+                <DiscordIcon className="w-4 h-4" />
+                Discord
+              </a>
               {user ? (
                 <>
                   <div className="flex items-center gap-2 pt-2 border-t-[2px] border-dark-600">
