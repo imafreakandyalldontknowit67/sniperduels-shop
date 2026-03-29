@@ -194,7 +194,6 @@ export function getRobloxAuthUrl(state: string, codeChallenge: string, baseUrl?:
     state,
     code_challenge: codeChallenge,
     code_challenge_method: 'S256',
-    prompt: 'login consent',
   })
 
   return `${ROBLOX_AUTH_URL}?${params.toString()}`
