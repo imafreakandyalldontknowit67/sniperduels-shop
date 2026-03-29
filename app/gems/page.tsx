@@ -29,7 +29,7 @@ interface UserInfo {
 
 export default function GemsPage() {
   const router = useRouter()
-  const [amount, setAmount] = useState(15)
+  const [amount, setAmount] = useState(5)
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
   const [listings, setListings] = useState<GemListing[]>([])
   const [selectedListing, setSelectedListing] = useState<GemListing | null>(null)
@@ -319,7 +319,7 @@ export default function GemsPage() {
               <div className="pt-3 mt-3" style={{ borderTop: '1px solid #4b5563' }}>
                 <div className="flex justify-between items-center">
                   <span className="text-white text-xs sm:text-sm uppercase font-bold">Total</span>
-                  <span className="text-lg sm:text-xl font-bold text-white">$ {discountedPrice.toFixed(0)}</span>
+                  <span className="text-lg sm:text-xl font-bold text-white">$ {discountedPrice.toFixed(2)}</span>
                 </div>
               </div>
             </div>
