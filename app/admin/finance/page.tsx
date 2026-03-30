@@ -134,7 +134,7 @@ export default function FinancePage() {
       bgColor: 'bg-green-500/10',
     },
     {
-      label: 'Processing Fees (6%)',
+      label: 'Processing Fees (7% + $0.35)',
       value: `$${stats.totalProcessingFees.toFixed(2)}`,
       sub: 'From fiat deposits',
       icon: Percent,
@@ -142,7 +142,7 @@ export default function FinancePage() {
       bgColor: 'bg-cyan-500/10',
     },
     {
-      label: 'Platform Fees (5%)',
+      label: 'Platform Fees (3%)',
       value: `$${stats.totalPlatformFees.toFixed(2)}`,
       sub: 'From vendor sales',
       icon: TrendingUp,

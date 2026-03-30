@@ -31,7 +31,7 @@ export async function GET() {
       id: 'platform',
       vendorId: null,
       pricePerK: PLATFORM_TIERS[0].rate,
-      minOrderK: 5,
+      minOrderK: 2,
       maxOrderK: 500,
       stockK: platformStockK,
       bulkTiers: PLATFORM_TIERS.map(t => ({ minK: t.min, pricePerK: t.rate })),

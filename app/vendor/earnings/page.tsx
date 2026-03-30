@@ -74,7 +74,7 @@ export default function VendorEarningsPage() {
         <div className="p-4" style={{ background: '#1a1a1e', border: '2px solid #2a2a2e' }}>
           <div className="flex items-center gap-2 mb-2">
             <Percent className="w-4 h-4 text-red-400" />
-            <span className="text-[10px] text-gray-400 uppercase">Platform Fees (5%)</span>
+            <span className="text-[10px] text-gray-400 uppercase">Platform Fees (3%)</span>
           </div>
           <p className="text-2xl font-bold text-white">${summary?.totalFees.toFixed(2) ?? '0.00'}</p>
         </div>

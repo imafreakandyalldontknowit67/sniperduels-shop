@@ -81,7 +81,7 @@ export default function DepositPage() {
   // ── Card/CashApp deposit (Pandabase) ──
   async function handleCardDeposit() {
     const numAmount = parseFloat(amount)
-    if (!numAmount || numAmount < 1 || numAmount > 500) {
+    if (!numAmount || numAmount < 5 || numAmount > 500) {
       setMessage({ type: 'error', text: 'Amount must be between $5 and $500' })
       return
     }
@@ -128,7 +128,7 @@ export default function DepositPage() {
   // ── Crypto deposit (NearPayments) ──
   async function handleCryptoDeposit() {
     const numAmount = parseFloat(amount)
-    if (!numAmount || numAmount < 1 || numAmount > 500) {
+    if (!numAmount || numAmount < 5 || numAmount > 500) {
       setMessage({ type: 'error', text: 'Amount must be between $5 and $500' })
       return
     }
@@ -287,19 +287,19 @@ export default function DepositPage() {
               You&apos;ll receive ${(parseFloat(amount) * 1.03).toFixed(2)} in your wallet (3% bonus)
             </p>
           )}
-          {tab === 'card' && amount && parseFloat(amount) >= 1 && (
+          {tab === 'card' && amount && parseFloat(amount) >= 5 && (
             <div className="text-xs text-center mt-3 space-y-1">
               <div className="flex justify-between text-gray-400 px-4">
                 <span>Deposit</span>
                 <span>${parseFloat(amount).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-gray-400 px-4">
-                <span>Processing fee (6%)</span>
-                <span>+${(parseFloat(amount) * 0.06).toFixed(2)}</span>
+                <span>Processing fee (7% + $0.35)</span>
+                <span>+${(parseFloat(amount) * 0.07 + 0.35).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-white font-medium px-4 pt-1 border-t border-dark-600">
                 <span>Total charge</span>
-                <span>${(parseFloat(amount) * 1.06).toFixed(2)}</span>
+                <span>${(parseFloat(amount) + parseFloat(amount) * 0.07 + 0.35).toFixed(2)}</span>
               </div>
             </div>
           )}
@@ -326,7 +326,7 @@ export default function DepositPage() {
 
             <button
               onClick={handleCardDeposit}
-              disabled={loading || !amount || parseFloat(amount) < 1}
+              disabled={loading || !amount || parseFloat(amount) < 5}
               className="w-full py-4 bg-accent hover:bg-accent-light disabled:bg-accent/50 disabled:cursor-not-allowed text-white font-medium rounded-xl text-lg transition-colors"
             >
               {loading ? (
@@ -400,7 +400,7 @@ export default function DepositPage() {
 
             <button
               onClick={handleCryptoDeposit}
-              disabled={loading || !amount || parseFloat(amount) < 1}
+              disabled={loading || !amount || parseFloat(amount) < 5}
               className="w-full py-4 bg-green-600 hover:bg-green-500 disabled:bg-green-600/50 disabled:cursor-not-allowed text-white font-medium rounded-xl text-lg transition-colors"
             >
               {loading ? (

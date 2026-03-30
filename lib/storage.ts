@@ -1074,7 +1074,7 @@ function toVendorEarning(row: {
   }
 }
 
-const PLATFORM_FEE_RATE = 0.05 // 5%
+const PLATFORM_FEE_RATE = 0.03 // 3%
 
 export async function createVendorEarning(
   vendorId: string,

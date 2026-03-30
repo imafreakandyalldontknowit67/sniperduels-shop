@@ -51,9 +51,9 @@ export async function POST(request: NextRequest) {
     }
     const { amountInK, vendorListingId } = body
 
-    if (!amountInK || typeof amountInK !== 'number' || !Number.isInteger(amountInK) || amountInK < 5 || amountInK > 500) {
+    if (!amountInK || typeof amountInK !== 'number' || !Number.isInteger(amountInK) || amountInK < 2 || amountInK > 500) {
       return NextResponse.json(
-        { error: 'amountInK must be an integer between 5 and 500' },
+        { error: 'amountInK must be an integer between 2 and 500' },
         { status: 400 }
       )
     }
