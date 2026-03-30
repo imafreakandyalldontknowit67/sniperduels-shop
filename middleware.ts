@@ -211,6 +211,12 @@ export async function middleware(request: NextRequest) {
     return new NextResponse(null, { status: 404 })
   }
 
+  // Redirect old /vendor routes to /dashboard/vendor
+  if (request.nextUrl.pathname.startsWith('/vendor') && !request.nextUrl.pathname.startsWith('/vendor/debug') && !request.nextUrl.pathname.startsWith('/vendor/admin') && !request.nextUrl.pathname.startsWith('/vendor/config')) {
+    const newPath = request.nextUrl.pathname.replace(/^\/vendor/, '/dashboard/vendor')
+    return NextResponse.redirect(new URL(newPath, request.url), 301)
+  }
+
   // Use a verified proxy header or the real connecting IP.
   // cf-connecting-ip is set by Cloudflare (trusted reverse proxy) and cannot be spoofed.
   // x-forwarded-for is only used as a last resort and is NOT trusted for rate limiting

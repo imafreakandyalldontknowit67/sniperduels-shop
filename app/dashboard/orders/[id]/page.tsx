@@ -604,13 +604,13 @@ export default function OrderTrackingPage() {
 
           <div className="flex gap-3 mt-8">
             <Link
-              href={isVendorDeposit ? '/vendor/deposit' : isVendorWithdrawal ? '/vendor/withdraw' : '/shop'}
+              href={isVendorDeposit ? '/dashboard/vendor/deposit' : isVendorWithdrawal ? '/dashboard/vendor/withdraw' : '/shop'}
               className="flex-1 py-3 bg-accent hover:bg-accent-light text-white font-medium rounded-xl text-center transition-colors"
             >
               {isVendorDeposit ? 'Back to Deposits' : isVendorWithdrawal ? 'Back to Withdrawals' : 'Back to Shop'}
             </Link>
             <Link
-              href={isVendorOp ? '/vendor' : '/dashboard/orders'}
+              href={isVendorOp ? '/dashboard/vendor' : '/dashboard/orders'}
               className="flex-1 py-3 bg-dark-600 hover:bg-dark-500 text-white font-medium rounded-xl text-center transition-colors"
             >
               {isVendorOp ? 'Vendor Dashboard' : 'View Orders'}
@@ -649,13 +649,13 @@ export default function OrderTrackingPage() {
 
           <div className="flex gap-3 mt-8">
             <Link
-              href={isVendorDeposit ? '/vendor/deposit' : isVendorWithdrawal ? '/vendor/withdraw' : '/shop'}
+              href={isVendorDeposit ? '/dashboard/vendor/deposit' : isVendorWithdrawal ? '/dashboard/vendor/withdraw' : '/shop'}
               className="flex-1 py-3 bg-accent hover:bg-accent-light text-white font-medium rounded-xl text-center transition-colors"
             >
               {isVendorDeposit ? 'Back to Deposits' : isVendorWithdrawal ? 'Back to Withdrawals' : 'Back to Shop'}
             </Link>
             <Link
-              href={isVendorOp ? '/vendor' : '/dashboard/orders'}
+              href={isVendorOp ? '/dashboard/vendor' : '/dashboard/orders'}
               className="flex-1 py-3 bg-dark-600 hover:bg-dark-500 text-white font-medium rounded-xl text-center transition-colors"
             >
               {isVendorOp ? 'Vendor Dashboard' : 'View Orders'}
@@ -684,7 +684,7 @@ export default function OrderTrackingPage() {
 
           <div className="mt-8">
             <Link
-              href={isVendorOp ? '/vendor' : '/dashboard/orders'}
+              href={isVendorOp ? '/dashboard/vendor' : '/dashboard/orders'}
               className="inline-block py-3 px-8 bg-dark-600 hover:bg-dark-500 text-white font-medium rounded-xl text-center transition-colors"
             >
               {isVendorOp ? 'Vendor Dashboard' : 'View Orders'}

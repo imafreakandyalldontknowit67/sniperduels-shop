@@ -183,7 +183,7 @@ export function Header() {
                       </Link>
                       {isVendor && (
                         <Link
-                          href="/vendor"
+                          href="/dashboard/vendor"
                           onClick={() => setUserDropdownOpen(false)}
                           className="flex items-center gap-3 px-4 py-2 text-xs text-accent hover:bg-dark-700 uppercase"
                         >
@@ -370,7 +370,7 @@ export function Header() {
                   </Link>
                   {isVendor && (
                     <Link
-                      href="/vendor"
+                      href="/dashboard/vendor"
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center gap-2 py-2 text-accent hover:text-accent-light text-xs uppercase"
                     >
