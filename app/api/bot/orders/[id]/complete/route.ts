@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
-import { getOrder, updateOrder, updateOrderStatus, addVendorStock, claimVendorDeposit, addGemStock, createLedgerEntry } from '@/lib/storage'
+import { getOrder, updateOrder, updateOrderStatus, addVendorStock, claimVendorDeposit, addGemStock, createLedgerEntry, createVendorEarning } from '@/lib/storage'
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -71,8 +71,9 @@ export async function POST(
     // Nothing extra to do — completion is handled by the updateOrder above
   }
 
-  // Log completed purchase to ledger (only on successful delivery)
-  if (order.type === 'gems' && order.notes !== 'platform-deposit' && !order.notes?.startsWith('vendor-deposit:') && !order.notes?.startsWith('vendor-withdrawal:')) {
+  // Log completed purchase to ledger + create vendor earning (only on successful delivery)
+  const isRegularPurchase = order.type === 'gems' && order.notes !== 'platform-deposit' && !order.notes?.startsWith('vendor-deposit:') && !order.notes?.startsWith('vendor-withdrawal:') && order.notes !== 'platform-withdraw'
+  if (isRegularPurchase) {
     createLedgerEntry({
       type: 'purchase',
       userId: order.userId,
@@ -81,8 +82,15 @@ export async function POST(
       relatedId: order.id,
     }).catch(err => console.error('Ledger write failed (purchase complete):', err))
 
-    // If vendor sale, also log vendor earning
+    // Create vendor earning NOW (on delivery), not at purchase time
+    // This ensures vendors only get paid for orders that actually complete
     if (order.vendorListingId && order.vendorListingId !== 'platform') {
+      try {
+        await createVendorEarning(order.vendorListingId, order.id, order.totalPrice)
+      } catch (err) {
+        console.error(`CRITICAL: Vendor earning creation failed for order ${order.id}:`, err)
+      }
+
       createLedgerEntry({
         type: 'vendor_earning',
         userId: order.vendorListingId,

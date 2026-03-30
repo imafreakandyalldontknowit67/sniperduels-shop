@@ -7,10 +7,10 @@ import { Send, Clock, CheckCircle, XCircle, AlertCircle, Package, Loader2, X } f
 interface VendorWithdrawal {
   id: string
   vendorId: string
+  userId: string
   amountK?: number
   quantity?: number
   status: 'pending' | 'processing' | 'completed' | 'failed'
-  orderId?: string
   createdAt: string
   updatedAt: string
 }
@@ -210,15 +210,15 @@ export default function VendorWithdrawPage() {
                   <span className="text-gray-500 text-[10px]">
                     {new Date(w.createdAt).toLocaleDateString()}
                   </span>
-                  {w.status === 'pending' && w.orderId && (
+                  {w.status === 'pending' && (
                     <button
-                      onClick={() => handleCancel(w.orderId!)}
-                      disabled={cancellingId === w.orderId}
+                      onClick={() => handleCancel(w.id)}
+                      disabled={cancellingId === w.id}
                       className="flex items-center gap-1 px-2 py-1 text-[10px] uppercase font-bold text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
                       style={{ border: '1px solid rgba(239,68,68,0.3)' }}
                     >
                       <X className="w-3 h-3" />
-                      {cancellingId === w.orderId ? 'Cancelling...' : 'Cancel'}
+                      {cancellingId === w.id ? 'Cancelling...' : 'Cancel'}
                     </button>
                   )}
                 </div>

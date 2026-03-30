@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser, isAdmin } from '@/lib/auth'
-import { getOrder, updateOrderStatus, addVendorStock, claimVendorDeposit, addGemStock, createLedgerEntry } from '@/lib/storage'
+import { getOrder, updateOrderStatus, addVendorStock, claimVendorDeposit, addGemStock, createLedgerEntry, createVendorEarning } from '@/lib/storage'
 
 export async function POST(
   request: NextRequest,
@@ -82,8 +82,9 @@ export async function POST(
     }
   }
 
-  // Log completed purchase to ledger
-  if (order.type === 'gems' && order.notes !== 'platform-deposit' && !order.notes?.startsWith('vendor-deposit:') && !order.notes?.startsWith('vendor-withdrawal:')) {
+  // Log completed purchase to ledger + create vendor earning
+  const isRegularPurchase = order.type === 'gems' && order.notes !== 'platform-deposit' && !order.notes?.startsWith('vendor-deposit:') && !order.notes?.startsWith('vendor-withdrawal:') && order.notes !== 'platform-withdraw'
+  if (isRegularPurchase) {
     createLedgerEntry({
       type: 'purchase',
       userId: order.userId,
@@ -91,6 +92,14 @@ export async function POST(
       description: `Purchased ${order.quantity}k gems at $${order.pricePerUnit}/k`,
       relatedId: order.id,
     }).catch(err => console.error('Ledger write failed (admin complete):', err))
+
+    if (order.vendorListingId && order.vendorListingId !== 'platform') {
+      try {
+        await createVendorEarning(order.vendorListingId, order.id, order.totalPrice)
+      } catch (err) {
+        console.error(`CRITICAL: Vendor earning creation failed for order ${order.id}:`, err)
+      }
+    }
   }
 
   return NextResponse.json({ order: updated })

@@ -13,7 +13,6 @@ import {
   deductGemStock,
   getVendorListing,
   deductVendorStock,
-  createVendorEarning,
   getUser,
 } from '@/lib/storage'
 import { notifyPurchase } from '@/lib/discord-webhook'
@@ -190,18 +189,9 @@ export async function POST(request: NextRequest) {
       await markDiscordFirstPurchaseUsed(user.id)
     }
 
-    // Ledger entries are created when the order completes (in bot complete route),
-    // NOT here — because the order might fail/cancel before delivery.
-
-    // Create vendor earning if applicable (with TOCTOU double-check)
-    if (isVendorPurchase && vendorId) {
-      const verifyListing = await getVendorListing(vendorId)
-      if (verifyListing && verifyListing.vendorId === vendorId) {
-        await createVendorEarning(vendorId, order.id, totalPrice)
-      } else {
-        console.error(`CRITICAL: Vendor ID mismatch at earning creation for order ${order.id}`)
-      }
-    }
+    // Vendor earnings + ledger entries are created when the order completes
+    // (in bot complete route), NOT here — because the order might fail/cancel
+    // before delivery, and we don't want vendors paid for undelivered orders.
 
     await notifyPurchase(user.name, `${roundedAmount}k Gems`, 1, totalPrice)
 
