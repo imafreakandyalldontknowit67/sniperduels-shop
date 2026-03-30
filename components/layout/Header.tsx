@@ -159,7 +159,7 @@ export function Header() {
                           className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-dark-600 hover:bg-dark-500 text-white text-xs font-medium uppercase"
                         >
                           <ArrowDownToLine className="w-3.5 h-3.5" />
-                          Withdraw
+                          Support
                         </a>
                       </div>
                     </div>
@@ -347,7 +347,7 @@ export function Header() {
                         className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-dark-600 hover:bg-dark-500 text-white text-xs font-medium uppercase"
                       >
                         <ArrowDownToLine className="w-3.5 h-3.5" />
-                        Withdraw
+                        Support
                       </a>
                     </div>
                   </div>

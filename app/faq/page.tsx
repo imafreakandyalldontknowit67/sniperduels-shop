@@ -30,8 +30,8 @@ const faqData = [
   // Payments & Wallet
   { section: 'Payments & Wallet', q: 'How do I add funds to my wallet?', a: "Go to your Dashboard and click 'Deposit'. We accept payments through Pandabase. Funds are credited to your wallet instantly after payment confirmation." },
   { section: 'Payments & Wallet', q: 'What payment methods are accepted?', a: 'We accept credit/debit cards and other methods available through our payment processor Pandabase.' },
-  { section: 'Payments & Wallet', q: 'Can I withdraw my balance?', a: 'Yes. Contact us through our Discord server to request a withdrawal.' },
-  { section: 'Payments & Wallet', q: 'What is your refund policy?', a: 'If an order cannot be fulfilled, your wallet balance will be automatically refunded. For other refund requests, please contact us on Discord.' },
+  { section: 'Payments & Wallet', q: 'Can I withdraw my balance?', a: 'No. Wallet deposits are non-refundable and can only be used for purchases on our platform. All sales are final.' },
+  { section: 'Payments & Wallet', q: 'What is your refund policy?', a: 'All sales are final. If an order cannot be fulfilled due to a technical issue, your wallet balance is automatically refunded to your site wallet. We do not issue refunds to your original payment method. If you have an issue, open a ticket in our Discord.' },
   { section: 'Payments & Wallet', q: 'Why is my balance different than expected?', a: 'Your balance may reflect pending orders or loyalty discounts applied to purchases. Check your order history for details.' },
   // Account & Security
   { section: 'Account & Security', q: 'How do I create an account?', a: "Click 'Login with Roblox' and authorize with your Roblox account. Your account is created automatically — no separate registration needed." },

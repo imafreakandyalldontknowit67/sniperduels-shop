@@ -134,7 +134,7 @@ const FAQ_SCHEMA = `
       "name": "Can I withdraw my balance?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. Contact us through our Discord server to request a withdrawal."
+        "text": "No. Wallet deposits are non-refundable and can only be used for purchases on our platform. All sales are final."
       }
     },
     {
@@ -142,7 +142,7 @@ const FAQ_SCHEMA = `
       "name": "What is your refund policy?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "If an order cannot be fulfilled, your wallet balance will be automatically refunded. For other refund requests, please contact us on Discord."
+        "text": "All sales are final. If an order cannot be fulfilled due to a technical issue, your wallet balance is automatically refunded to your site wallet. We do not issue refunds to your original payment method."
       }
     },
     {

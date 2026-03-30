@@ -120,7 +120,7 @@ export default function VendorPayoutsPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-white mb-2 uppercase">Cash Out</h1>
-      <p className="text-gray-400 text-xs mb-8">Withdraw your earnings to your preferred payment method</p>
+      <p className="text-gray-400 text-xs mb-8">Request a payout for your vendor earnings</p>
 
       {/* Balance Card */}
       <div className="p-4 mb-8" style={{ background: '#1a1a1e', border: '2px solid #2a2a2e' }}>
@@ -131,71 +131,36 @@ export default function VendorPayoutsPage() {
         <p className="text-3xl font-bold text-white">${balance.toFixed(2)}</p>
       </div>
 
-      {/* Payout Request Form */}
-      {hasPending ? (
-        <div className="p-4 mb-8 flex items-center gap-3" style={{ background: '#1a1a1e', border: '2px solid #e1ad2d33' }}>
-          <Clock className="w-5 h-5 text-yellow-400 flex-shrink-0" />
-          <div>
-            <p className="text-white text-sm font-bold">Payout Pending</p>
-            <p className="text-gray-400 text-xs">You have a pending payout request. Wait for it to be processed before requesting another.</p>
-          </div>
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="p-4 mb-8" style={{ background: '#1a1a1e', border: '2px solid #2a2a2e' }}>
-          <h2 className="text-sm font-bold text-white uppercase mb-4">Request Payout</h2>
-
-          {error && (
-            <div className="flex items-center gap-2 text-red-400 text-xs mb-4 p-2 bg-red-500/10 rounded">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              {error}
-            </div>
-          )}
-          {success && (
-            <div className="flex items-center gap-2 text-green-400 text-xs mb-4 p-2 bg-green-500/10 rounded">
-              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-              {success}
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <div>
-              <label className="text-[10px] text-gray-400 uppercase block mb-1">Amount (USD)</label>
-              <input
-                type="number"
-                step="0.01"
-                min="1"
-                max={balance}
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0.00"
-                className="w-full p-3 rounded bg-dark-800 text-white border border-dark-700 focus:border-accent outline-none text-sm"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] text-gray-400 uppercase block mb-1">Payment Method</label>
-              <textarea
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                placeholder="e.g. PayPal: myemail@gmail.com&#10;or CashApp: $mytag&#10;or Roblox Gift Card"
-                rows={3}
-                className="w-full p-3 rounded bg-dark-800 text-white border border-dark-700 focus:border-accent outline-none text-sm resize-none"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={submitting || balance < 1}
-              className="w-full py-3 rounded font-bold text-sm uppercase transition-colors disabled:opacity-50"
-              style={{ background: '#e1ad2d', color: '#1a1a1e' }}
-            >
-              {submitting ? (
-                <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-              ) : (
-                `Request Payout`
-              )}
-            </button>
-          </div>
-        </form>
-      )}
+      {/* Discord Payout Instructions */}
+      <div className="p-6 mb-8" style={{ background: '#1a1a1e', border: '2px solid #e1ad2d' }}>
+        <h2 className="text-sm font-bold text-white uppercase mb-3">How to Request a Payout</h2>
+        <p className="text-gray-300 text-xs leading-relaxed mb-4">
+          To cash out your earnings, open a ticket in our Discord server and include:
+        </p>
+        <ul className="text-gray-300 text-xs space-y-2 mb-6">
+          <li className="flex items-start gap-2">
+            <span className="text-accent font-bold">1.</span>
+            <span>Your <strong className="text-white">payment method</strong> (e.g. PayPal, CashApp, Venmo, crypto wallet)</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-accent font-bold">2.</span>
+            <span>Your <strong className="text-white">payment details</strong> (email, $cashtag, wallet address, etc.)</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-accent font-bold">3.</span>
+            <span>The <strong className="text-white">amount</strong> you want to withdraw</span>
+          </li>
+        </ul>
+        <a
+          href="https://discord.gg/sniperduels"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block px-6 py-3 font-bold text-sm uppercase rounded-lg transition-colors text-center"
+          style={{ background: '#e1ad2d', color: '#1a1a1e' }}
+        >
+          Open a Discord Ticket
+        </a>
+      </div>
 
       {/* Payout History */}
       <h2 className="text-sm font-bold text-white uppercase mb-4">Payout History</h2>
