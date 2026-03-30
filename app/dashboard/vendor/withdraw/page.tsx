@@ -7,7 +7,8 @@ import { Send, Clock, CheckCircle, XCircle, AlertCircle, Package, Loader2, X } f
 interface VendorWithdrawal {
   id: string
   vendorId: string
-  amountK: number
+  amountK?: number
+  quantity?: number
   status: 'pending' | 'processing' | 'completed' | 'failed'
   orderId?: string
   createdAt: string
@@ -200,7 +201,7 @@ export default function VendorWithdrawPage() {
               >
                 <div className="flex items-center gap-3">
                   <Icon className="w-4 h-4" style={{ color: config.color }} />
-                  <span className="text-white text-sm font-bold">{w.amountK}k gems</span>
+                  <span className="text-white text-sm font-bold">{w.amountK ?? w.quantity ?? 0}k gems</span>
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="text-[10px] uppercase font-bold" style={{ color: config.color }}>
