@@ -83,9 +83,13 @@ export async function POST(
   await addToWallet(order.userId, order.totalPrice)
   await addToLifetimeSpend(order.userId, -order.totalPrice)
 
-  // Restore stock
+  // Restore stock — to the correct pool (vendor or platform)
   if (order.type === 'gems') {
-    await addGemStock(order.quantity)
+    if (order.vendorListingId && order.vendorListingId !== 'platform') {
+      await addVendorStock(order.vendorListingId, order.quantity)
+    } else {
+      await addGemStock(order.quantity)
+    }
   } else {
     const stock = await getStock()
     const stockItem = stock.find(i => i.name === order.itemName)

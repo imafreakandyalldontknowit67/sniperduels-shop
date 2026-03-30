@@ -77,7 +77,11 @@ export async function POST(
   await addToLifetimeSpend(order.userId, -order.totalPrice)
 
   if (order.type === 'gems') {
-    await addGemStock(order.quantity)
+    if (order.vendorListingId && order.vendorListingId !== 'platform') {
+      await addVendorStock(order.vendorListingId, order.quantity)
+    } else {
+      await addGemStock(order.quantity)
+    }
   } else {
     const stock = await getStock()
     const stockItem = stock.find(i => i.name === order.itemName)

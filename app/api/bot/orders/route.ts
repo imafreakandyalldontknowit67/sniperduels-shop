@@ -22,7 +22,7 @@ function authenticateBot(request: NextRequest): boolean {
   }
 }
 
-async function expireOrder(order: { id: string; userId: string; totalPrice: number; type: string; itemName: string; quantity: number; notes?: string }) {
+async function expireOrder(order: { id: string; userId: string; totalPrice: number; type: string; itemName: string; quantity: number; notes?: string; vendorListingId?: string }) {
   // Atomic transition: only expire if still pending/processing. If someone else already handled it, bail out.
   const expired = await updateOrderStatus(order.id, ['pending', 'processing'], {
     status: 'failed',
@@ -60,7 +60,11 @@ async function expireOrder(order: { id: string; userId: string; totalPrice: numb
   await addToLifetimeSpend(order.userId, -order.totalPrice)
 
   if (order.type === 'gems') {
-    await addGemStock(order.quantity)
+    if (order.vendorListingId && order.vendorListingId !== 'platform') {
+      await addVendorStock(order.vendorListingId, order.quantity)
+    } else {
+      await addGemStock(order.quantity)
+    }
   } else {
     const stock = await getStock()
     const stockItem = stock.find(i => i.name === order.itemName)
