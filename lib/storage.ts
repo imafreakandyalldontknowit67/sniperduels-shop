@@ -432,6 +432,32 @@ export async function updateOrder(id: string, updates: Partial<Order>): Promise<
   }
 }
 
+/**
+ * Atomically update an order only if its current status matches expectedStatus.
+ * Uses updateMany with a WHERE status guard so concurrent calls can't both succeed.
+ * Returns the updated order if the transition succeeded, or null if someone else already changed it.
+ */
+export async function updateOrderStatus(
+  id: string,
+  expectedStatus: string | string[],
+  updates: Partial<Order>
+): Promise<Order | null> {
+  const statusFilter = Array.isArray(expectedStatus) ? expectedStatus : [expectedStatus]
+  const { id: _id, userId: _uid, status, ...restUpdates } = updates
+
+  const result = await prisma.order.updateMany({
+    where: { id, status: { in: statusFilter as never[] } },
+    data: {
+      ...restUpdates,
+      ...(status ? { status: status as never } : {}),
+      updatedAt: new Date().toISOString(),
+    },
+  })
+
+  if (result.count === 0) return null
+  return (await getOrder(id)) ?? null
+}
+
 // ─── Stock/Inventory types (kept identical) ──────────────────────────────────
 
 export interface StockItem {

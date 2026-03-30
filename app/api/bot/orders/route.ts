@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
-import { getOrders, getUser, updateOrder, addToWallet, addToLifetimeSpend, addGemStock, getStock, updateStockItem, updateVendorDepositStatus, addVendorStock } from '@/lib/storage'
+import { getOrders, getUser, updateOrder, updateOrderStatus, addToWallet, addToLifetimeSpend, addGemStock, getStock, updateStockItem, updateVendorDepositStatus, addVendorStock } from '@/lib/storage'
 import type { Order } from '@/lib/storage'
 
 // Orders older than this are auto-expired (in milliseconds)
@@ -23,59 +23,42 @@ function authenticateBot(request: NextRequest): boolean {
 }
 
 async function expireOrder(order: { id: string; userId: string; totalPrice: number; type: string; itemName: string; quantity: number; notes?: string }) {
-  // Platform withdraw orders: refund stock (was deducted at submission)
+  // Atomic transition: only expire if still pending/processing. If someone else already handled it, bail out.
+  const expired = await updateOrderStatus(order.id, ['pending', 'processing'], {
+    status: 'failed',
+    notes: order.notes
+      ? `${order.notes} | Auto-expired: timed out after 30 minutes`
+      : 'Auto-expired: timed out after 30 minutes',
+  })
+  if (!expired) return // Another process already changed this order — skip refund
+
+  // Platform withdraw: refund stock
   if (order.notes?.startsWith('platform-withdraw')) {
-    await updateOrder(order.id, {
-      status: 'failed',
-      notes: 'platform-withdraw | Auto-expired: timed out after 30 minutes',
-    })
     await addGemStock(order.quantity)
     return
   }
 
-  // Platform deposit orders: just mark as failed, no refund needed (nothing was deducted)
-  if (order.notes === 'platform-deposit') {
-    await updateOrder(order.id, {
-      status: 'failed',
-      notes: 'platform-deposit | Auto-expired: timed out after 30 minutes',
-    })
-    return
-  }
+  // Platform deposit: no refund needed
+  if (order.notes === 'platform-deposit') return
 
-  // Vendor deposit orders: just mark as failed, no refund needed (vendor didn't pay anything)
+  // Vendor deposit: mark deposit as failed, no refund
   if (order.notes?.startsWith('vendor-deposit:')) {
-    await updateOrder(order.id, {
-      status: 'failed',
-      notes: `${order.notes} | Auto-expired: vendor deposit timed out after 30 minutes`,
-    })
     const depositId = order.notes.replace('vendor-deposit:', '')
     await updateVendorDepositStatus(depositId, 'failed')
     return
   }
 
-  // Vendor withdrawal orders: refund vendor stock (was deducted at submission time)
+  // Vendor withdrawal: refund vendor stock
   if (order.notes?.startsWith('vendor-withdrawal:')) {
-    await updateOrder(order.id, {
-      status: 'failed',
-      notes: 'Auto-expired: vendor withdrawal timed out after 30 minutes',
-    })
     const vendorId = order.notes.replace('vendor-withdrawal:', '')
     await addVendorStock(vendorId, order.quantity)
     return
   }
 
-  await updateOrder(order.id, {
-    status: 'failed',
-    notes: order.notes
-      ? `${order.notes} | Auto-expired: order timed out after 30 minutes`
-      : 'Auto-expired: order timed out after 30 minutes',
-  })
-
-  // Refund wallet and reverse lifetime spend
+  // Regular order: refund wallet + restore stock
   await addToWallet(order.userId, order.totalPrice)
   await addToLifetimeSpend(order.userId, -order.totalPrice)
 
-  // Restore stock
   if (order.type === 'gems') {
     await addGemStock(order.quantity)
   } else {

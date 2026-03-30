@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser, isAdmin } from '@/lib/auth'
-import { getOrder, updateOrder, addToWallet, addToLifetimeSpend, getStock, updateStockItem, addGemStock, updateVendorDepositStatus, addVendorStock } from '@/lib/storage'
+import { getOrder, updateOrder, updateOrderStatus, addToWallet, addToLifetimeSpend, getStock, updateStockItem, addGemStock, updateVendorDepositStatus, addVendorStock } from '@/lib/storage'
 
 export async function POST(
   request: NextRequest,
@@ -25,25 +25,35 @@ export async function POST(
     )
   }
 
-  // Mark as failed FIRST to prevent race with bot complete.
-  // If bot reads the order after this write, it will see "failed" and abort.
   const isVendorDeposit = order.notes?.startsWith('vendor-deposit:')
+  const isPlatformDeposit = order.notes === 'platform-deposit'
+  const isPlatformWithdraw = order.notes?.startsWith('platform-withdraw')
   const cancelNote = isVendorDeposit
     ? 'Cancelled by admin — vendor deposit'
     : 'Cancelled by admin — wallet refunded'
-  const updated = await updateOrder(id, {
+
+  // Atomic transition: only cancel if still pending/processing
+  const updated = await updateOrderStatus(id, ['pending', 'processing'], {
     status: 'failed',
     notes: order.notes ? `${order.notes} | ${cancelNote}` : cancelNote,
   })
 
-  // Re-read order to confirm we won the race (status is actually failed)
-  const confirmed = await getOrder(id)
-  if (!confirmed || confirmed.status !== 'failed') {
-    // Bot completed it between our check and update — do NOT refund
+  if (!updated) {
     return NextResponse.json(
-      { error: 'Order was completed by bot before cancel could take effect' },
+      { error: 'Order was already processed — cannot cancel' },
       { status: 409 }
     )
+  }
+
+  // Platform deposit: no refund needed
+  if (isPlatformDeposit) {
+    return NextResponse.json({ order: updated })
+  }
+
+  // Platform withdraw: refund stock
+  if (isPlatformWithdraw) {
+    await addGemStock(order.quantity)
+    return NextResponse.json({ order: updated })
   }
 
   // Vendor deposit orders: just mark deposit as failed, no wallet refund needed

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
-import { getOrder, updateOrder, addToWallet, addToLifetimeSpend, getStock, updateStockItem, addGemStock, updateVendorDepositStatus, addVendorStock } from '@/lib/storage'
+import { getOrder, updateOrder, updateOrderStatus, addToWallet, addToLifetimeSpend, getStock, updateStockItem, addGemStock, updateVendorDepositStatus, addVendorStock } from '@/lib/storage'
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -38,29 +38,19 @@ export async function POST(
     return NextResponse.json({ error: 'Order not found' }, { status: 404 })
   }
 
-  if (order.status !== 'pending' && order.status !== 'processing') {
-    return NextResponse.json(
-      { error: `Order is already ${order.status}` },
-      { status: 400 }
-    )
-  }
-
-  // Mark as failed FIRST to prevent double-refund race with admin cancel.
-  // Preserve existing notes (e.g. vendor-deposit:{id}) and append failure reason
+  // Atomic transition: only fail if still pending/processing
   const failNote = reason ? `Failed: ${reason}` : 'Failed by trade bot'
   const updatedNotes = order.notes
     ? `${order.notes} | ${failNote}`
     : failNote
-  const updated = await updateOrder(id, {
+  const updated = await updateOrderStatus(id, ['pending', 'processing'], {
     status: 'failed',
     notes: updatedNotes,
   })
 
-  // Re-read to confirm we won the race (admin cancel may have already processed this)
-  const confirmed = await getOrder(id)
-  if (!confirmed || confirmed.status !== 'failed') {
+  if (!updated) {
     return NextResponse.json(
-      { error: 'Order was already processed by another request' },
+      { error: `Order was already ${order.status} — cannot fail` },
       { status: 409 }
     )
   }

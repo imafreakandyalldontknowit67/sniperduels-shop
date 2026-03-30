@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
-import { getOrder, updateOrder, addToWallet, addToLifetimeSpend, getStock, updateStockItem, addGemStock, updateVendorDepositStatus, addVendorStock } from '@/lib/storage'
+import { getOrder, updateOrder, updateOrderStatus, addToWallet, addToLifetimeSpend, getStock, updateStockItem, addGemStock, updateVendorDepositStatus, addVendorStock } from '@/lib/storage'
 
 export async function POST(
   request: NextRequest,
@@ -35,17 +35,15 @@ export async function POST(
   const isVendorDeposit = order.notes?.startsWith('vendor-deposit:')
   const isVendorWithdrawal = order.notes?.startsWith('vendor-withdrawal:')
 
-  // Mark as failed FIRST to prevent race with bot complete.
-  const updated = await updateOrder(id, {
+  // Atomic transition: only cancel if still pending
+  const updated = await updateOrderStatus(id, 'pending', {
     status: 'failed',
     notes: order.notes ? `${order.notes} | Cancelled by user` : 'Cancelled by user',
   })
 
-  // Re-read order to confirm we won the race
-  const confirmed = await getOrder(id)
-  if (!confirmed || confirmed.status !== 'failed') {
+  if (!updated) {
     return NextResponse.json(
-      { error: 'Order was completed by bot before cancel could take effect' },
+      { error: 'Order was already processed — cannot cancel' },
       { status: 409 }
     )
   }

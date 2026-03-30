@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
-import { getOrder, updateOrder, addVendorStock, updateVendorDepositStatus, addGemStock, createLedgerEntry } from '@/lib/storage'
+import { getOrder, updateOrder, updateOrderStatus, addVendorStock, updateVendorDepositStatus, addGemStock, createLedgerEntry } from '@/lib/storage'
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -30,23 +30,15 @@ export async function POST(
     return NextResponse.json({ error: 'Order not found' }, { status: 404 })
   }
 
-  if (order.status !== 'pending' && order.status !== 'processing') {
-    return NextResponse.json(
-      { error: `Order is already ${order.status}` },
-      { status: 400 }
-    )
-  }
-
-  const updated = await updateOrder(id, {
+  // Atomic transition: only complete if still pending/processing
+  const updated = await updateOrderStatus(id, ['pending', 'processing'], {
     status: 'completed',
     completedAt: new Date().toISOString(),
   })
 
-  // Verify our write stuck (cancel may have raced us)
-  const confirmed = await getOrder(id)
-  if (confirmed && confirmed.status !== 'completed') {
+  if (!updated) {
     return NextResponse.json(
-      { error: 'Order was cancelled before completion could finalize' },
+      { error: `Order was already ${order.status} — cannot complete` },
       { status: 409 }
     )
   }
