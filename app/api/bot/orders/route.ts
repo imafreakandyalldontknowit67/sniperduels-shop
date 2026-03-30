@@ -23,6 +23,16 @@ function authenticateBot(request: NextRequest): boolean {
 }
 
 async function expireOrder(order: { id: string; userId: string; totalPrice: number; type: string; itemName: string; quantity: number; notes?: string }) {
+  // Platform withdraw orders: refund stock (was deducted at submission)
+  if (order.notes?.startsWith('platform-withdraw')) {
+    await updateOrder(order.id, {
+      status: 'failed',
+      notes: 'platform-withdraw | Auto-expired: timed out after 30 minutes',
+    })
+    await addGemStock(order.quantity)
+    return
+  }
+
   // Platform deposit orders: just mark as failed, no refund needed (nothing was deducted)
   if (order.notes === 'platform-deposit') {
     await updateOrder(order.id, {
@@ -163,6 +173,7 @@ export async function GET(request: NextRequest) {
         isVendorDeposit: !!o.notes?.startsWith('vendor-deposit:'),
         isVendorWithdrawal: !!o.notes?.startsWith('vendor-withdrawal:'),
         isPlatformDeposit: o.notes === 'platform-deposit',
+        isPlatformWithdraw: !!o.notes?.startsWith('platform-withdraw'),
       }
     })
   )

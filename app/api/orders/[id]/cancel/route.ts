@@ -29,7 +29,9 @@ export async function POST(
     )
   }
 
-  // Detect vendor ops before overwriting notes
+  // Detect special order types before overwriting notes
+  const isPlatformDeposit = order.notes === 'platform-deposit'
+  const isPlatformWithdraw = order.notes?.startsWith('platform-withdraw')
   const isVendorDeposit = order.notes?.startsWith('vendor-deposit:')
   const isVendorWithdrawal = order.notes?.startsWith('vendor-withdrawal:')
 
@@ -46,6 +48,17 @@ export async function POST(
       { error: 'Order was completed by bot before cancel could take effect' },
       { status: 409 }
     )
+  }
+
+  // Platform deposit: no refund needed
+  if (isPlatformDeposit) {
+    return NextResponse.json({ order: updated })
+  }
+
+  // Platform withdraw: refund stock
+  if (isPlatformWithdraw) {
+    await addGemStock(order.quantity)
+    return NextResponse.json({ order: updated })
   }
 
   // Vendor deposit: mark deposit as failed, no wallet refund needed

@@ -65,6 +65,17 @@ export async function POST(
     )
   }
 
+  // Platform deposit orders: no refund needed (nothing was deducted)
+  if (order.notes === 'platform-deposit') {
+    return NextResponse.json({ order: updated })
+  }
+
+  // Platform withdraw orders: refund stock (was deducted at submission)
+  if (order.notes?.startsWith('platform-withdraw')) {
+    await addGemStock(order.quantity)
+    return NextResponse.json({ order: updated })
+  }
+
   // Vendor deposit orders: just mark deposit as failed, no refund needed
   if (order.notes?.startsWith('vendor-deposit:')) {
     const depositId = order.notes.replace('vendor-deposit:', '')
