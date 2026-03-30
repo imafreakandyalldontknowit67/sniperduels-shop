@@ -23,6 +23,7 @@ export default function DepositPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [hpField, setHpField] = useState('')
+  const [cancellingId, setCancellingId] = useState<string | null>(null)
 
   // Crypto-specific state
   const [allCurrencies, setAllCurrencies] = useState<string[]>([])
@@ -199,6 +200,21 @@ export default function DepositPage() {
     navigator.clipboard.writeText(text)
     setMessage({ type: 'success', text: 'Copied!' })
     setTimeout(() => setMessage(null), 1500)
+  }
+
+  async function handleCancelDeposit(depositId: string) {
+    setCancellingId(depositId)
+    try {
+      const res = await fetch(`/api/deposits/${depositId}/cancel-deposit`, { method: 'POST' })
+      if (res.ok) {
+        setMessage({ type: 'success', text: 'Deposit cancelled' })
+        fetchDeposits()
+      } else {
+        const data = await res.json()
+        setMessage({ type: 'error', text: data.error || 'Failed to cancel' })
+      }
+    } catch { setMessage({ type: 'error', text: 'Failed to cancel' }) }
+    finally { setCancellingId(null) }
   }
 
   const pendingDeposits = deposits.filter(d => d.status === 'pending')
@@ -464,13 +480,22 @@ export default function DepositPage() {
                       <span className="text-white font-medium">${deposit.amount.toFixed(2)}</span>
                       <span className="text-gray-500 text-sm">{new Date(deposit.createdAt).toLocaleString()}</span>
                     </button>
-                    <button
-                      onClick={() => handleVerify(deposit.id)}
-                      disabled={verifyingId === deposit.id}
-                      className="px-4 py-2 bg-accent hover:bg-accent-light disabled:bg-accent/50 text-white text-sm font-medium rounded-lg transition-colors"
-                    >
-                      {verifyingId === deposit.id ? 'Checking...' : 'Verify'}
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleVerify(deposit.id)}
+                        disabled={verifyingId === deposit.id}
+                        className="px-4 py-2 bg-accent hover:bg-accent-light disabled:bg-accent/50 text-white text-sm font-medium rounded-lg transition-colors"
+                      >
+                        {verifyingId === deposit.id ? 'Checking...' : 'Verify'}
+                      </button>
+                      <button
+                        onClick={() => handleCancelDeposit(deposit.id)}
+                        disabled={cancellingId === deposit.id}
+                        className="px-3 py-2 bg-dark-600 hover:bg-red-500/20 hover:text-red-400 disabled:opacity-50 text-gray-400 text-sm rounded-lg transition-colors"
+                      >
+                        {cancellingId === deposit.id ? '...' : 'Cancel'}
+                      </button>
+                    </div>
                   </div>
                   {expandedId === deposit.id && (
                     <div className="mt-3 pt-3 border-t border-dark-600 space-y-2 text-sm">
