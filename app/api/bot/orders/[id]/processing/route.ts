@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
-import { getOrder, updateOrder } from '@/lib/storage'
+import { getOrder, updateOrderStatus } from '@/lib/storage'
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -30,14 +30,17 @@ export async function POST(
     return NextResponse.json({ error: 'Order not found' }, { status: 404 })
   }
 
-  if (order.status !== 'pending') {
+  // Atomic transition: only move to processing if still pending
+  const updated = await updateOrderStatus(id, 'pending', {
+    status: 'processing',
+  })
+
+  if (!updated) {
     return NextResponse.json(
       { error: `Order is already ${order.status}` },
       { status: 400 }
     )
   }
-
-  const updated = await updateOrder(id, { status: 'processing' })
 
   return NextResponse.json({ order: updated })
 }

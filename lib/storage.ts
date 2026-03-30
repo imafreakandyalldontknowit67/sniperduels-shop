@@ -1057,6 +1057,21 @@ export async function updateVendorDepositStatus(
   }
 }
 
+/**
+ * Atomically claim a vendor deposit for stock crediting.
+ * Only transitions from pending/queued → completed.
+ * Returns the deposit if claimed, null if already claimed by another process.
+ * This prevents double-credit when multiple endpoints try to credit the same deposit.
+ */
+export async function claimVendorDeposit(depositId: string): Promise<VendorDeposit | null> {
+  const result = await prisma.vendorDeposit.updateMany({
+    where: { id: depositId, status: { in: ['pending', 'queued'] as never[] } },
+    data: { status: 'completed' as never, updatedAt: new Date().toISOString() },
+  })
+  if (result.count === 0) return null
+  return getVendorDeposit(depositId)
+}
+
 export async function getPendingVendorDeposits(): Promise<(VendorDeposit & { vendorName: string })[]> {
   const rows = await prisma.vendorDeposit.findMany({
     where: { status: { in: ['pending', 'queued'] } },

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser, isAdmin } from '@/lib/auth'
-import { getOrder, updateOrder, addVendorStock, updateVendorDepositStatus, createLedgerEntry } from '@/lib/storage'
+import { getOrder, updateOrderStatus, addVendorStock, claimVendorDeposit, addGemStock, createLedgerEntry } from '@/lib/storage'
 
 export async function POST(
   request: NextRequest,
@@ -36,8 +36,6 @@ export async function POST(
     )
   }
 
-  // Bot-delivered orders must provide a trade ID
-  // Admin override requires an explicit reason (e.g. refund processing, manual delivery)
   if (!body.botTradeId && !body.reason) {
     return NextResponse.json(
       { error: 'Must provide botTradeId (bot delivery proof) or reason (admin override justification)' },
@@ -49,30 +47,43 @@ export async function POST(
     ? `Bot delivery confirmed - Trade ID: ${body.botTradeId}`
     : `Admin override by ${currentUser.name} (${currentUser.id}): ${body.reason}`
 
-  const updated = await updateOrder(id, {
+  // Atomic transition: only complete if still pending/processing
+  const updated = await updateOrderStatus(id, ['pending', 'processing'], {
     status: 'completed',
     completedAt: new Date().toISOString(),
     notes: order.notes ? `${order.notes} | ${completionNotes}` : completionNotes,
   })
 
-  // Verify our write stuck (cancel/fail may have raced us)
-  const confirmed = await getOrder(id)
-  if (confirmed && confirmed.status !== 'completed') {
+  if (!updated) {
     return NextResponse.json(
-      { error: 'Order was cancelled or failed before completion could finalize' },
+      { error: 'Order was already processed — cannot complete' },
       { status: 409 }
     )
   }
 
-  // If this is a vendor deposit order, credit the vendor's stock
+  // Platform deposit: add to platform stock
+  if (order.notes === 'platform-deposit') {
+    await addGemStock(order.quantity)
+    createLedgerEntry({
+      type: 'deposit',
+      userId: order.userId,
+      amount: 0,
+      description: `Platform gem deposit: ${order.quantity}k gems (admin complete)`,
+      relatedId: order.id,
+    }).catch(err => console.error('Ledger write failed (admin complete platform deposit):', err))
+  }
+
+  // Vendor deposit: atomically claim and credit stock
   if (order.notes?.startsWith('vendor-deposit:')) {
     const depositId = order.notes.replace('vendor-deposit:', '')
-    await updateVendorDepositStatus(depositId, 'completed')
-    await addVendorStock(order.userId, order.quantity)
+    const claimed = await claimVendorDeposit(depositId)
+    if (claimed) {
+      await addVendorStock(order.userId, order.quantity)
+    }
   }
 
   // Log completed purchase to ledger
-  if (order.type === 'gems' && !order.notes?.startsWith('vendor-deposit:') && !order.notes?.startsWith('vendor-withdrawal:')) {
+  if (order.type === 'gems' && order.notes !== 'platform-deposit' && !order.notes?.startsWith('vendor-deposit:') && !order.notes?.startsWith('vendor-withdrawal:')) {
     createLedgerEntry({
       type: 'purchase',
       userId: order.userId,

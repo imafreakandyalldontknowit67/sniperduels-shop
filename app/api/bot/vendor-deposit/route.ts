@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
-import { getVendorDeposit, updateVendorDepositStatus, addVendorStock, getPendingVendorDeposits } from '@/lib/storage'
+import { getVendorDeposit, claimVendorDeposit, addVendorStock, getPendingVendorDeposits } from '@/lib/storage'
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -56,32 +56,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Replay prevention: only process pending/queued deposits
-    if (deposit.status !== 'pending' && deposit.status !== 'queued') {
+    // Atomic claim: only one caller can transition pending/queued → completed
+    const claimed = await claimVendorDeposit(depositId)
+    if (!claimed) {
       return NextResponse.json(
-        { error: `Deposit already ${deposit.status}` },
+        { error: `Deposit already processed` },
         { status: 409 }
       )
-    }
-
-    // Now safe to mutate: mark deposit as completed
-    const updated = await updateVendorDepositStatus(depositId, 'completed')
-    if (!updated) {
-      return NextResponse.json({ error: 'Failed to update deposit status' }, { status: 500 })
     }
 
     // Add gems to vendor's stock
     const listing = await addVendorStock(vendorId, amountK)
     if (!listing) {
       return NextResponse.json(
-        { error: 'Vendor listing not found. Deposit marked complete but stock not updated.' },
+        { error: 'Vendor listing not found. Deposit claimed but stock not updated.' },
         { status: 404 }
       )
     }
 
     return NextResponse.json({
       success: true,
-      deposit: updated,
+      deposit: claimed,
       newStockK: listing.stockK,
     })
   } catch (error) {
