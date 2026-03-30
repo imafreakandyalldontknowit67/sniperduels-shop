@@ -12,6 +12,7 @@ import {
   canUseDiscordFirstPurchaseDiscount,
   markDiscordFirstPurchaseUsed,
   getSiteSettings,
+  getUser,
 } from '@/lib/storage'
 import { notifyPurchase } from '@/lib/discord-webhook'
 import { getBotLastHeartbeat } from '@/lib/bot-heartbeat'
@@ -21,6 +22,11 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const dbUser = await getUser(user.id)
+    if (dbUser?.isVendor) {
+      return NextResponse.json({ error: 'Vendor accounts cannot make purchases. Your balance is withdraw-only — request a payout via Discord.' }, { status: 403 })
     }
 
     // Block item purchases when items are marked as coming soon
