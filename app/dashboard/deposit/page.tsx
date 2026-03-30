@@ -250,9 +250,6 @@ export default function DepositPage() {
             className={`flex-1 py-3 text-sm font-medium rounded-lg transition-colors relative ${tab === 'crypto' ? 'bg-accent text-white' : 'bg-dark-600 hover:bg-dark-500 text-gray-400'}`}
           >
             Crypto
-            <span className="absolute -top-2 -right-2 px-1.5 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded-full">
-              +3%
-            </span>
           </button>
         </div>
 
@@ -284,8 +281,8 @@ export default function DepositPage() {
             ))}
           </div>
           {tab === 'crypto' && amount && parseFloat(amount) >= 5 && (
-            <p className="text-green-400 text-xs text-center mt-3">
-              You&apos;ll receive ${(parseFloat(amount) * 1.03).toFixed(2)} in your wallet (3% bonus)
+            <p className="text-gray-400 text-xs text-center mt-3">
+              You&apos;ll receive ${parseFloat(amount).toFixed(2)} in your wallet — no processing fees
             </p>
           )}
           {tab === 'card' && amount && parseFloat(amount) >= 5 && (
@@ -424,7 +421,7 @@ export default function DepositPage() {
                   <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   Creating payment...
                 </span>
-              ) : 'Pay with Crypto (+3% bonus)'}
+              ) : 'Pay with Crypto'}
             </button>
           </>
         )}
@@ -452,17 +449,9 @@ export default function DepositPage() {
               </div>
 
               <div className="pt-3 border-t border-dark-600">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Deposit</span>
-                  <span className="text-white">${amount}</span>
-                </div>
-                <div className="flex justify-between text-sm mt-1">
-                  <span className="text-green-400">3% Bonus</span>
-                  <span className="text-green-400">+${cryptoPayment.bonusAmount.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm mt-1 font-bold">
+                <div className="flex justify-between text-sm font-bold">
                   <span className="text-white">Wallet credit</span>
-                  <span className="text-white">${(parseFloat(amount) + cryptoPayment.bonusAmount).toFixed(2)}</span>
+                  <span className="text-white">${parseFloat(amount).toFixed(2)}</span>
                 </div>
               </div>
 

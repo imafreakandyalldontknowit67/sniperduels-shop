@@ -5,7 +5,7 @@ import { notifyDeposit } from '@/lib/discord-webhook'
 
 export const dynamic = 'force-dynamic'
 
-const CRYPTO_BONUS = 0.03 // 3% bonus for crypto deposits
+const CRYPTO_BONUS = 0 // No bonus — 1:1 crypto deposits
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,21 +43,19 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ received: true })
       }
 
-      // Credit wallet + 5% bonus
-      const bonus = Math.round(deposit.amount * CRYPTO_BONUS * 100) / 100
-      const totalCredit = deposit.amount + bonus
-      await addToWallet(deposit.userId, totalCredit)
+      // Credit wallet 1:1
+      await addToWallet(deposit.userId, deposit.amount)
       createLedgerEntry({
         type: 'deposit',
         userId: deposit.userId,
-        amount: totalCredit,
-        description: `Crypto deposit: $${deposit.amount} + $${bonus} bonus`,
+        amount: deposit.amount,
+        description: `Crypto deposit: $${deposit.amount}`,
         relatedId: deposit.id,
       }).catch(err => console.error('Ledger write failed (crypto deposit):', err))
 
       const user = await getUser(deposit.userId)
-      await notifyDeposit(user?.name || deposit.userId, totalCredit)
-      console.log(`[NearPayments IPN] Completed: ${deposit.id} ($${deposit.amount} + $${bonus} bonus = $${totalCredit})`)
+      await notifyDeposit(user?.name || deposit.userId, deposit.amount)
+      console.log(`[NearPayments IPN] Completed: ${deposit.id} ($${deposit.amount})`)
     } else if (status === 'failed' || status === 'expired' || status === 'refunded') {
       const { prisma } = await import('@/lib/prisma')
       await prisma.deposit.updateMany({

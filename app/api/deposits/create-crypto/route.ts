@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       payAddress,
       payAmount,
       payCurrency,
-      bonusAmount: Math.round(roundedAmount * 0.03 * 100) / 100,
+      bonusAmount: 0,
     })
   } catch (error) {
     console.error('Crypto deposit error:', error)
