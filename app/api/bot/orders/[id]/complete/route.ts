@@ -63,11 +63,11 @@ export async function POST(
     }).catch(err => console.error('Ledger write failed (platform deposit):', err))
   }
 
-  // If this is a vendor deposit order, credit the vendor's stock
+  // If this is a vendor deposit order, mark deposit as completed
+  // Stock is already credited by the /api/bot/vendor-deposit endpoint
   if (order.notes?.startsWith('vendor-deposit:')) {
     const depositId = order.notes.replace('vendor-deposit:', '')
     await updateVendorDepositStatus(depositId, 'completed')
-    await addVendorStock(order.userId, order.quantity)
   }
 
   // Vendor withdrawal orders: stock was already deducted at submission time, so just mark complete
