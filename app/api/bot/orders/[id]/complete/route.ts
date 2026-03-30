@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
-import { getOrder, updateOrder, updateOrderStatus, addVendorStock, updateVendorDepositStatus, addGemStock, createLedgerEntry } from '@/lib/storage'
+import { getOrder, updateOrder, updateOrderStatus, addVendorStock, updateVendorDepositStatus, getVendorDeposit, addGemStock, createLedgerEntry } from '@/lib/storage'
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -55,11 +55,16 @@ export async function POST(
     }).catch(err => console.error('Ledger write failed (platform deposit):', err))
   }
 
-  // If this is a vendor deposit order, mark deposit as completed
-  // Stock is already credited by the /api/bot/vendor-deposit endpoint
+  // If this is a vendor deposit order, credit stock if not already done
   if (order.notes?.startsWith('vendor-deposit:')) {
     const depositId = order.notes.replace('vendor-deposit:', '')
-    await updateVendorDepositStatus(depositId, 'completed')
+    const deposit = await getVendorDeposit(depositId)
+    if (deposit && deposit.status !== 'completed') {
+      // Stock hasn't been credited yet — do it now
+      await addVendorStock(order.userId, order.quantity)
+      await updateVendorDepositStatus(depositId, 'completed')
+    }
+    // If already completed, vendor-deposit endpoint handled it — skip to avoid double-credit
   }
 
   // Vendor withdrawal orders: stock was already deducted at submission time, so just mark complete
