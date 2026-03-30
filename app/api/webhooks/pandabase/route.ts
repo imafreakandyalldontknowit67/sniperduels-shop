@@ -3,6 +3,7 @@ import { verifyWebhookSignature } from '@/lib/pandabase'
 import { getDepositByInvoiceId, getDepositByRefId, claimPendingDeposit, addToWallet, getUser, createLedgerEntry } from '@/lib/storage'
 import type { Deposit } from '@/lib/storage'
 import { notifyDeposit, notifyDispute, notifyRefund } from '@/lib/discord-webhook'
+import { flagAndBlacklist } from '@/lib/blacklist'
 
 export const dynamic = 'force-dynamic'
 
@@ -111,6 +112,15 @@ export async function POST(request: NextRequest) {
         if (deposit) {
           const user = await getUser(deposit.userId)
           await notifyDispute(user?.name || deposit.userId, deposit.amount, deposit.pandabaseInvoiceId)
+
+          // Auto-blacklist the user who filed a dispute
+          await flagAndBlacklist({
+            ip: 'dispute-auto',
+            userId: deposit.userId,
+            reason: `Payment dispute filed on deposit ${deposit.id} ($${deposit.amount})`,
+            endpoint: '/api/webhooks/pandabase',
+          })
+          console.log(`[Webhook] DISPUTE: Auto-blacklisted user ${deposit.userId} (${user?.name})`)
         }
         break
       }

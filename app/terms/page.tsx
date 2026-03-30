@@ -69,13 +69,25 @@ export default function TermsPage() {
             </ul>
           </section>
 
-          <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">Chargebacks and Fraud</h2>
-            <p className="text-gray-300 leading-relaxed">
-              Filing a chargeback or payment dispute after receiving your items constitutes fraud
-              and breach of these terms. We will permanently ban accounts involved in chargebacks
-              and reserve the right to pursue recovery of funds and report fraudulent activity to
-              relevant authorities.
+          <section className="bg-red-500/10 border border-red-500/30 p-6 rounded-lg">
+            <h2 className="text-2xl font-semibold text-red-400 mb-4">Chargebacks and Fraud — Zero Tolerance</h2>
+            <p className="text-gray-300 leading-relaxed mb-4">
+              Filing a chargeback or payment dispute after receiving your items or depositing funds constitutes
+              fraud and a material breach of these terms. We enforce a zero-tolerance policy:
+            </p>
+            <ul className="list-disc list-inside text-gray-300 space-y-2">
+              <li>Immediate and permanent ban from all services</li>
+              <li>All transaction evidence (IP address, device fingerprint, timestamps, delivery confirmation, Roblox account data) is submitted to the payment processor to contest every dispute</li>
+              <li>Blacklisted across our platform — no new accounts permitted</li>
+              <li>We reserve the right to report fraudulent chargebacks to law enforcement and pursue recovery of funds through legal channels</li>
+            </ul>
+            <p className="text-gray-300 leading-relaxed mt-4">
+              By completing a purchase or deposit, you acknowledge that you received the goods or services as described
+              and agree not to initiate any dispute with your bank or payment provider. If you have an issue,{' '}
+              <a href="https://discord.gg/sniperduels" className="text-accent hover:underline" target="_blank" rel="noopener noreferrer">
+                open a support ticket in our Discord
+              </a>{' '}
+              before taking any other action.
             </p>
           </section>
 

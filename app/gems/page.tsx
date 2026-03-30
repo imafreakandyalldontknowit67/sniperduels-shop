@@ -37,6 +37,7 @@ export default function GemsPage() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [purchasing, setPurchasing] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   useEffect(() => {
     fetchUser()
@@ -130,6 +131,7 @@ export default function GemsPage() {
       window.location.href = '/api/auth/roblox'
       return
     }
+    setAgreedToTerms(false)
     setShowConfirm(true)
   }
 
@@ -527,6 +529,21 @@ export default function GemsPage() {
               </div>
             </div>
 
+            <label className="flex items-start gap-2 mb-4 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-accent shrink-0"
+              />
+              <span className="text-[10px] text-gray-400 leading-tight">
+                I agree that{' '}
+                <Link href="/terms" className="text-accent hover:underline" target="_blank">all sales are final</Link>
+                {' '}and non-refundable once delivered. Filing a dispute or chargeback will result in a permanent ban. Issues?{' '}
+                <a href="https://discord.gg/sniperduels" className="text-accent hover:underline" target="_blank" rel="noopener noreferrer">Open a ticket in our Discord</a>.
+              </span>
+            </label>
+
             {userInfo.walletBalance < discountedPrice ? (
               <div className="space-y-3">
                 <p className="text-red-400 text-xs text-center uppercase">Insufficient balance</p>
@@ -554,7 +571,7 @@ export default function GemsPage() {
                 </button>
                 <button
                   onClick={handleConfirmPurchase}
-                  disabled={purchasing}
+                  disabled={purchasing || !agreedToTerms}
                   className="flex-1 relative h-[42px] bg-no-repeat bg-center bg-contain border-0 cursor-pointer active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ backgroundImage: 'url(/images/pixel/pngs/asset-59.png)', backgroundSize: '100% 100%' }}
                 >

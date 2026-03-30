@@ -2,68 +2,92 @@ export default function RefundsPage() {
   return (
     <div className="min-h-screen bg-dark-900 py-16">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-4xl font-bold text-white mb-8">Refund Policy</h1>
-        <p className="text-gray-400 mb-8">Last updated: February 2026</p>
+        <h1 className="text-4xl font-bold text-white mb-2">Refund Policy</h1>
+        <p className="text-red-400 font-bold text-lg uppercase mb-2">All Sales Are Final — No Refunds</p>
+        <p className="text-gray-400 mb-8">Last updated: March 2026</p>
 
         <div className="prose prose-invert max-w-none space-y-8">
           <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">All Sales Are Final</h2>
+            <h2 className="text-2xl font-semibold text-white mb-4">No Refunds Policy</h2>
             <p className="text-gray-300 leading-relaxed">
-              Due to the nature of digital goods and in-game item trading, all purchases made through
-              Sleuth (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) are final and non-refundable once the items have been delivered
-              to your Roblox account.
+              All purchases made through Sniper Duels Auto Shop (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) are <strong className="text-white">final and non-refundable</strong>.
+              This includes wallet deposits, gem purchases, item purchases, and crate purchases. Due to the nature of digital goods
+              and in-game item trading, once a transaction is completed, it cannot be reversed.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">Why We Cannot Offer Refunds</h2>
+            <h2 className="text-2xl font-semibold text-white mb-4">Wallet Deposits</h2>
+            <p className="text-gray-300 leading-relaxed">
+              Funds deposited into your wallet are <strong className="text-white">non-refundable and cannot be withdrawn back to your original payment method</strong>.
+              Deposited funds can only be used to make purchases on our platform. By completing a deposit, you acknowledge and accept this.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold text-white mb-4">Undelivered Orders</h2>
+            <p className="text-gray-300 leading-relaxed">
+              If an order cannot be fulfilled due to a technical issue, bot downtime, or stock unavailability, your
+              wallet balance is <strong className="text-white">automatically refunded to your site wallet</strong> (not to your original payment method).
+              No action is required on your part.
+            </p>
+          </section>
+
+          <section className="bg-red-500/10 border border-red-500/30 p-6 rounded-lg">
+            <h2 className="text-2xl font-semibold text-red-400 mb-4">Chargebacks &amp; Disputes — Zero Tolerance</h2>
             <p className="text-gray-300 leading-relaxed mb-4">
-              Once a trade is completed and items are transferred to your account:
+              Filing a chargeback, payment dispute, or claim with your bank or payment provider after receiving your items
+              or depositing funds is considered <strong className="text-white">fraud</strong>. We maintain a strict zero-tolerance policy:
             </p>
             <ul className="list-disc list-inside text-gray-300 space-y-2">
-              <li>The digital items become your property within Roblox</li>
-              <li>We cannot retrieve or reverse traded items</li>
-              <li>The transaction is permanently recorded on our systems</li>
+              <li><strong className="text-white">Permanent ban</strong> from all our services, effective immediately</li>
+              <li><strong className="text-white">All transaction evidence</strong> (IP address, device fingerprint, timestamps, delivery confirmation, Roblox account data) is submitted to the payment processor to contest the dispute</li>
+              <li><strong className="text-white">Blacklisted</strong> across our platform — no new accounts, no future access</li>
+              <li>We reserve the right to <strong className="text-white">report fraudulent chargebacks to law enforcement</strong> and pursue recovery of funds through appropriate legal channels</li>
             </ul>
           </section>
 
-          <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">Exceptions</h2>
+          <section className="bg-accent/10 border border-accent/30 p-6 rounded-lg">
+            <h2 className="text-2xl font-semibold text-accent mb-4">Have an Issue? Contact Us First</h2>
             <p className="text-gray-300 leading-relaxed mb-4">
-              We may consider compensation or store credit in the following rare circumstances:
+              If you experience any problem with your order or deposit, <strong className="text-white">do NOT file a dispute with your bank</strong>.
+              Instead, open a support ticket in our Discord server. We resolve most issues within minutes.
             </p>
-            <ul className="list-disc list-inside text-gray-300 space-y-2">
-              <li>You received the wrong item due to an error on our part</li>
-              <li>A technical issue prevented delivery of your purchased items</li>
-              <li>Duplicate charges occurred due to payment processing errors</li>
-            </ul>
-            <p className="text-gray-300 leading-relaxed mt-4">
-              These cases are reviewed individually and require proof of the issue.
+            <p className="text-gray-300 leading-relaxed">
+              We handle issues including: wrong items received, technical delivery failures, duplicate charges, and account problems.
+              Contact us first and we will make it right.
             </p>
+            <a
+              href="https://discord.gg/sniperduels"
+              className="inline-block mt-4 px-6 py-3 bg-accent hover:bg-accent-light text-black font-bold text-sm uppercase rounded-lg transition-colors"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open a Discord Ticket
+            </a>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">Chargebacks</h2>
+            <h2 className="text-2xl font-semibold text-white mb-4">Payment Processor Terms</h2>
             <p className="text-gray-300 leading-relaxed">
-              Filing a chargeback or payment dispute after receiving your items is considered fraud.
-              Users who initiate chargebacks will be permanently banned from our services, and we
-              reserve the right to pursue recovery of funds through appropriate channels.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">Contact Us</h2>
-            <p className="text-gray-300 leading-relaxed">
-              If you believe you have a valid case for an exception, please contact us through our{' '}
+              All payments are processed through Pandabase. By making a purchase, you also agree to{' '}
               <a
-                href="https://discord.gg/sniperduels"
+                href="https://pandabase.io/legal/purchase-terms/"
                 className="text-accent hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Discord server
-              </a>
-              . Include your Roblox username, order details, and a description of the issue.
+                Pandabase&apos;s Purchase Terms
+              </a>.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold text-white mb-4">Transaction Records</h2>
+            <p className="text-gray-300 leading-relaxed">
+              All transactions are permanently logged with associated metadata including IP address, device information,
+              timestamps, payment method details, delivery confirmation, and linked Roblox account. These records are
+              retained and may be used as evidence in the event of a dispute.
             </p>
           </section>
         </div>

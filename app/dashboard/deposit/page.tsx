@@ -24,6 +24,7 @@ export default function DepositPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [hpField, setHpField] = useState('')
   const [cancellingId, setCancellingId] = useState<string | null>(null)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   // Crypto-specific state
   const [allCurrencies, setAllCurrencies] = useState<string[]>([])
@@ -324,9 +325,24 @@ export default function DepositPage() {
               <input type="text" name="website" value={hpField} onChange={(e) => setHpField(e.target.value)} autoComplete="off" tabIndex={-1} />
             </div>
 
+            <label className="flex items-start gap-2 mb-4 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-[#e1ad2d] shrink-0"
+              />
+              <span className="text-[10px] text-gray-400 leading-tight">
+                I agree that{' '}
+                <a href="/terms" className="text-[#e1ad2d] hover:underline" target="_blank">all sales are final</a>
+                {' '}and non-refundable. Deposits are credited to your wallet and cannot be reversed. Filing a dispute or chargeback will result in a permanent ban. Issues?{' '}
+                <a href="https://discord.gg/sniperduels" className="text-[#e1ad2d] hover:underline" target="_blank" rel="noopener noreferrer">Open a ticket in our Discord</a>.
+              </span>
+            </label>
+
             <button
               onClick={handleCardDeposit}
-              disabled={loading || !amount || parseFloat(amount) < 5}
+              disabled={loading || !amount || parseFloat(amount) < 5 || !agreedToTerms}
               className="w-full py-4 bg-accent hover:bg-accent-light disabled:bg-accent/50 disabled:cursor-not-allowed text-white font-medium rounded-xl text-lg transition-colors"
             >
               {loading ? (
@@ -400,7 +416,7 @@ export default function DepositPage() {
 
             <button
               onClick={handleCryptoDeposit}
-              disabled={loading || !amount || parseFloat(amount) < 5}
+              disabled={loading || !amount || parseFloat(amount) < 5 || !agreedToTerms}
               className="w-full py-4 bg-green-600 hover:bg-green-500 disabled:bg-green-600/50 disabled:cursor-not-allowed text-white font-medium rounded-xl text-lg transition-colors"
             >
               {loading ? (

@@ -573,13 +573,26 @@ export default function OrderTrackingPage() {
           <h1 className="text-2xl font-bold text-white mb-2">
             {isVendorDeposit ? 'Deposit Complete!' : isVendorWithdrawal ? 'Withdrawal Complete!' : 'Order Complete!'}
           </h1>
-          <p className="text-gray-400 mb-6">
+          <p className="text-gray-400 mb-4">
             {isVendorDeposit
               ? 'Your gems have been added to your stock.'
               : isVendorWithdrawal
               ? 'Your gems have been sent to your Roblox account.'
               : 'Your items have been delivered.'}
           </p>
+
+          {!isVendorOp && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mb-6 text-left">
+              <p className="text-amber-400 text-xs font-bold uppercase mb-1">All sales are final</p>
+              <p className="text-gray-400 text-[11px] leading-relaxed">
+                Having an issue with your order?{' '}
+                <a href="https://discord.gg/sniperduels" className="text-accent hover:underline font-medium" target="_blank" rel="noopener noreferrer">
+                  Open a ticket in our Discord
+                </a>
+                {' '}&mdash; do NOT file a dispute with your bank.
+              </p>
+            </div>
+          )}
 
           <OrderInfo order={order} isVendorOp={isVendorOp} isVendorDeposit={isVendorDeposit} isVendorWithdrawal={isVendorWithdrawal} />
 

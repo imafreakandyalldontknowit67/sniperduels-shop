@@ -38,6 +38,7 @@ export default function ShopPage() {
   const [confirmItem, setConfirmItem] = useState<StockItem | null>(null)
   const [purchasing, setPurchasing] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [comingSoon, setComingSoon] = useState(false)
   const [comingSoonLoading, setComingSoonLoading] = useState(true)
 
@@ -113,6 +114,7 @@ export default function ShopPage() {
       window.location.href = '/api/auth/roblox'
       return
     }
+    setAgreedToTerms(false)
     setConfirmItem(item)
   }
 
@@ -462,6 +464,21 @@ export default function ShopPage() {
               </div>
             </div>
 
+            <label className="flex items-start gap-2 mb-4 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-accent shrink-0"
+              />
+              <span className="text-[10px] text-gray-400 leading-tight">
+                I agree that{' '}
+                <a href="/terms" className="text-accent hover:underline" target="_blank">all sales are final</a>
+                {' '}and non-refundable once delivered. Filing a dispute or chargeback will result in a permanent ban. Issues?{' '}
+                <a href="https://discord.gg/sniperduels" className="text-accent hover:underline" target="_blank" rel="noopener noreferrer">Open a ticket in our Discord</a>.
+              </span>
+            </label>
+
             {userInfo.walletBalance < getDiscountedPrice(confirmItem.priceUsd) ? (
               <div className="space-y-3">
                 <p className="text-red-400 text-xs text-center uppercase">Insufficient balance</p>
@@ -477,7 +494,7 @@ export default function ShopPage() {
                 </button>
                 <button
                   onClick={handleConfirmPurchase}
-                  disabled={purchasing}
+                  disabled={purchasing || !agreedToTerms}
                   className="flex-1 py-3 bg-accent hover:bg-accent-light disabled:bg-accent/50 text-black text-xs font-bold uppercase border-[3px] border-accent-dark pixel-shadow"
                 >
                   {purchasing ? 'Buying...' : 'Confirm Purchase'}
