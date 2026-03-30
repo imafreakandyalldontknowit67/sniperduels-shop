@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
-import { getOrder, updateOrder, addVendorStock, updateVendorDepositStatus, createLedgerEntry } from '@/lib/storage'
+import { getOrder, updateOrder, addVendorStock, updateVendorDepositStatus, addGemStock, createLedgerEntry } from '@/lib/storage'
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -51,6 +51,18 @@ export async function POST(
     )
   }
 
+  // If this is a platform deposit order, add to platform gem stock
+  if (order.notes === 'platform-deposit') {
+    await addGemStock(order.quantity)
+    createLedgerEntry({
+      type: 'deposit',
+      userId: order.userId,
+      amount: 0,
+      description: `Platform gem deposit: ${order.quantity}k gems added to official stock`,
+      relatedId: order.id,
+    }).catch(err => console.error('Ledger write failed (platform deposit):', err))
+  }
+
   // If this is a vendor deposit order, credit the vendor's stock
   if (order.notes?.startsWith('vendor-deposit:')) {
     const depositId = order.notes.replace('vendor-deposit:', '')
@@ -65,7 +77,7 @@ export async function POST(
   }
 
   // Log completed purchase to ledger (only on successful delivery)
-  if (order.type === 'gems' && !order.notes?.startsWith('vendor-deposit:') && !order.notes?.startsWith('vendor-withdrawal:')) {
+  if (order.type === 'gems' && order.notes !== 'platform-deposit' && !order.notes?.startsWith('vendor-deposit:') && !order.notes?.startsWith('vendor-withdrawal:')) {
     createLedgerEntry({
       type: 'purchase',
       userId: order.userId,

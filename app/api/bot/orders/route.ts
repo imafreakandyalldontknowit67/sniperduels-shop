@@ -23,6 +23,15 @@ function authenticateBot(request: NextRequest): boolean {
 }
 
 async function expireOrder(order: { id: string; userId: string; totalPrice: number; type: string; itemName: string; quantity: number; notes?: string }) {
+  // Platform deposit orders: just mark as failed, no refund needed (nothing was deducted)
+  if (order.notes === 'platform-deposit') {
+    await updateOrder(order.id, {
+      status: 'failed',
+      notes: 'platform-deposit | Auto-expired: timed out after 30 minutes',
+    })
+    return
+  }
+
   // Vendor deposit orders: just mark as failed, no refund needed (vendor didn't pay anything)
   if (order.notes?.startsWith('vendor-deposit:')) {
     await updateOrder(order.id, {
@@ -153,6 +162,7 @@ export async function GET(request: NextRequest) {
         createdAt: o.createdAt,
         isVendorDeposit: !!o.notes?.startsWith('vendor-deposit:'),
         isVendorWithdrawal: !!o.notes?.startsWith('vendor-withdrawal:'),
+        isPlatformDeposit: o.notes === 'platform-deposit',
       }
     })
   )
