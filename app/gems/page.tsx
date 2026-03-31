@@ -380,7 +380,6 @@ export default function GemsPage() {
                         className={`w-full flex justify-between items-center px-4 sm:px-5 py-3 sm:py-4 text-left transition-colors`}
                         style={{
                           border: `2px solid ${isSelected ? '#e1ad2d' : '#2a2a2e'}`,
-                          borderBottom: isSelected && hasBulk ? 'none' : undefined,
                           background: isSelected ? 'rgba(225,173,45,0.05)' : 'transparent',
                         }}
                       >
