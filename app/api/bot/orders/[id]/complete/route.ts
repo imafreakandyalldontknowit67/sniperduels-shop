@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
-import { getOrder, updateOrder, updateOrderStatus, addVendorStock, claimVendorDeposit, addGemStock, createLedgerEntry, createVendorEarning } from '@/lib/storage'
+import { getOrder, updateOrder, updateOrderStatus, addVendorStock, claimVendorDeposit, addGemStock, deductGemStock, deductVendorStock, deductFromWallet, addToLifetimeSpend, createLedgerEntry, createVendorEarning } from '@/lib/storage'
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -37,6 +37,57 @@ export async function POST(
   })
 
   if (!updated) {
+    // If order was auto-expired or bot-restarted, reverse the refund and complete it
+    // This handles the race where the bot sends gems but the order was already failed
+    if (order.status === 'failed' && order.notes && (order.notes.includes('Auto-expired') || order.notes.includes('Bot restarted'))) {
+      console.error(`CRITICAL: Bot completed order ${id} that was already failed (${order.notes}). Reversing refund.`)
+
+      // Re-deduct wallet (undo refund)
+      const isRegular = order.type === 'gems' && !order.notes.includes('platform-deposit') && !order.notes.includes('vendor-deposit') && !order.notes.includes('vendor-withdrawal') && !order.notes.includes('platform-withdraw')
+      if (isRegular) {
+        await deductFromWallet(order.userId, Number(order.totalPrice))
+        await addToLifetimeSpend(order.userId, -Number(order.totalPrice))
+
+        // Re-deduct stock (undo restoration)
+        if (order.vendorListingId && order.vendorListingId !== 'platform') {
+          await deductVendorStock(order.vendorListingId, order.quantity)
+        } else {
+          await deductGemStock(order.quantity)
+        }
+      }
+
+      // Force-update to completed
+      await updateOrder(id, {
+        status: 'completed',
+        completedAt: new Date().toISOString(),
+        notes: `${order.notes} | REVERSED: Bot confirmed delivery after failure`,
+      })
+
+      // Create vendor earning + ledger entries (same as normal completion path)
+      if (isRegular) {
+        createLedgerEntry({
+          type: 'purchase',
+          userId: order.userId,
+          amount: order.totalPrice,
+          description: `Purchased ${order.quantity}k gems at $${order.pricePerUnit}/k (reversed from failed)`,
+          relatedId: order.id,
+        }).catch(err => console.error('Ledger write failed (reversed purchase):', err))
+
+        if (order.vendorListingId && order.vendorListingId !== 'platform') {
+          try {
+            await createVendorEarning(order.vendorListingId, order.id, Number(order.totalPrice))
+          } catch (err) {
+            console.error(`CRITICAL: Vendor earning creation failed for reversed order ${order.id}:`, err)
+          }
+        }
+      }
+
+      return NextResponse.json({
+        order: await getOrder(id),
+        warning: 'Order was failed but bot confirmed delivery — refund reversed',
+      })
+    }
+
     return NextResponse.json(
       { error: `Order was already ${order.status} — cannot complete` },
       { status: 409 }

@@ -833,6 +833,7 @@ export interface VendorGemListing {
   maxOrderK: number
   stockK: number
   bulkTiers: Array<{ minK: number; pricePerK: number }> | null
+  platformFeeRate: number | null
   active: boolean
   createdAt: string
   updatedAt: string
@@ -846,6 +847,7 @@ function toVendorGemListing(row: {
   maxOrderK: number
   stockK: number
   bulkTiers: string | null
+  platformFeeRate: Decimal | null
   active: boolean
   createdAt: string
   updatedAt: string
@@ -862,6 +864,7 @@ function toVendorGemListing(row: {
     maxOrderK: row.maxOrderK,
     stockK: row.stockK,
     bulkTiers,
+    platformFeeRate: row.platformFeeRate != null ? d(row.platformFeeRate) : null,
     active: row.active,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -943,6 +946,18 @@ export async function deleteVendorListing(vendorId: string): Promise<boolean> {
     return true
   } catch {
     return false
+  }
+}
+
+export async function updateVendorPlatformFeeRate(vendorId: string, rate: number | null): Promise<VendorGemListing | null> {
+  try {
+    const row = await prisma.vendorGemListing.update({
+      where: { vendorId },
+      data: { platformFeeRate: rate, updatedAt: new Date().toISOString() },
+    })
+    return toVendorGemListing(row)
+  } catch {
+    return null
   }
 }
 
@@ -1122,7 +1137,9 @@ export async function createVendorEarning(
   orderId: string,
   saleAmount: number
 ): Promise<VendorEarningRecord> {
-  const platformFee = Math.round(saleAmount * PLATFORM_FEE_RATE * 100) / 100
+  const listing = await prisma.vendorGemListing.findUnique({ where: { vendorId }, select: { platformFeeRate: true } })
+  const feeRate = listing?.platformFeeRate != null ? Number(listing.platformFeeRate) : PLATFORM_FEE_RATE
+  const platformFee = Math.round(saleAmount * feeRate * 100) / 100
   const netAmount = Math.round((saleAmount - platformFee) * 100) / 100
   const now = new Date().toISOString()
   const row = await prisma.vendorEarning.create({

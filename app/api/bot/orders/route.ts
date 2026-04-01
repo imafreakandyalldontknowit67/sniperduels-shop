@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
   const activeOrders: typeof pendingOrProcessing = []
   for (const o of pendingOrProcessing) {
     const age = now - new Date(o.createdAt).getTime()
-    if (age > ORDER_TIMEOUT_MS) {
+    if (age > ORDER_TIMEOUT_MS && o.status === 'pending') {
       await expireOrder(o)
     } else {
       activeOrders.push(o)

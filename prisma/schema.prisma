@@ -163,8 +163,9 @@ model VendorGemListing {
   minOrderK  Int     @default(1)
   maxOrderK  Int     @default(500)
   stockK     Int     @default(0)
-  bulkTiers  String? // JSON: [{ minK, pricePerK }]
-  active     Boolean @default(true)
+  bulkTiers       String?  // JSON: [{ minK, pricePerK }]
+  platformFeeRate Decimal? @db.Decimal(5, 4) // null = default 3%
+  active          Boolean  @default(true)
   createdAt  String
   updatedAt  String
 

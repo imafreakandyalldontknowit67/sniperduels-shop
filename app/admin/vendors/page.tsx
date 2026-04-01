@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { UserPlus, Trash2, DollarSign, Package, Loader2 } from 'lucide-react'
+import { UserPlus, Trash2, DollarSign, Package, Loader2, Percent } from 'lucide-react'
 
 interface Vendor {
   id: string
@@ -12,6 +12,7 @@ interface Vendor {
     pricePerK: number
     stockK: number
     active: boolean
+    platformFeeRate: number | null
   } | null
   earnings: {
     totalSales: number
@@ -27,6 +28,8 @@ export default function AdminVendorsPage() {
   const [newUserId, setNewUserId] = useState('')
   const [adding, setAdding] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [editingFee, setEditingFee] = useState<string | null>(null)
+  const [feeInput, setFeeInput] = useState('')
 
   useEffect(() => {
     fetchVendors()
@@ -93,6 +96,27 @@ export default function AdminVendorsPage() {
     } catch {
       setToast({ type: 'error', text: 'Failed to remove vendor' })
     }
+  }
+
+  async function handleFeeUpdate(vendorId: string) {
+    const value = feeInput.trim()
+    try {
+      const res = await fetch('/api/admin/vendors', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendorId, platformFeeRate: value === '' ? null : value }),
+      })
+      if (res.ok) {
+        setToast({ type: 'success', text: value === '' ? 'Fee reset to default 3%' : `Fee set to ${value}%` })
+        fetchVendors()
+      } else {
+        const data = await res.json()
+        setToast({ type: 'error', text: data.error || 'Failed to update fee' })
+      }
+    } catch {
+      setToast({ type: 'error', text: 'Failed to update fee' })
+    }
+    setEditingFee(null)
   }
 
   return (
@@ -169,6 +193,32 @@ export default function AdminVendorsPage() {
                         <Package className="w-3 h-3" />
                         {vendor.listing.stockK}k stock
                       </div>
+                    </div>
+                    <div className="text-right">
+                      {editingFee === vendor.id ? (
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="100"
+                          value={feeInput}
+                          onChange={e => setFeeInput(e.target.value)}
+                          onBlur={() => handleFeeUpdate(vendor.id)}
+                          onKeyDown={e => { if (e.key === 'Enter') handleFeeUpdate(vendor.id); if (e.key === 'Escape') setEditingFee(null) }}
+                          autoFocus
+                          placeholder="3"
+                          className="w-16 px-2 py-1 text-xs text-white text-right focus:outline-none"
+                          style={{ background: '#111', border: '2px solid #3a3a3e' }}
+                        />
+                      ) : (
+                        <button
+                          onClick={() => { setEditingFee(vendor.id); setFeeInput(vendor.listing?.platformFeeRate != null ? String(vendor.listing.platformFeeRate * 100) : '') }}
+                          className="flex items-center gap-1 text-xs text-gray-400 hover:text-white transition-colors"
+                        >
+                          <Percent className="w-3 h-3" />
+                          {vendor.listing?.platformFeeRate != null ? `${(vendor.listing.platformFeeRate * 100).toFixed(1)}%` : '3%'} fee
+                        </button>
+                      )}
                     </div>
                     <div className="text-right">
                       <div className="flex items-center gap-1 text-xs text-gray-400">

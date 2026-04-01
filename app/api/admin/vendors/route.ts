@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser, isAdmin } from '@/lib/auth'
-import { getVendors, getUser, setVendorStatus, getVendorListing, getVendorEarningsSummary, deleteVendorListing } from '@/lib/storage'
+import { getVendors, getUser, setVendorStatus, getVendorListing, getVendorEarningsSummary, deleteVendorListing, updateVendorPlatformFeeRate } from '@/lib/storage'
 
 export async function GET() {
   try {
@@ -23,6 +23,7 @@ export async function GET() {
             pricePerK: listing.pricePerK,
             stockK: listing.stockK,
             active: listing.active,
+            platformFeeRate: listing.platformFeeRate,
           } : null,
           earnings,
         }
@@ -68,5 +69,40 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Admin vendors POST error:', error)
     return NextResponse.json({ error: 'Failed to update vendor' }, { status: 500 })
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const user = await getCurrentUser()
+    if (!user || !isAdmin(user.id)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { vendorId, platformFeeRate } = body
+
+    if (!vendorId || typeof vendorId !== 'string') {
+      return NextResponse.json({ error: 'vendorId required' }, { status: 400 })
+    }
+
+    // null = reset to default 3%
+    let rate: number | null = null
+    if (platformFeeRate !== null && platformFeeRate !== undefined && platformFeeRate !== '') {
+      rate = Number(platformFeeRate) / 100 // Convert percentage to decimal (e.g. 1.5 → 0.015)
+      if (!Number.isFinite(rate) || rate < 0 || rate > 1) {
+        return NextResponse.json({ error: 'platformFeeRate must be 0-100%' }, { status: 400 })
+      }
+    }
+
+    const updated = await updateVendorPlatformFeeRate(vendorId, rate)
+    if (!updated) {
+      return NextResponse.json({ error: 'Vendor listing not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({ listing: updated })
+  } catch (error) {
+    console.error('Admin vendors PATCH error:', error)
+    return NextResponse.json({ error: 'Failed to update vendor fee rate' }, { status: 500 })
   }
 }
