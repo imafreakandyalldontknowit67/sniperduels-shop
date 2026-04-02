@@ -70,18 +70,23 @@ export async function POST(request: NextRequest) {
     })
 
     // Create NearPayments payment
-    const { paymentId, payAddress, payAmount, payCurrency } = await createCryptoPayment(
-      roundedAmount,
-      deposit.id,
-      currency
-    )
+    let paymentResult
+    try {
+      paymentResult = await createCryptoPayment(roundedAmount, deposit.id, currency)
+    } catch (err) {
+      console.error('Crypto payment provider error:', err)
+      return NextResponse.json(
+        { error: "Crypto deposits aren't available at this moment. Feel free to open a ticket in our Discord for a manual deposit: https://discord.gg/sniperduels" },
+        { status: 503 }
+      )
+    }
 
     return NextResponse.json({
       depositId: deposit.id,
-      paymentId,
-      payAddress,
-      payAmount,
-      payCurrency,
+      paymentId: paymentResult.paymentId,
+      payAddress: paymentResult.payAddress,
+      payAmount: paymentResult.payAmount,
+      payCurrency: paymentResult.payCurrency,
       bonusAmount: 0,
     })
   } catch (error) {
