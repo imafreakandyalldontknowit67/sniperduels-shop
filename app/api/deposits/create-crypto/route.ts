@@ -69,11 +69,28 @@ export async function POST(request: NextRequest) {
       pandabaseRefId: currency,
     })
 
+    // Currency-specific minimums (NearPayments bridge requirements)
+    const CRYPTO_MINIMUMS: Record<string, number> = { btc: 15 }
+    const minForCurrency = CRYPTO_MINIMUMS[currency.toLowerCase()] || 5
+    if (roundedAmount < minForCurrency) {
+      return NextResponse.json(
+        { error: `Minimum deposit for ${currency.toUpperCase()} is $${minForCurrency}. Try a higher amount or use a different currency.` },
+        { status: 400 }
+      )
+    }
+
     // Create NearPayments payment
     let paymentResult
     try {
       paymentResult = await createCryptoPayment(roundedAmount, deposit.id, currency)
     } catch (err) {
+      const errMsg = String(err)
+      if (errMsg.includes('too low')) {
+        return NextResponse.json(
+          { error: `Amount is too low for ${currency.toUpperCase()}. Try a higher amount or use a different currency like SOL or USDT.` },
+          { status: 400 }
+        )
+      }
       console.error('Crypto payment provider error:', err)
       return NextResponse.json(
         { error: "Crypto deposits aren't available at this moment. Feel free to open a ticket in our Discord for a manual deposit: https://discord.gg/sniperduels" },
