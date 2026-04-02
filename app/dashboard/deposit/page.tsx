@@ -281,9 +281,14 @@ export default function DepositPage() {
             ))}
           </div>
           {tab === 'crypto' && amount && parseFloat(amount) >= 5 && (
-            <p className="text-gray-400 text-xs text-center mt-3">
-              You&apos;ll receive ${parseFloat(amount).toFixed(2)} in your wallet — no processing fees
-            </p>
+            <div className="text-xs text-center mt-3 space-y-1">
+              <p className="text-gray-400">
+                You&apos;ll receive ${parseFloat(amount).toFixed(2)} in your wallet — no processing fees
+              </p>
+              {cryptoCurrency === 'btc' && parseFloat(amount) < 15 && (
+                <p className="text-yellow-400">BTC has a $15 minimum — try a higher amount or use SOL/USDT</p>
+              )}
+            </div>
           )}
           {tab === 'card' && amount && parseFloat(amount) >= 5 && (
             <div className="text-xs text-center mt-3 space-y-1">
