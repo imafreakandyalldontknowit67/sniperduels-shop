@@ -21,10 +21,13 @@ export async function POST(request: NextRequest) {
   }
 
   let gemBalance: number | undefined
-  try {
-    const body = await request.json()
-    gemBalance = typeof body.gemBalance === 'number' ? body.gemBalance : undefined
-  } catch { /* no body is fine — old bot version */ }
+  const contentType = request.headers.get('content-type')
+  if (contentType?.includes('application/json')) {
+    try {
+      const body = await request.json()
+      gemBalance = typeof body.gemBalance === 'number' ? body.gemBalance : undefined
+    } catch { /* ignore parse errors */ }
+  }
 
   setBotHeartbeat(gemBalance)
   return NextResponse.json({ ok: true })
