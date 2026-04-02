@@ -303,6 +303,21 @@ export default function DepositPage() {
           )}
         </div>
 
+        <label className="flex items-start gap-2 mb-4 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={agreedToTerms}
+            onChange={(e) => setAgreedToTerms(e.target.checked)}
+            className="mt-0.5 w-4 h-4 accent-[#e1ad2d] shrink-0"
+          />
+          <span className="text-[10px] text-gray-400 leading-tight">
+            I agree that{' '}
+            <a href="/terms" className="text-[#e1ad2d] hover:underline" target="_blank">all sales are final</a>
+            {' '}and non-refundable. Deposits are credited to your wallet and cannot be reversed. Filing a dispute or chargeback will result in a permanent ban. Issues?{' '}
+            <a href="https://discord.gg/sniperduels" className="text-[#e1ad2d] hover:underline" target="_blank" rel="noopener noreferrer">Open a ticket in our Discord</a>.
+          </span>
+        </label>
+
         {/* Card Tab Content */}
         {tab === 'card' && (
           <>
@@ -321,21 +336,6 @@ export default function DepositPage() {
             <div className="absolute opacity-0 h-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
               <input type="text" name="website" value={hpField} onChange={(e) => setHpField(e.target.value)} autoComplete="off" tabIndex={-1} />
             </div>
-
-            <label className="flex items-start gap-2 mb-4 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
-                className="mt-0.5 w-4 h-4 accent-[#e1ad2d] shrink-0"
-              />
-              <span className="text-[10px] text-gray-400 leading-tight">
-                I agree that{' '}
-                <a href="/terms" className="text-[#e1ad2d] hover:underline" target="_blank">all sales are final</a>
-                {' '}and non-refundable. Deposits are credited to your wallet and cannot be reversed. Filing a dispute or chargeback will result in a permanent ban. Issues?{' '}
-                <a href="https://discord.gg/sniperduels" className="text-[#e1ad2d] hover:underline" target="_blank" rel="noopener noreferrer">Open a ticket in our Discord</a>.
-              </span>
-            </label>
 
             <button
               onClick={handleCardDeposit}
