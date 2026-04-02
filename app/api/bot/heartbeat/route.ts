@@ -45,6 +45,6 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     lastHeartbeat: lastHeartbeat || null,
     secondsAgo: ago,
-    online: lastHeartbeat > 0 && (now - lastHeartbeat) < 60_000,
+    online: lastHeartbeat > 0 && (now - lastHeartbeat) < 300_000, // 5 minutes
   })
 }

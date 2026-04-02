@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     const lastHeartbeat = getBotLastHeartbeat()
-    if (Date.now() - lastHeartbeat > 60_000) {
+    if (Date.now() - lastHeartbeat > 300_000) { // 5 minutes
       return NextResponse.json(
         { error: 'The trade bot is currently offline. Please try again later.' },
         { status: 503 }
