@@ -204,12 +204,14 @@ export async function updateWalletBalance(userId: string, amount: number): Promi
 export async function addToWallet(userId: string, amount: number): Promise<StoredUser | null> {
   if (!Number.isFinite(amount) || amount < 0) return null
 
-  // Use a transaction for atomicity
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    const user = await tx.user.findUnique({ where: { id: userId } })
-    if (!user) return null
+    // Lock the user row to prevent concurrent balance reads (race condition fix)
+    const locked: Array<{ walletBalance: number }> = await tx.$queryRawUnsafe(
+      'SELECT "walletBalance" FROM "User" WHERE id = $1 FOR UPDATE', userId
+    )
+    if (!locked.length) return null
 
-    const currentBalance = d(user.walletBalance)
+    const currentBalance = Number(locked[0].walletBalance)
     const newBalance = currentBalance + amount
     if (newBalance > MAX_WALLET_BALANCE) return null
 
