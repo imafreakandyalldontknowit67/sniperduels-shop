@@ -11,12 +11,15 @@ import {
   markDiscordFirstPurchaseUsed,
   getGemStock,
   deductGemStock,
+  addGemStock,
   getVendorListing,
   deductVendorStock,
+  addVendorStock,
   getUser,
+  getOrders,
 } from '@/lib/storage'
 import { notifyPurchase } from '@/lib/discord-webhook'
-import { getBotLastHeartbeat } from '@/lib/bot-heartbeat'
+import { getBotLastHeartbeat, getBotGemBalance } from '@/lib/bot-heartbeat'
 
 const PRICING_TIERS = [
   { min: 1, max: 99, rate: 2.90 },
@@ -166,6 +169,29 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { error: 'Gems went out of stock. Wallet refunded.' },
           { status: 409 }
+        )
+      }
+    }
+
+    // Guard: check bot's actual gem balance can cover all pending orders + this one
+    const botBalance = getBotGemBalance()
+    if (botBalance != null) {
+      const allOrders = await getOrders()
+      const pendingTotal = allOrders
+        .filter(o => o.status === 'pending' || o.status === 'processing')
+        .reduce((sum, o) => sum + o.quantity, 0)
+      if (pendingTotal + roundedAmount > botBalance) {
+        // Reverse: restore stock
+        if (isVendorPurchase && vendorId) {
+          await addVendorStock(vendorId, roundedAmount)
+        } else {
+          await addGemStock(roundedAmount)
+        }
+        await addToWallet(user.id, totalPrice)
+        await addToLifetimeSpend(user.id, -totalPrice)
+        return NextResponse.json(
+          { error: 'The bot is running low on gems. Please try a smaller amount or wait for restocking.' },
+          { status: 503 }
         )
       }
     }

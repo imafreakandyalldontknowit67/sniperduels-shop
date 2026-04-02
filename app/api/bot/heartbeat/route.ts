@@ -20,7 +20,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  setBotHeartbeat()
+  let gemBalance: number | undefined
+  try {
+    const body = await request.json()
+    gemBalance = typeof body.gemBalance === 'number' ? body.gemBalance : undefined
+  } catch { /* no body is fine — old bot version */ }
+
+  setBotHeartbeat(gemBalance)
   return NextResponse.json({ ok: true })
 }
 
