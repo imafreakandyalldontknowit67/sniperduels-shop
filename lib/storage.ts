@@ -326,6 +326,7 @@ export interface Order {
   createdAt: string
   updatedAt: string
   completedAt?: string
+  reachedFrontAt?: string
   notes?: string
   vendorListingId?: string
 }
@@ -345,6 +346,7 @@ function toOrder(row: {
   createdAt: string
   updatedAt: string
   completedAt: string | null
+  reachedFrontAt: string | null
   notes: string | null
   vendorListingId: string | null
 }): Order {
@@ -363,6 +365,7 @@ function toOrder(row: {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     completedAt: row.completedAt ?? undefined,
+    reachedFrontAt: row.reachedFrontAt ?? undefined,
     notes: row.notes ?? undefined,
     vendorListingId: row.vendorListingId ?? undefined,
   }

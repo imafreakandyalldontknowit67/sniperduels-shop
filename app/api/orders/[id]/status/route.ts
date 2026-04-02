@@ -4,7 +4,7 @@ import { getOrder, getOrders } from '@/lib/storage'
 import type { Order } from '@/lib/storage'
 
 const ESTIMATED_MINUTES_PER_ORDER = 2
-const SKIP_TIMEOUT_MS = 10 * 60 * 1000 // 10 minutes
+const SKIP_TIMEOUT_MS = 3.5 * 60 * 1000 // 3.5 minutes from reaching #1
 
 // Same sort logic as bot polling — must stay in sync
 function sortOrders(orders: Order[]): Order[] {
@@ -69,7 +69,8 @@ export async function GET(
 
       // If at #1 and not ready, show when they'll be skipped
       if (showServerLink && !order.playerReady && !order.skippedAt) {
-        const deadline = new Date(new Date(order.createdAt).getTime() + SKIP_TIMEOUT_MS)
+        const frontTime = order.reachedFrontAt || order.createdAt
+        const deadline = new Date(new Date(frontTime).getTime() + SKIP_TIMEOUT_MS)
         skipDeadline = deadline.toISOString()
       }
     } else if (order.status === 'processing') {

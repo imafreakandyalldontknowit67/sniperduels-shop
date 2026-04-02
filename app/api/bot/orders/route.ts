@@ -6,8 +6,8 @@ import type { Order } from '@/lib/storage'
 // Orders older than this are auto-expired (in milliseconds)
 const ORDER_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
 
-// Time before an unready #1 order gets skipped
-const SKIP_TIMEOUT_MS = 10 * 60 * 1000 // 10 minutes
+// Time before an unready #1 order gets skipped (from when they reach #1, not order creation)
+const SKIP_TIMEOUT_MS = 3.5 * 60 * 1000 // 3.5 minutes
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -127,15 +127,21 @@ export async function GET(request: NextRequest) {
   // Sort: ready-first queue
   const sorted = sortOrders(activeOrders)
 
-  // Skip logic: if the #1 pending order is not ready and has been waiting >10 min, skip it
+  // Skip logic: if the #1 pending order is not ready and has been at #1 for >3.5 min, skip it
   const pendingOnly = sorted.filter(o => o.status === 'pending')
   if (pendingOnly.length > 0) {
     const first = pendingOnly[0]
     if (!first.playerReady && !first.skippedAt) {
-      const waitTime = now - new Date(first.createdAt).getTime()
-      if (waitTime > SKIP_TIMEOUT_MS) {
-        await updateOrder(first.id, { skippedAt: new Date().toISOString() })
-        first.skippedAt = new Date().toISOString()
+      if (!first.reachedFrontAt) {
+        // First time at #1 — stamp it
+        await updateOrder(first.id, { reachedFrontAt: new Date().toISOString() })
+        first.reachedFrontAt = new Date().toISOString()
+      } else {
+        const waitTime = now - new Date(first.reachedFrontAt).getTime()
+        if (waitTime > SKIP_TIMEOUT_MS) {
+          await updateOrder(first.id, { skippedAt: new Date().toISOString() })
+          first.skippedAt = new Date().toISOString()
+        }
       }
     }
   }

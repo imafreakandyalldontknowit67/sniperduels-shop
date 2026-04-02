@@ -73,6 +73,7 @@ model Order {
   createdAt   String
   updatedAt   String
   completedAt     String?
+  reachedFrontAt  String?
   notes           String?
   vendorListingId String?
 
