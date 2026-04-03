@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Package, DollarSign, TrendingUp, Save, Loader2, Plus, Trash2 } from 'lucide-react'
+import { Package, DollarSign, TrendingUp, Save, Loader2, Plus, Trash2, Trophy } from 'lucide-react'
 
 interface BulkTier {
   minK: number
@@ -28,6 +28,8 @@ interface Summary {
 export default function VendorDashboard() {
   const [listing, setListing] = useState<Listing | null>(null)
   const [summary, setSummary] = useState<Summary | null>(null)
+  const [monthlyRank, setMonthlyRank] = useState<number | null>(null)
+  const [totalVendors, setTotalVendors] = useState(0)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -80,6 +82,8 @@ export default function VendorDashboard() {
       if (res.ok) {
         const data = await res.json()
         setSummary(data.summary)
+        if (data.monthlyRank != null) setMonthlyRank(data.monthlyRank)
+        setTotalVendors(data.totalVendors || 0)
       }
     } catch { /* ignore */ }
   }
@@ -206,6 +210,25 @@ export default function VendorDashboard() {
           <p className="text-2xl font-bold text-white">{summary?.count ?? 0}</p>
         </div>
       </div>
+
+      {/* Monthly Rank Badge */}
+      {monthlyRank !== null && (
+        <div
+          className="flex items-center gap-3 p-4 mb-8"
+          style={{
+            background: monthlyRank <= 3 ? 'rgba(225,173,45,0.08)' : 'rgba(99,102,241,0.08)',
+            border: `2px solid ${monthlyRank <= 3 ? '#e1ad2d' : '#6366f1'}`,
+          }}
+        >
+          <Trophy className="w-5 h-5 shrink-0" style={{ color: monthlyRank === 1 ? '#e1ad2d' : monthlyRank === 2 ? '#c0c0c0' : monthlyRank === 3 ? '#cd7f32' : '#6366f1' }} />
+          <span className="text-xs text-white uppercase">
+            {monthlyRank === 1
+              ? `You're #1 in sales this month!`
+              : `You're #${monthlyRank} in sales this month!`}
+            <span className="text-gray-500 ml-2">out of {totalVendors} vendor{totalVendors !== 1 ? 's' : ''}</span>
+          </span>
+        </div>
+      )}
 
       {/* Listing Settings */}
       <div className="p-6" style={{ background: '#1a1a1e', border: '2px solid #2a2a2e' }}>
