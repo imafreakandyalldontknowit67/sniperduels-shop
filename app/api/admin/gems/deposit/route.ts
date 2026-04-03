@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser, isAdmin } from '@/lib/auth'
 import { createOrder, getOrders } from '@/lib/storage'
-import { getBotLastHeartbeat } from '@/lib/bot-heartbeat'
+import { getBotLastHeartbeat, BOT_OFFLINE_THRESHOLD_MS } from '@/lib/bot-heartbeat'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const lastHeartbeat = getBotLastHeartbeat()
-  if (Date.now() - lastHeartbeat > 60_000) {
+  const lastHeartbeat = await getBotLastHeartbeat()
+  if (Date.now() - lastHeartbeat > BOT_OFFLINE_THRESHOLD_MS) {
     return NextResponse.json(
       { error: 'The trade bot is currently offline. Please try again later.' },
       { status: 503 }

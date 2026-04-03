@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
-import { getBotLastHeartbeat, setBotHeartbeat } from '@/lib/bot-heartbeat'
+import { getBotLastHeartbeat, setBotHeartbeat, BOT_OFFLINE_THRESHOLD_MS } from '@/lib/bot-heartbeat'
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -38,13 +38,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const lastHeartbeat = getBotLastHeartbeat()
+  const lastHeartbeat = await getBotLastHeartbeat()
   const now = Date.now()
   const ago = lastHeartbeat ? Math.floor((now - lastHeartbeat) / 1000) : null
 
   return NextResponse.json({
     lastHeartbeat: lastHeartbeat || null,
     secondsAgo: ago,
-    online: lastHeartbeat > 0 && (now - lastHeartbeat) < 300_000, // 5 minutes
+    online: lastHeartbeat > 0 && (now - lastHeartbeat) < BOT_OFFLINE_THRESHOLD_MS,
   })
 }

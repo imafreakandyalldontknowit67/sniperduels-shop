@@ -261,6 +261,13 @@ model TransactionLedger {
   @@index([createdAt])
 }
 
+// ─── Bot State (key-value, survives deploys) ────────────────────────────────
+model BotState {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
 // ─── Session Blacklist ───────────────────────────────────────────────────────
 model SessionBlacklist {
   jti       String @id // JWT ID

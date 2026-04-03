@@ -19,7 +19,7 @@ import {
   getOrders,
 } from '@/lib/storage'
 import { notifyPurchase } from '@/lib/discord-webhook'
-import { getBotLastHeartbeat, getBotGemBalance } from '@/lib/bot-heartbeat'
+import { getBotLastHeartbeat, getBotGemBalance, BOT_OFFLINE_THRESHOLD_MS } from '@/lib/bot-heartbeat'
 
 const PRICING_TIERS = [
   { min: 1, max: 99, rate: 2.90 },
@@ -43,8 +43,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Vendor accounts cannot make purchases. Your balance is withdraw-only — request a payout via Discord.' }, { status: 403 })
     }
 
-    const lastHeartbeat = getBotLastHeartbeat()
-    if (Date.now() - lastHeartbeat > 300_000) { // 5 minutes
+    const lastHeartbeat = await getBotLastHeartbeat()
+    if (Date.now() - lastHeartbeat > BOT_OFFLINE_THRESHOLD_MS) {
       return NextResponse.json(
         { error: 'The trade bot is currently offline. Please try again later.' },
         { status: 503 }

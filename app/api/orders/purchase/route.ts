@@ -15,7 +15,7 @@ import {
   getUser,
 } from '@/lib/storage'
 import { notifyPurchase } from '@/lib/discord-webhook'
-import { getBotLastHeartbeat } from '@/lib/bot-heartbeat'
+import { getBotLastHeartbeat, BOT_OFFLINE_THRESHOLD_MS } from '@/lib/bot-heartbeat'
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,8 +35,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Item purchases are not yet available' }, { status: 403 })
     }
 
-    const lastHeartbeat = getBotLastHeartbeat()
-    if (Date.now() - lastHeartbeat > 60_000) {
+    const lastHeartbeat = await getBotLastHeartbeat()
+    if (Date.now() - lastHeartbeat > BOT_OFFLINE_THRESHOLD_MS) {
       return NextResponse.json(
         { error: 'The trade bot is currently offline. Please try again later.' },
         { status: 503 }
