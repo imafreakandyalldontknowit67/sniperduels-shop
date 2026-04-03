@@ -116,10 +116,10 @@ export async function POST(request: NextRequest) {
       rate = getRate(roundedAmount)
     }
 
-    // Calculate price with loyalty + discord discounts
+    // Calculate price — discounts only apply to platform stock, not vendor listings
     const loyalty = await getUserLoyaltyInfo(user.id)
     const discordEligible = await canUseDiscordFirstPurchaseDiscount(user.id)
-    const combinedDiscount = loyalty.discount + (discordEligible ? 0.025 : 0)
+    const combinedDiscount = isVendorPurchase ? 0 : loyalty.discount + (discordEligible ? 0.025 : 0)
     const basePrice = roundedAmount * rate
     const totalPrice = Math.round(basePrice * (1 - combinedDiscount) * 100) / 100
 
@@ -211,7 +211,7 @@ export async function POST(request: NextRequest) {
 
     // Track lifetime spend + consume discord first-purchase bonus
     await addToLifetimeSpend(user.id, totalPrice)
-    if (discordEligible) {
+    if (discordEligible && !isVendorPurchase) {
       await markDiscordFirstPurchaseUsed(user.id)
     }
 

@@ -114,7 +114,8 @@ export default function GemsPage() {
 
   const currentRate = selectedListing ? getEffectiveRate(selectedListing, amount) : 2.90
   const totalPrice = amount * currentRate
-  const combinedDiscount = (userInfo?.loyaltyDiscount || 0) + (userInfo?.canUseDiscordDiscount ? 0.025 : 0)
+  const isVendorSelected = selectedListing?.type === 'vendor'
+  const combinedDiscount = isVendorSelected ? 0 : (userInfo?.loyaltyDiscount || 0) + (userInfo?.canUseDiscordDiscount ? 0.025 : 0)
   const discountedPrice = combinedDiscount > 0
     ? Math.round(totalPrice * (1 - combinedDiscount) * 100) / 100
     : totalPrice
@@ -502,13 +503,13 @@ export default function GemsPage() {
                 <span className="text-gray-400 text-xs uppercase">Price</span>
                 <span className="text-white font-medium text-sm">${discountedPrice.toFixed(2)}</span>
               </div>
-              {userInfo.canUseDiscordDiscount && (
+              {!isVendorSelected && userInfo.canUseDiscordDiscount && (
                 <div className="flex justify-between">
                   <span className="text-gray-400 text-xs uppercase">Discord First Purchase</span>
                   <span className="text-green-400 text-sm">-2.5%</span>
                 </div>
               )}
-              {userInfo.loyaltyDiscount > 0 && (
+              {!isVendorSelected && userInfo.loyaltyDiscount > 0 && (
                 <div className="flex justify-between">
                   <span className="text-gray-400 text-xs uppercase">Loyalty Discount</span>
                   <span className="text-green-400 text-sm">-{parseFloat((userInfo.loyaltyDiscount * 100).toFixed(1))}%</span>
