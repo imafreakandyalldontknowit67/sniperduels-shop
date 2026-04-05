@@ -42,6 +42,7 @@ export async function createCheckout(amount: number): Promise<{
       'Authorization': `Bearer ${secretKey}`,
     },
     body: JSON.stringify({
+      currency: 'usd',
       items: [{
         name: `Wallet Deposit - $${amount.toFixed(2)} #${refId}`,
         amount: Math.round(amount * 100),
