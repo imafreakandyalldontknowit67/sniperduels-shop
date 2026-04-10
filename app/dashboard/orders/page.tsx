@@ -2,6 +2,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { getUserOrders } from '@/lib/storage'
 import { ShoppingBag } from 'lucide-react'
 import Link from 'next/link'
+import { Price } from '@/components/ui'
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-500/20 text-yellow-400',
@@ -69,7 +70,7 @@ export default async function OrdersPage() {
                     {order.quantity}
                   </td>
                   <td className="px-3 sm:px-6 py-4 text-sm text-white font-medium">
-                    ${order.totalPrice.toFixed(2)}
+                    <Price amount={order.totalPrice} />
                   </td>
                   <td className="px-3 sm:px-6 py-4">
                     <Link href={`/dashboard/orders/${order.id}`}>

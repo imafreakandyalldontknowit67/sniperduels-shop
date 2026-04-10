@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Banknote, Wallet, Clock, CheckCircle2, XCircle, Loader2, AlertCircle } from 'lucide-react'
+import { useCurrency } from '@/components/providers'
 
 interface Payout {
   id: string
@@ -15,6 +16,7 @@ interface Payout {
 }
 
 export default function VendorPayoutsPage() {
+  const { formatPrice } = useCurrency()
   const [payouts, setPayouts] = useState<Payout[]>([])
   const [balance, setBalance] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -128,7 +130,7 @@ export default function VendorPayoutsPage() {
           <Wallet className="w-4 h-4 text-green-400" />
           <span className="text-[10px] text-gray-400 uppercase">Available Balance</span>
         </div>
-        <p className="text-3xl font-bold text-white">${balance.toFixed(2)}</p>
+        <p className="text-3xl font-bold text-white">{formatPrice(balance)}</p>
       </div>
 
       {/* Discord Payout Instructions */}
@@ -179,7 +181,7 @@ export default function VendorPayoutsPage() {
               style={{ background: '#1a1a1e', border: '2px solid #2a2a2e' }}
             >
               <div>
-                <p className="text-white text-sm font-bold">${p.amount.toFixed(2)}</p>
+                <p className="text-white text-sm font-bold">{formatPrice(p.amount)}</p>
                 <p className="text-gray-500 text-[10px] max-w-[200px] truncate">{p.paymentMethod}</p>
                 {p.adminNotes && (
                   <p className="text-gray-400 text-[10px] mt-0.5">Note: {p.adminNotes}</p>

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { CurrencySelector } from '@/components/ui'
 
 export function Footer() {
   const pathname = usePathname()
@@ -23,11 +24,15 @@ export function Footer() {
                 style={{ imageRendering: 'pixelated' }}
               />
             </Link>
-            <p className="text-gray-400 text-[10px] sm:text-xs uppercase leading-relaxed max-w-[280px]">
+            <p className="text-gray-400 text-[10px] sm:text-xs uppercase leading-relaxed max-w-[280px] mb-3">
               The first automated item shop for Sniper Duels.
               <br />
               Automatic delivery, available 24/7.
             </p>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500 text-[10px] uppercase">Currency:</span>
+              <CurrencySelector compact />
+            </div>
           </div>
 
           {/* About */}

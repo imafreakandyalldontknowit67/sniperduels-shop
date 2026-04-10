@@ -2,6 +2,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { getUser, getUserLoyaltyInfo, LOYALTY_TIERS, canUseDiscordFirstPurchaseDiscount } from '@/lib/storage'
 import { User, Check, ExternalLink, Crown, Gift } from 'lucide-react'
 import Link from 'next/link'
+import { Price } from '@/components/ui'
 
 // Roblox icon component
 function RobloxIcon({ className }: { className?: string }) {
@@ -125,7 +126,7 @@ export default async function ProfilePage({
                 {loyaltyInfo.discount > 0 ? `${parseFloat((loyaltyInfo.discount * 100).toFixed(1))}% off` : 'No discount yet'}
               </p>
               <p className="text-gray-500 text-sm mt-1">
-                Lifetime spend: ${loyaltyInfo.lifetimeSpend.toFixed(2)}
+                Lifetime spend: <Price amount={loyaltyInfo.lifetimeSpend} />
               </p>
             </div>
 
@@ -134,7 +135,7 @@ export default async function ProfilePage({
               <div className="mb-6">
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-gray-400">Progress to {LOYALTY_TIERS[loyaltyInfo.nextTier].label}</span>
-                  <span className="text-gray-400">${loyaltyInfo.spendToNextTier.toFixed(2)} to go</span>
+                  <span className="text-gray-400"><Price amount={loyaltyInfo.spendToNextTier} /> to go</span>
                 </div>
                 <div className="h-2 bg-dark-600 rounded-full overflow-hidden">
                   <div

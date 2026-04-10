@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { DollarSign, TrendingUp, Percent, BarChart3, Loader2 } from 'lucide-react'
+import { useCurrency } from '@/components/providers'
 
 interface Earning {
   id: string
@@ -21,6 +22,7 @@ interface Summary {
 }
 
 export default function VendorEarningsPage() {
+  const { formatPrice } = useCurrency()
   const [earnings, setEarnings] = useState<Earning[]>([])
   const [summary, setSummary] = useState<Summary | null>(null)
   const [loading, setLoading] = useState(true)
@@ -62,21 +64,21 @@ export default function VendorEarningsPage() {
             <DollarSign className="w-4 h-4 text-green-400" />
             <span className="text-[10px] text-gray-400 uppercase">Net Earnings</span>
           </div>
-          <p className="text-2xl font-bold text-white">${summary?.totalNet.toFixed(2) ?? '0.00'}</p>
+          <p className="text-2xl font-bold text-white">{formatPrice(summary?.totalNet ?? 0)}</p>
         </div>
         <div className="p-4" style={{ background: '#1a1a1e', border: '2px solid #2a2a2e' }}>
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-4 h-4 text-accent" />
             <span className="text-[10px] text-gray-400 uppercase">Total Sales</span>
           </div>
-          <p className="text-2xl font-bold text-white">${summary?.totalSales.toFixed(2) ?? '0.00'}</p>
+          <p className="text-2xl font-bold text-white">{formatPrice(summary?.totalSales ?? 0)}</p>
         </div>
         <div className="p-4" style={{ background: '#1a1a1e', border: '2px solid #2a2a2e' }}>
           <div className="flex items-center gap-2 mb-2">
             <Percent className="w-4 h-4 text-red-400" />
             <span className="text-[10px] text-gray-400 uppercase">Platform Fees</span>
           </div>
-          <p className="text-2xl font-bold text-white">${summary?.totalFees.toFixed(2) ?? '0.00'}</p>
+          <p className="text-2xl font-bold text-white">{formatPrice(summary?.totalFees ?? 0)}</p>
         </div>
       </div>
 
@@ -97,12 +99,12 @@ export default function VendorEarningsPage() {
               style={{ background: '#1a1a1e', border: '2px solid #2a2a2e' }}
             >
               <div>
-                <p className="text-white text-sm font-bold">${e.saleAmount.toFixed(2)} sale</p>
+                <p className="text-white text-sm font-bold">{formatPrice(e.saleAmount)} sale</p>
                 <p className="text-gray-500 text-[10px]">Order: {e.orderId.slice(0, 16)}...</p>
               </div>
               <div className="text-right">
-                <p className="text-green-400 text-sm font-bold">+${e.netAmount.toFixed(2)}</p>
-                <p className="text-red-400 text-[10px]">-${e.platformFee.toFixed(2)} fee</p>
+                <p className="text-green-400 text-sm font-bold">+{formatPrice(e.netAmount)}</p>
+                <p className="text-red-400 text-[10px]">-{formatPrice(e.platformFee)} fee</p>
               </div>
               <span className="text-gray-500 text-[10px]">
                 {new Date(e.createdAt).toLocaleDateString()}

@@ -4,7 +4,7 @@ import Script from 'next/script'
 import './globals.css'
 import { Suspense } from 'react'
 import { Header, Footer } from '@/components/layout'
-import { AuthProvider, PostHogProvider, PostHogPageView } from '@/components/providers'
+import { AuthProvider, PostHogProvider, PostHogPageView, CurrencyProvider } from '@/components/providers'
 
 const pixelEmulator = localFont({
   src: '../public/fonts/PixelEmulator-xq08.ttf',
@@ -100,11 +100,13 @@ export default function RootLayout({
             <PostHogPageView />
           </Suspense>
           <AuthProvider>
-            <Header />
-            <main className="min-h-screen pt-[56px] sm:pt-[64px] md:pt-[72px]">
-              {children}
-            </main>
-            <Footer />
+            <CurrencyProvider>
+              <Header />
+              <main className="min-h-screen pt-[56px] sm:pt-[64px] md:pt-[72px]">
+                {children}
+              </main>
+              <Footer />
+            </CurrencyProvider>
           </AuthProvider>
         </PostHogProvider>
       </body>

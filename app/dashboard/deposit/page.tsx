@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
-import { useAuth } from '@/components/providers'
+import { useAuth, useCurrency } from '@/components/providers'
 import type { Deposit } from '@/lib/storage'
 
 const PRESET_AMOUNTS = [5, 10, 25, 50, 100]
@@ -14,6 +14,7 @@ type Tab = 'card' | 'crypto'
 export default function DepositPage() {
   const router = useRouter()
   const { user, isLoading, walletBalance: authWalletBalance } = useAuth()
+  const { formatPrice, isUsd, currency } = useCurrency()
   const [tab, setTab] = useState<Tab>('card')
   const [amount, setAmount] = useState('')
   const [walletBalance, setWalletBalance] = useState(0)
@@ -107,7 +108,7 @@ export default function DepositPage() {
           mode: 'modal',
           theme: 'dark',
           onPaymentSuccess: () => {
-            setMessage({ type: 'success', text: `$${numAmount.toFixed(2)} payment received! Crediting your wallet...` })
+            setMessage({ type: 'success', text: `${formatPrice(numAmount)} payment received! Crediting your wallet...` })
             setAmount('')
             setTimeout(() => { handleVerify(data.depositId); fetchDeposits() }, 2000)
             checkout.destroy()
@@ -226,7 +227,7 @@ export default function DepositPage() {
       <div className="w-full max-w-xl mb-8">
         <h1 className="text-2xl font-bold text-white text-center">Add Balance</h1>
         <p className="text-gray-400 mt-1 text-center">
-          Current balance: <span className="text-white font-medium">${walletBalance.toFixed(2)}</span>
+          Current balance: <span className="text-white font-medium">{formatPrice(walletBalance)}</span>
         </p>
       </div>
 
@@ -289,16 +290,19 @@ export default function DepositPage() {
             <div className="text-xs text-center mt-3 space-y-1">
               <div className="flex justify-between text-gray-400 px-4">
                 <span>Deposit</span>
-                <span>${parseFloat(amount).toFixed(2)}</span>
+                <span>{formatPrice(parseFloat(amount))}</span>
               </div>
               <div className="flex justify-between text-gray-400 px-4">
                 <span>Processing fee (7% + $0.35)</span>
-                <span>+${(parseFloat(amount) * 0.07 + 0.35).toFixed(2)}</span>
+                <span>+{formatPrice(parseFloat(amount) * 0.07 + 0.35)}</span>
               </div>
               <div className="flex justify-between text-white font-medium px-4 pt-1 border-t border-dark-600">
                 <span>Total charge</span>
-                <span>${(parseFloat(amount) + parseFloat(amount) * 0.07 + 0.35).toFixed(2)}</span>
+                <span>{formatPrice(parseFloat(amount) + parseFloat(amount) * 0.07 + 0.35)}</span>
               </div>
+              {!isUsd && (
+                <p className="text-[10px] text-gray-500 mt-2">Amounts in {currency} are approximate. You will be charged in USD.</p>
+              )}
             </div>
           )}
         </div>
@@ -398,7 +402,7 @@ export default function DepositPage() {
               <div className="pt-3 border-t border-dark-600">
                 <div className="flex justify-between text-sm font-bold">
                   <span className="text-white">Wallet credit</span>
-                  <span className="text-white">${parseFloat(amount).toFixed(2)}</span>
+                  <span className="text-white">{formatPrice(parseFloat(amount))}</span>
                 </div>
               </div>
 
@@ -429,7 +433,7 @@ export default function DepositPage() {
                       <svg className={`w-4 h-4 text-gray-500 transition-transform ${expandedId === deposit.id ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
-                      <span className="text-white font-medium">${deposit.amount.toFixed(2)}</span>
+                      <span className="text-white font-medium">{formatPrice(deposit.amount)}</span>
                       <span className="text-gray-500 text-sm">{new Date(deposit.createdAt).toLocaleString()}</span>
                     </button>
                     <div className="flex gap-2">
@@ -452,7 +456,7 @@ export default function DepositPage() {
                   {expandedId === deposit.id && (
                     <div className="mt-3 pt-3 border-t border-dark-600 space-y-2 text-sm">
                       <div className="flex justify-between"><span className="text-gray-500">Deposit ID</span><button onClick={() => copyToClipboard(deposit.id)} className="text-gray-300 hover:text-white font-mono text-xs">{deposit.id}</button></div>
-                      <div className="flex justify-between"><span className="text-gray-500">Amount</span><span className="text-gray-300">${deposit.amount.toFixed(2)}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">Amount</span><span className="text-gray-300">{formatPrice(deposit.amount)}</span></div>
                       <div className="flex justify-between"><span className="text-gray-500">Created</span><span className="text-gray-300">{new Date(deposit.createdAt).toLocaleString()}</span></div>
                     </div>
                   )}
@@ -471,7 +475,7 @@ export default function DepositPage() {
                 <div key={deposit.id} className="bg-dark-800/50 rounded-xl p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-white font-medium">${deposit.amount.toFixed(2)}</span>
+                      <span className="text-white font-medium">{formatPrice(deposit.amount)}</span>
                       <span className="text-gray-500 text-sm">{new Date(deposit.createdAt).toLocaleString()}</span>
                     </div>
                     <span className={`text-sm px-2 py-1 rounded ${deposit.status === 'completed' ? 'bg-green-500/20 text-green-400' : deposit.status === 'failed' ? 'bg-red-500/20 text-red-400' : 'bg-gray-500/20 text-gray-400'}`}>

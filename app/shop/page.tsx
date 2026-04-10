@@ -8,6 +8,7 @@ import { Card, Button } from '@/components/ui'
 import { Loader2, X } from 'lucide-react'
 import Link from 'next/link'
 import type { StockItem } from '@/lib/storage'
+import { useCurrency } from '@/components/providers'
 
 const rarityColors: Record<string, string> = {
   Collectible: 'bg-pink-500/20 text-pink-400 border-pink-500/30',
@@ -31,6 +32,7 @@ interface UserInfo {
 
 export default function ShopPage() {
   const router = useRouter()
+  const { formatPrice, isUsd, currency } = useCurrency()
   const [items, setItems] = useState<StockItem[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedFilter, setSelectedFilter] = useState<Filter>('All')
@@ -134,7 +136,7 @@ export default function ShopPage() {
       if (!res.ok) {
         posthog.capture('item_purchase_failed', { item_id: confirmItem.id, error: data.error })
         if (data.error === 'Insufficient wallet balance') {
-          setToast({ type: 'error', text: `Not enough balance ($${data.balance.toFixed(2)}). Add funds first!` })
+          setToast({ type: 'error', text: `Not enough balance (${formatPrice(data.balance)}). Add funds first!` })
         } else {
           setToast({ type: 'error', text: data.error || 'Purchase failed' })
         }
@@ -247,10 +249,13 @@ export default function ShopPage() {
                 <rect x="12" y="8" width="4" height="4" fill="#e1ad2d"/>
               </svg>
               <span className="text-gray-400 text-xs uppercase">Wallet Balance:</span>
-              <span className="text-white font-semibold text-sm">${userInfo.walletBalance.toFixed(2)}</span>
+              <span className="text-white font-semibold text-sm">{formatPrice(userInfo.walletBalance)}</span>
             </div>
             <Button href="/dashboard/deposit" size="sm">Add Funds</Button>
           </div>
+        )}
+        {!isUsd && (
+          <p className="text-[10px] text-gray-500 mb-4 text-center uppercase">Prices shown in {currency} are approximate. All payments are charged in USD.</p>
         )}
 
         {loading ? (
@@ -382,15 +387,15 @@ export default function ShopPage() {
                             {hasDiscount ? (
                               <>
                                 <span className="text-gray-500 line-through text-xs mr-2">
-                                  ${item.priceUsd?.toFixed(2)}
+                                  {formatPrice(item.priceUsd)}
                                 </span>
                                 <span className="text-xl font-bold text-accent">
-                                  ${discountedPrice.toFixed(2)}
+                                  {formatPrice(discountedPrice)}
                                 </span>
                               </>
                             ) : (
                               <span className="text-xl font-bold text-white">
-                                ${item.priceUsd?.toFixed(2)}
+                                {formatPrice(item.priceUsd)}
                               </span>
                             )}
                           </div>
@@ -434,7 +439,7 @@ export default function ShopPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400 text-xs uppercase">Price</span>
-                <span className="text-white font-medium text-xs">${getDiscountedPrice(confirmItem.priceUsd).toFixed(2)}</span>
+                <span className="text-white font-medium text-xs">{formatPrice(getDiscountedPrice(confirmItem.priceUsd))}</span>
               </div>
               {userInfo.canUseDiscordDiscount && (
                 <div className="flex justify-between">
@@ -450,7 +455,7 @@ export default function ShopPage() {
               )}
               <div className="border-t-[2px] border-dark-600 pt-3 flex justify-between">
                 <span className="text-gray-400 text-xs uppercase">Current Balance</span>
-                <span className="text-white text-xs">${userInfo.walletBalance.toFixed(2)}</span>
+                <span className="text-white text-xs">{formatPrice(userInfo.walletBalance)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400 text-xs uppercase">After Purchase</span>
@@ -459,7 +464,7 @@ export default function ShopPage() {
                     ? 'text-white'
                     : 'text-red-400'
                 }`}>
-                  ${(userInfo.walletBalance - getDiscountedPrice(confirmItem.priceUsd)).toFixed(2)}
+                  {formatPrice(userInfo.walletBalance - getDiscountedPrice(confirmItem.priceUsd))}
                 </span>
               </div>
             </div>

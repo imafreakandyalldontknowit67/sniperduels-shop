@@ -6,10 +6,10 @@ import { usePathname } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
 import { NAV_LINKS } from '@/lib/constants'
 import { Menu, X, LogOut, Shield, User, Eye, EyeOff, ChevronDown, ShoppingBag, UserCircle, Check, Wallet, Plus, ArrowDownToLine, Crown, Store } from 'lucide-react'
-import { useAuth } from '@/components/providers'
+import { useAuth, useCurrency } from '@/components/providers'
 import posthog from 'posthog-js'
 import { LOYALTY_TIERS } from '@/lib/loyalty'
-import { PixelButton } from '@/components/ui'
+import { PixelButton, CurrencySelector } from '@/components/ui'
 
 function DiscordIcon({ className }: { className?: string }) {
   return (
@@ -27,6 +27,7 @@ export function Header() {
   const pathname = usePathname()
   const { user, isAdmin, isVendor, isViewingAsConsumer, isLoading, discordLinked, discordUsername, walletBalance, loyaltyTier, loyaltyDiscount, login, logout, toggleViewMode } = useAuth()
 
+  const { formatPrice } = useCurrency()
   const showAdminFeatures = isAdmin && !isViewingAsConsumer
 
   useEffect(() => {
@@ -92,6 +93,7 @@ export function Header() {
 
           {/* User Section */}
           <div className="hidden md:flex items-center gap-4">
+            <CurrencySelector />
             {isLoading ? (
               <div className="w-40 h-10 bg-dark-700 animate-pulse" />
             ) : user ? (
@@ -139,7 +141,7 @@ export function Header() {
                           {balanceHidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                         <span className="text-lg font-bold text-accent">
-                          {balanceHidden ? '------' : `$${walletBalance.toFixed(2)}`}
+                          {balanceHidden ? '------' : formatPrice(walletBalance)}
                         </span>
                       </div>
                       <div className="flex gap-2">
@@ -281,6 +283,10 @@ export function Header() {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t-[2px] border-dark-600">
             <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between pb-2 border-b border-dark-600">
+                <span className="text-xs text-gray-400 uppercase">Currency</span>
+                <CurrencySelector compact />
+              </div>
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.href}
@@ -327,7 +333,7 @@ export function Header() {
                         {balanceHidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                       <span className="text-lg font-bold text-accent">
-                        {balanceHidden ? '------' : `$${walletBalance.toFixed(2)}`}
+                        {balanceHidden ? '------' : formatPrice(walletBalance)}
                       </span>
                     </div>
                     <div className="flex gap-2">

@@ -6,6 +6,7 @@ import posthog from 'posthog-js'
 import { Minus, Plus, X, Wallet, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import { PixelButton } from '@/components/ui'
+import { useCurrency } from '@/components/providers'
 
 interface GemListing {
   id: string
@@ -29,6 +30,7 @@ interface UserInfo {
 
 export default function GemsPage() {
   const router = useRouter()
+  const { formatPrice, formatPricePerK, isUsd, currency } = useCurrency()
   const [amount, setAmount] = useState(5)
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
   const [listings, setListings] = useState<GemListing[]>([])
@@ -155,7 +157,7 @@ export default function GemsPage() {
       if (!res.ok) {
         posthog.capture('gems_purchase_failed', { amount_k: amount, error: data.error })
         if (data.error === 'Insufficient wallet balance') {
-          setToast({ type: 'error', text: `Not enough balance ($${data.balance.toFixed(2)}). Add funds first!` })
+          setToast({ type: 'error', text: `Not enough balance (${formatPrice(data.balance)}). Add funds first!` })
         } else if (data.error?.includes('stock')) {
           setToast({ type: 'error', text: data.error })
           fetchListings() // Refresh stock
@@ -200,6 +202,10 @@ export default function GemsPage() {
           </div>
         )}
 
+        {!isUsd && (
+          <p className="text-[10px] text-gray-500 mb-4 text-center uppercase">Prices shown in {currency} are approximate. All payments are charged in USD.</p>
+        )}
+
         {/* Page Header */}
         <div className="text-center mb-6 sm:mb-8 md:mb-10">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-accent mb-3 sm:mb-4 uppercase">
@@ -223,7 +229,7 @@ export default function GemsPage() {
               </div>
               {cheapestRate < 2.90 && (
                 <span className="text-[10px] sm:text-xs text-accent uppercase font-bold">
-                  From ${cheapestRate.toFixed(2)}/k
+                  From {formatPricePerK(cheapestRate)}
                 </span>
               )}
             </div>
@@ -301,7 +307,7 @@ export default function GemsPage() {
               </div>
               <div className="flex justify-between items-center mb-2 sm:mb-3">
                 <span className="text-white text-[10px] sm:text-xs uppercase font-bold">Rate</span>
-                <span className="text-white font-bold text-xs sm:text-sm">$ {currentRate.toFixed(2)}/k</span>
+                <span className="text-white font-bold text-xs sm:text-sm">{formatPricePerK(currentRate)}</span>
               </div>
               {combinedDiscount > 0 && (
                 <>
@@ -322,7 +328,7 @@ export default function GemsPage() {
               <div className="pt-3 mt-3" style={{ borderTop: '1px solid #4b5563' }}>
                 <div className="flex justify-between items-center">
                   <span className="text-white text-xs sm:text-sm uppercase font-bold">Total</span>
-                  <span className="text-lg sm:text-xl font-bold text-white">$ {discountedPrice.toFixed(2)}</span>
+                  <span className="text-lg sm:text-xl font-bold text-white">{formatPrice(discountedPrice)}</span>
                 </div>
               </div>
             </div>
@@ -401,11 +407,11 @@ export default function GemsPage() {
                             className="text-xs sm:text-sm block"
                             style={{ color: isSelected ? '#e1ad2d' : '#d1d5db', fontWeight: isSelected ? 'bold' : 'normal' }}
                           >
-                            $ {rate.toFixed(2)}/k
+                            {formatPricePerK(rate)}
                           </span>
                           {hasBulk && rate > lowestRate && (
                             <span className="text-[10px] text-green-400">
-                              as low as ${lowestRate.toFixed(2)}/k
+                              as low as {formatPricePerK(lowestRate)}
                             </span>
                           )}
                         </div>
@@ -436,7 +442,7 @@ export default function GemsPage() {
                                       : '+'}
                                   </span>
                                   <span className={`text-[10px] ${isActiveTier ? 'text-accent font-bold' : 'text-gray-400'}`}>
-                                    ${tier.pricePerK.toFixed(2)}/k
+                                    {formatPricePerK(tier.pricePerK)}
                                     {isActiveTier && ' ←'}
                                   </span>
                                 </div>
@@ -459,7 +465,7 @@ export default function GemsPage() {
                 <div className="flex items-center gap-2 sm:gap-3">
                   <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
                   <span className="text-gray-400 text-[10px] sm:text-xs uppercase">Balance:</span>
-                  <span className="text-white font-semibold text-xs sm:text-sm">${userInfo.walletBalance.toFixed(2)}</span>
+                  <span className="text-white font-semibold text-xs sm:text-sm">{formatPrice(userInfo.walletBalance)}</span>
                 </div>
                 <Link
                   href="/dashboard/deposit"
@@ -501,7 +507,7 @@ export default function GemsPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400 text-xs uppercase">Price</span>
-                <span className="text-white font-medium text-sm">${discountedPrice.toFixed(2)}</span>
+                <span className="text-white font-medium text-sm">{formatPrice(discountedPrice)}</span>
               </div>
               {!isVendorSelected && userInfo.canUseDiscordDiscount && (
                 <div className="flex justify-between">
@@ -517,14 +523,14 @@ export default function GemsPage() {
               )}
               <div className="border-t-[2px] border-dark-600 pt-3 flex justify-between">
                 <span className="text-gray-400 text-xs uppercase">Current Balance</span>
-                <span className="text-white text-sm">${userInfo.walletBalance.toFixed(2)}</span>
+                <span className="text-white text-sm">{formatPrice(userInfo.walletBalance)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400 text-xs uppercase">After Purchase</span>
                 <span className={`font-medium text-sm ${
                   userInfo.walletBalance >= discountedPrice ? 'text-white' : 'text-red-400'
                 }`}>
-                  ${(userInfo.walletBalance - discountedPrice).toFixed(2)}
+                  {formatPrice(userInfo.walletBalance - discountedPrice)}
                 </span>
               </div>
             </div>

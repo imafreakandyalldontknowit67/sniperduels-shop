@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Order } from '@/lib/storage'
+import { useCurrency } from '@/components/providers'
 
 const POLL_INTERVAL = 5000
 
@@ -51,6 +52,7 @@ export default function OrderTrackingPage() {
   const router = useRouter()
   const orderId = params.id as string
 
+  const { formatPrice } = useCurrency()
   const [status, setStatus] = useState<OrderStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -181,7 +183,7 @@ export default function OrderTrackingPage() {
           if (newStatus === 'failed') {
             setToast({
               type: 'error',
-              text: `Order cancelled — $${data.order.totalPrice.toFixed(2)} has been refunded to your wallet.`,
+              text: `Order cancelled — ${formatPrice(data.order.totalPrice)} has been refunded to your wallet.`,
             })
           } else if (newStatus === 'completed') {
             setToast({
@@ -636,7 +638,7 @@ export default function OrderTrackingPage() {
               ? 'Something went wrong with the deposit. No gems were deducted.'
               : isVendorWithdrawal
               ? 'Something went wrong with the withdrawal. Your stock has been restored.'
-              : `Something went wrong with the delivery. Your wallet has been refunded ($${order.totalPrice.toFixed(2)}).`}
+              : `Something went wrong with the delivery. Your wallet has been refunded (${formatPrice(order.totalPrice)}).`}
           </p>
 
           {order.notes && !isVendorOp && (
@@ -697,6 +699,7 @@ export default function OrderTrackingPage() {
 }
 
 function OrderInfo({ order, isVendorOp, isVendorDeposit, isVendorWithdrawal }: { order: Order; isVendorOp?: boolean; isVendorDeposit?: boolean; isVendorWithdrawal?: boolean }) {
+  const { formatPrice } = useCurrency()
   return (
     <div className="bg-dark-800/50 rounded-xl p-4 text-left">
       <div className="space-y-2 text-sm">
@@ -711,7 +714,7 @@ function OrderInfo({ order, isVendorOp, isVendorDeposit, isVendorWithdrawal }: {
         {!isVendorOp && (
           <div className="flex justify-between">
             <span className="text-gray-500">Total</span>
-            <span className="text-white font-medium">${order.totalPrice.toFixed(2)}</span>
+            <span className="text-white font-medium">{formatPrice(order.totalPrice)}</span>
           </div>
         )}
         <div className="flex justify-between">
