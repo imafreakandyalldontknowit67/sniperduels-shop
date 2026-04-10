@@ -145,7 +145,7 @@ export function DashboardSidebar({ isVendor = false }: { isVendor?: boolean }) {
         <div className="p-4 space-y-2">
           <div className="flex items-center justify-between px-4 py-2">
             <span className="text-xs text-gray-500 uppercase">Currency</span>
-            <CurrencySelector />
+            <CurrencySelector dropUp />
           </div>
           <Link
             href="/"

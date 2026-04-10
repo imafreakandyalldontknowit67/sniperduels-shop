@@ -5,7 +5,7 @@ import { ChevronDown } from 'lucide-react'
 import { useCurrency } from '@/components/providers'
 import { SUPPORTED_CURRENCIES, type CurrencyCode } from '@/lib/currency'
 
-export function CurrencySelector({ compact }: { compact?: boolean }) {
+export function CurrencySelector({ compact, dropUp }: { compact?: boolean; dropUp?: boolean }) {
   const { currency, setCurrency } = useCurrency()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -34,7 +34,7 @@ export function CurrencySelector({ compact }: { compact?: boolean }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-[#1a1a1f] border border-white/10 rounded-lg shadow-xl py-1 min-w-[180px] max-h-[300px] overflow-y-auto">
+        <div className={`absolute right-0 z-50 bg-[#1a1a1f] border border-white/10 rounded-lg shadow-xl py-1 min-w-[180px] max-h-[300px] overflow-y-auto ${dropUp ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
           {(Object.entries(SUPPORTED_CURRENCIES) as [CurrencyCode, typeof current][]).map(([code, info]) => (
             <button
               key={code}

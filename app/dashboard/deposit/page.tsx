@@ -280,7 +280,7 @@ export default function DepositPage() {
               min={Math.ceil(minLocal)}
               max={Math.floor(maxLocal)}
               step="0.01"
-              className="w-full bg-dark-800 border border-dark-500 rounded-lg px-4 py-4 pl-10 text-xl text-white placeholder-gray-500 focus:outline-none focus:border-accent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-full bg-dark-800 border border-dark-500 rounded-lg px-4 py-4 pl-14 text-xl text-white placeholder-gray-500 focus:outline-none focus:border-accent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
           </div>
           <div className="flex gap-2 mt-4">
