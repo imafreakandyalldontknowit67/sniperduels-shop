@@ -17,6 +17,7 @@ import {
   TrendingUp,
   Banknote,
 } from 'lucide-react'
+import { CurrencySelector } from '@/components/ui'
 
 const customerItems = [
   { href: '/dashboard/orders', label: 'My Orders', icon: ShoppingBag },
@@ -140,8 +141,12 @@ export function DashboardSidebar({ isVendor = false }: { isVendor?: boolean }) {
           )}
         </nav>
 
-        {/* Back to Site */}
-        <div className="p-4">
+        {/* Currency + Back to Site */}
+        <div className="p-4 space-y-2">
+          <div className="flex items-center justify-between px-4 py-2">
+            <span className="text-xs text-gray-500 uppercase">Currency</span>
+            <CurrencySelector />
+          </div>
           <Link
             href="/"
             className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-dark-700 transition-colors"
