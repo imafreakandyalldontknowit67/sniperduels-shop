@@ -8,6 +8,8 @@ import {
   detectCurrencyFromLocale,
   formatPrice as formatPriceUtil,
   formatPricePerK as formatPricePerKUtil,
+  convertToUsd as convertToUsdUtil,
+  convertFromUsd as convertFromUsdUtil,
 } from '@/lib/currency'
 
 interface CurrencyContextValue {
@@ -15,6 +17,9 @@ interface CurrencyContextValue {
   setCurrency: (code: CurrencyCode) => void
   formatPrice: (usdAmount: number) => string
   formatPricePerK: (usdPerK: number) => string
+  convertToUsd: (localAmount: number) => number
+  convertFromUsd: (usdAmount: number) => number
+  currencySymbol: string
   isUsd: boolean
   currencyLabel: string
 }
@@ -24,6 +29,9 @@ const CurrencyContext = createContext<CurrencyContextValue>({
   setCurrency: () => {},
   formatPrice: (n) => `$${n.toFixed(2)}`,
   formatPricePerK: (n) => `$${n.toFixed(2)}/k`,
+  convertToUsd: (n) => n,
+  convertFromUsd: (n) => n,
+  currencySymbol: '$',
   isUsd: true,
   currencyLabel: 'USD',
 })
@@ -88,11 +96,24 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     [currency, rates]
   )
 
+  const convertToUsd = useCallback(
+    (localAmount: number) => convertToUsdUtil(localAmount, currency, rates),
+    [currency, rates]
+  )
+
+  const convertFromUsd = useCallback(
+    (usdAmount: number) => convertFromUsdUtil(usdAmount, currency, rates),
+    [currency, rates]
+  )
+
   const value: CurrencyContextValue = {
     currency,
     setCurrency,
     formatPrice,
     formatPricePerK,
+    convertToUsd,
+    convertFromUsd,
+    currencySymbol: SUPPORTED_CURRENCIES[currency].symbol,
     isUsd: currency === 'USD',
     currencyLabel: SUPPORTED_CURRENCIES[currency].name,
   }

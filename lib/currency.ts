@@ -98,6 +98,26 @@ export function formatPrice(
   }).format(converted)
 }
 
+export function convertToUsd(
+  localAmount: number,
+  currencyCode: CurrencyCode,
+  rates: Record<string, number>
+): number {
+  if (currencyCode === 'USD') return localAmount
+  const rate = rates[currencyCode] ?? FALLBACK_RATES[currencyCode] ?? 1
+  return Math.round((localAmount / rate) * 100) / 100
+}
+
+export function convertFromUsd(
+  usdAmount: number,
+  currencyCode: CurrencyCode,
+  rates: Record<string, number>
+): number {
+  if (currencyCode === 'USD') return usdAmount
+  const rate = rates[currencyCode] ?? FALLBACK_RATES[currencyCode] ?? 1
+  return Math.round(usdAmount * rate * 100) / 100
+}
+
 export function formatPricePerK(
   usdPerK: number,
   currencyCode: CurrencyCode,

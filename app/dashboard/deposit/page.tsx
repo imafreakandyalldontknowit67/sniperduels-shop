@@ -14,7 +14,7 @@ type Tab = 'card' | 'crypto'
 export default function DepositPage() {
   const router = useRouter()
   const { user, isLoading, walletBalance: authWalletBalance } = useAuth()
-  const { formatPrice, isUsd, currency } = useCurrency()
+  const { formatPrice, isUsd, currency, currencySymbol, convertToUsd, convertFromUsd } = useCurrency()
   const [tab, setTab] = useState<Tab>('card')
   const [amount, setAmount] = useState('')
   const [walletBalance, setWalletBalance] = useState(0)
@@ -80,11 +80,22 @@ export default function DepositPage() {
 
   if (!user) { router.push('/'); return null }
 
+  // Convert input amount (in user's currency) to USD
+  function getUsdAmount(): number {
+    const numAmount = parseFloat(amount)
+    if (!numAmount) return 0
+    return isUsd ? numAmount : convertToUsd(numAmount)
+  }
+
+  // Get min/max in user's currency
+  const minLocal = isUsd ? 5 : convertFromUsd(5)
+  const maxLocal = isUsd ? 500 : convertFromUsd(500)
+
   // ── Card/CashApp deposit (Pandabase) ──
   async function handleCardDeposit() {
-    const numAmount = parseFloat(amount)
-    if (!numAmount || numAmount < 5 || numAmount > 500) {
-      setMessage({ type: 'error', text: 'Amount must be between $5 and $500' })
+    const usdAmount = getUsdAmount()
+    if (!usdAmount || usdAmount < 5 || usdAmount > 500) {
+      setMessage({ type: 'error', text: `Amount must be between ${currencySymbol}${Math.ceil(minLocal)} and ${currencySymbol}${Math.floor(maxLocal)}` })
       return
     }
     setLoading(true)
@@ -93,12 +104,12 @@ export default function DepositPage() {
       const res = await fetch('/api/deposits/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: numAmount, website: hpField }),
+        body: JSON.stringify({ amount: usdAmount, website: hpField }),
       })
       const data = await res.json()
       if (!res.ok) { setMessage({ type: 'error', text: data.error || 'Failed to create deposit' }); return }
 
-      posthog.capture('deposit_initiated', { amount: numAmount, method: 'card' })
+      posthog.capture('deposit_initiated', { amount: usdAmount, method: 'card' })
 
       const win = window as unknown as { Pandabase?: { checkout: (opts: Record<string, unknown>) => { open: () => void; destroy: () => void } } }
       if (win.Pandabase && data.sessionId) {
@@ -108,7 +119,7 @@ export default function DepositPage() {
           mode: 'modal',
           theme: 'dark',
           onPaymentSuccess: () => {
-            setMessage({ type: 'success', text: `${formatPrice(numAmount)} payment received! Crediting your wallet...` })
+            setMessage({ type: 'success', text: `${formatPrice(usdAmount)} payment received! Crediting your wallet...` })
             setAmount('')
             setTimeout(() => { handleVerify(data.depositId); fetchDeposits() }, 2000)
             checkout.destroy()
@@ -129,9 +140,9 @@ export default function DepositPage() {
 
   // ── Crypto deposit (NearPayments) ──
   async function handleCryptoDeposit() {
-    const numAmount = parseFloat(amount)
-    if (!numAmount || numAmount < 5 || numAmount > 500) {
-      setMessage({ type: 'error', text: 'Amount must be between $5 and $500' })
+    const usdAmount = getUsdAmount()
+    if (!usdAmount || usdAmount < 5 || usdAmount > 500) {
+      setMessage({ type: 'error', text: `Amount must be between ${currencySymbol}${Math.ceil(minLocal)} and ${currencySymbol}${Math.floor(maxLocal)}` })
       return
     }
     setLoading(true)
@@ -141,12 +152,12 @@ export default function DepositPage() {
       const res = await fetch('/api/deposits/create-crypto', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: numAmount, currency: cryptoCurrency, website: hpField }),
+        body: JSON.stringify({ amount: usdAmount, currency: cryptoCurrency, website: hpField }),
       })
       const data = await res.json()
       if (!res.ok) { setMessage({ type: 'error', text: data.error || 'Failed to create crypto deposit' }); return }
 
-      posthog.capture('deposit_initiated', { amount: numAmount, method: 'crypto', currency: cryptoCurrency })
+      posthog.capture('deposit_initiated', { amount: usdAmount, method: 'crypto', currency: cryptoCurrency })
       setCryptoPayment(data)
 
       // Poll for completion every 5s
@@ -256,16 +267,18 @@ export default function DepositPage() {
 
         {/* Amount Input (shared) */}
         <div className="bg-dark-800/50 rounded-xl p-6 mb-6">
-          <label className="block text-sm text-gray-400 mb-3 text-center">Deposit amount</label>
+          <label className="block text-sm text-gray-400 mb-3 text-center">
+            Deposit amount {!isUsd && `(${currency})`}
+          </label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">$</span>
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">{currencySymbol}</span>
             <input
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
-              min="5"
-              max="500"
+              min={Math.ceil(minLocal)}
+              max={Math.floor(maxLocal)}
               step="0.01"
               className="w-full bg-dark-800 border border-dark-500 rounded-lg px-4 py-4 pl-10 text-xl text-white placeholder-gray-500 focus:outline-none focus:border-accent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
@@ -277,31 +290,36 @@ export default function DepositPage() {
                 onClick={() => setAmount(p.toString())}
                 className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${amount === p.toString() ? 'bg-accent text-white' : 'bg-dark-600 hover:bg-dark-500 text-white'}`}
               >
-                ${p}
+                {currencySymbol}{p}
               </button>
             ))}
           </div>
+          {!isUsd && amount && parseFloat(amount) > 0 && (
+            <p className="text-xs text-center mt-3 text-accent">
+              {currencySymbol}{parseFloat(amount).toFixed(2)} {currency} ≈ ${getUsdAmount().toFixed(2)} USD
+            </p>
+          )}
           {tab === 'crypto' && (
             <p className="text-xs text-center mt-3 text-gray-400">
               Crypto deposits are processed manually with no fees
             </p>
           )}
-          {tab === 'card' && amount && parseFloat(amount) >= 5 && (
+          {tab === 'card' && amount && getUsdAmount() >= 5 && (
             <div className="text-xs text-center mt-3 space-y-1">
               <div className="flex justify-between text-gray-400 px-4">
-                <span>Deposit</span>
-                <span>{formatPrice(parseFloat(amount))}</span>
+                <span>Wallet credit</span>
+                <span>${getUsdAmount().toFixed(2)} USD</span>
               </div>
               <div className="flex justify-between text-gray-400 px-4">
                 <span>Processing fee (7% + $0.35)</span>
-                <span>+{formatPrice(parseFloat(amount) * 0.07 + 0.35)}</span>
+                <span>+${(getUsdAmount() * 0.07 + 0.35).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-white font-medium px-4 pt-1 border-t border-dark-600">
-                <span>Total charge</span>
-                <span>{formatPrice(parseFloat(amount) + parseFloat(amount) * 0.07 + 0.35)}</span>
+                <span>Total charge (USD)</span>
+                <span>${(getUsdAmount() + getUsdAmount() * 0.07 + 0.35).toFixed(2)}</span>
               </div>
               {!isUsd && (
-                <p className="text-[10px] text-gray-500 mt-2">Amounts in {currency} are approximate. You will be charged in USD.</p>
+                <p className="text-[10px] text-gray-500 mt-2">Your card will be charged in USD. Your bank may apply its own conversion rate.</p>
               )}
             </div>
           )}
@@ -343,7 +361,7 @@ export default function DepositPage() {
 
             <button
               onClick={handleCardDeposit}
-              disabled={loading || !amount || parseFloat(amount) < 5 || !agreedToTerms}
+              disabled={loading || !amount || getUsdAmount() < 5 || !agreedToTerms}
               className="w-full py-4 bg-accent hover:bg-accent-light disabled:bg-accent/50 disabled:cursor-not-allowed text-white font-medium rounded-xl text-lg transition-colors"
             >
               {loading ? (
