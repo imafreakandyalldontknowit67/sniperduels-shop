@@ -136,6 +136,7 @@ export default function GemsPage() {
     }
     setAgreedToTerms(false)
     setShowConfirm(true)
+    posthog.capture('gems_confirm_modal_opened', { amount_k: amount, total_price: discountedPrice })
   }
 
   async function handleConfirmPurchase() {
@@ -489,7 +490,7 @@ export default function GemsPage() {
           <div className="w-full sm:max-w-md p-4 sm:p-6" style={{ background: '#1a1a1e', border: '3px solid #e1ad2d', boxShadow: '4px 4px 0px #000' }}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-accent uppercase">Confirm Gems Purchase</h3>
-              <button onClick={() => setShowConfirm(false)} className="text-gray-400 hover:text-white">
+              <button onClick={() => { posthog.capture('gems_confirm_modal_closed', { amount_k: amount, total_price: discountedPrice, reason: 'dismissed' }); setShowConfirm(false) }} className="text-gray-400 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -539,7 +540,7 @@ export default function GemsPage() {
               <input
                 type="checkbox"
                 checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                onChange={(e) => { setAgreedToTerms(e.target.checked); if (e.target.checked) posthog.capture('terms_agreed', { page: 'gems' }) }}
                 className="mt-0.5 w-4 h-4 accent-accent shrink-0"
               />
               <span className="text-[10px] text-gray-400 leading-tight">
@@ -567,7 +568,7 @@ export default function GemsPage() {
             ) : (
               <div className="flex gap-3">
                 <button
-                  onClick={() => setShowConfirm(false)}
+                  onClick={() => { posthog.capture('gems_confirm_modal_closed', { amount_k: amount, total_price: discountedPrice, reason: 'cancelled' }); setShowConfirm(false) }}
                   className="flex-1 relative h-[42px] bg-no-repeat bg-center bg-contain border-0 cursor-pointer active:scale-95 transition-transform"
                   style={{ backgroundImage: 'url(/images/pixel/pngs/asset-60.png)', backgroundSize: '100% 100%' }}
                 >

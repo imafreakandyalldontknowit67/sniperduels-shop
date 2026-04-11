@@ -473,7 +473,7 @@ export default function ShopPage() {
               <input
                 type="checkbox"
                 checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                onChange={(e) => { setAgreedToTerms(e.target.checked); if (e.target.checked) posthog.capture('terms_agreed', { page: 'shop' }) }}
                 className="mt-0.5 w-4 h-4 accent-accent shrink-0"
               />
               <span className="text-[10px] text-gray-400 leading-tight">

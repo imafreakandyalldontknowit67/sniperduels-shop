@@ -1,6 +1,7 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
+import posthog from 'posthog-js'
 import {
   type CurrencyCode,
   SUPPORTED_CURRENCIES,
@@ -54,6 +55,9 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       } else {
         const detected = detectCurrencyFromLocale(navigator.language)
         setCurrencyState(detected)
+        if (detected !== 'USD') {
+          posthog.capture('currency_auto_detected', { detected_currency: detected, browser_locale: navigator.language })
+        }
       }
     } catch {
       // localStorage unavailable, keep USD
@@ -78,13 +82,17 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const setCurrency = useCallback((code: CurrencyCode) => {
+    const prev = currency
     setCurrencyState(code)
     try {
       localStorage.setItem('preferred_currency', code)
     } catch {
       // localStorage unavailable
     }
-  }, [])
+    if (prev !== code) {
+      posthog.capture('currency_changed', { from: prev, to: code })
+    }
+  }, [currency])
 
   const formatPrice = useCallback(
     (usdAmount: number) => formatPriceUtil(usdAmount, currency, rates),

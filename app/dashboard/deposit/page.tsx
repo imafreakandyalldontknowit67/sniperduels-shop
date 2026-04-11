@@ -78,6 +78,12 @@ export default function DepositPage() {
     )
   }
 
+  useEffect(() => {
+    if (!isLoading && user) {
+      posthog.capture('deposit_page_viewed', { wallet_balance: authWalletBalance })
+    }
+  }, [isLoading, user])
+
   if (!user) { router.push('/'); return null }
 
   // Convert input amount (in user's currency) to USD
@@ -124,10 +130,11 @@ export default function DepositPage() {
             setTimeout(() => { handleVerify(data.depositId); fetchDeposits() }, 2000)
             checkout.destroy()
           },
-          onPaymentFailed: () => { setMessage({ type: 'error', text: 'Payment failed. Please try again.' }); checkout.destroy() },
+          onPaymentFailed: () => { posthog.capture('deposit_failed', { amount: usdAmount, method: 'card', reason: 'payment_failed' }); setMessage({ type: 'error', text: 'Payment failed. Please try again.' }); checkout.destroy() },
           onClose: () => { fetchDeposits() },
         })
         checkout.open()
+        posthog.capture('checkout_modal_opened', { amount: usdAmount, method: 'card' })
       } else {
         window.open(data.checkoutUrl, '_blank')
         setMessage({ type: 'success', text: 'Checkout opened. Complete payment then verify below.' })
@@ -171,6 +178,7 @@ export default function DepositPage() {
         const verifyData = await verifyRes.json()
         if (verifyData.status === 'completed') {
           if (pollRef.current) clearInterval(pollRef.current)
+          posthog.capture('deposit_completed', { amount: verifyData.amount || 0, method: 'crypto' })
           setWalletBalance(verifyData.walletBalance)
           setMessage({ type: 'success', text: verifyData.message })
           setCryptoPayment(null)
@@ -178,6 +186,7 @@ export default function DepositPage() {
           fetchDeposits()
         } else if (verifyData.status === 'failed' || verifyData.status === 'expired') {
           if (pollRef.current) clearInterval(pollRef.current)
+          posthog.capture('deposit_failed', { method: 'crypto', reason: verifyData.status })
           setMessage({ type: 'error', text: `Deposit ${verifyData.status}` })
           setCryptoPayment(null)
         }
@@ -197,6 +206,7 @@ export default function DepositPage() {
       })
       const data = await res.json()
       if (data.status === 'completed') {
+        posthog.capture('deposit_completed', { amount: data.amount || 0, method: 'card' })
         setWalletBalance(data.walletBalance)
         setMessage({ type: 'success', text: data.message })
         fetchDeposits()

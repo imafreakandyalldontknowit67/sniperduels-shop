@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import posthog from 'posthog-js'
 import type { Order } from '@/lib/storage'
 import { useCurrency } from '@/components/providers'
 
@@ -198,6 +199,9 @@ export default function OrderTrackingPage() {
           }
         }
 
+        if (!prevStatusRef.current) {
+          posthog.capture('order_tracking_viewed', { order_id: orderId, order_status: newStatus })
+        }
         prevStatusRef.current = newStatus
         setStatus(data)
         setError(null)
