@@ -74,24 +74,30 @@ async function expireOrder(order: { id: string; userId: string; totalPrice: numb
   }
 }
 
-// Sort orders: ready first, then by skip status, then by creation time
-// 1. ready + not skipped (FIFO by createdAt)
-// 2. ready + skipped (by skippedAt)
-// 3. not ready + not skipped (FIFO by createdAt)
-// 4. not ready + skipped (by skippedAt)
+function isVendorOp(order: Order): boolean {
+  return !!order.notes?.startsWith('vendor-deposit:') || !!order.notes?.startsWith('vendor-withdrawal:')
+}
+
+// Sort orders: ready first, then by skip status, then vendor ops prioritized, then FIFO
 function sortOrders(orders: Order[]): Order[] {
   return [...orders].sort((a, b) => {
-    // Ready orders come first
+    // 1. Ready orders come first
     if (a.playerReady !== b.playerReady) {
       return a.playerReady ? -1 : 1
     }
-    // Non-skipped orders come before skipped ones
+    // 2. Non-skipped orders come before skipped ones
     const aSkipped = !!a.skippedAt
     const bSkipped = !!b.skippedAt
     if (aSkipped !== bSkipped) {
       return aSkipped ? 1 : -1
     }
-    // Within same group: skipped orders sort by skippedAt, others by createdAt
+    // 3. Vendor ops (deposits/withdrawals) before regular orders
+    const aVendor = isVendorOp(a)
+    const bVendor = isVendorOp(b)
+    if (aVendor !== bVendor) {
+      return aVendor ? -1 : 1
+    }
+    // 4. Within same group: skipped orders sort by skippedAt, others by createdAt
     if (aSkipped && bSkipped) {
       return new Date(a.skippedAt!).getTime() - new Date(b.skippedAt!).getTime()
     }

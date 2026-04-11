@@ -305,7 +305,7 @@ export default function OrderTrackingPage() {
           {!order.playerReady && skipCountdown && skipCountdown !== '0:00' && (
             <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mb-4">
               <p className="text-yellow-400 text-sm font-medium">
-                Join within <span className="font-mono text-lg">{skipCountdown}</span> or you&apos;ll be moved back in the queue
+                Join within <span className="font-mono text-lg">{skipCountdown}</span> or {isVendorOp ? 'your deposit will be' : 'you\u0027ll be'} moved back in the queue
               </p>
             </div>
           )}
@@ -454,7 +454,11 @@ export default function OrderTrackingPage() {
 
           <div className="bg-dark-800/50 border border-dark-600 rounded-xl p-5 mb-4">
             <p className="text-gray-400 text-sm mb-4">
-              You&apos;ll get the server link when it&apos;s your turn. Hang tight!
+              {isVendorDeposit
+                ? 'Your deposit is prioritized. You\'ll get the server link shortly.'
+                : isVendorWithdrawal
+                ? 'Your withdrawal is prioritized. You\'ll get the server link shortly.'
+                : 'You\'ll get the server link when it\'s your turn. Hang tight!'}
             </p>
 
             {order.skippedAt && (
@@ -466,7 +470,13 @@ export default function OrderTrackingPage() {
             )}
 
             {order.playerReady && (
-              <p className="text-green-400 text-sm font-medium">Confirmed ready! The bot will trade you when it&apos;s your turn.</p>
+              <p className="text-green-400 text-sm font-medium">
+                {isVendorDeposit
+                  ? 'Confirmed ready! The bot will receive your gems shortly.'
+                  : isVendorWithdrawal
+                  ? 'Confirmed ready! The bot will send your gems shortly.'
+                  : 'Confirmed ready! The bot will trade you when it\'s your turn.'}
+              </p>
             )}
           </div>
 

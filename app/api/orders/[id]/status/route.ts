@@ -6,17 +6,30 @@ import type { Order } from '@/lib/storage'
 const ESTIMATED_MINUTES_PER_ORDER = 2
 const SKIP_TIMEOUT_MS = 3.5 * 60 * 1000 // 3.5 minutes from reaching #1
 
+function isVendorOp(order: Order): boolean {
+  return !!order.notes?.startsWith('vendor-deposit:') || !!order.notes?.startsWith('vendor-withdrawal:')
+}
+
 // Same sort logic as bot polling — must stay in sync
 function sortOrders(orders: Order[]): Order[] {
   return [...orders].sort((a, b) => {
+    // 1. Ready orders first
     if (a.playerReady !== b.playerReady) {
       return a.playerReady ? -1 : 1
     }
+    // 2. Non-skipped before skipped
     const aSkipped = !!a.skippedAt
     const bSkipped = !!b.skippedAt
     if (aSkipped !== bSkipped) {
       return aSkipped ? 1 : -1
     }
+    // 3. Vendor ops before regular orders
+    const aVendor = isVendorOp(a)
+    const bVendor = isVendorOp(b)
+    if (aVendor !== bVendor) {
+      return aVendor ? -1 : 1
+    }
+    // 4. Within same group: by timestamp
     if (aSkipped && bSkipped) {
       return new Date(a.skippedAt!).getTime() - new Date(b.skippedAt!).getTime()
     }
