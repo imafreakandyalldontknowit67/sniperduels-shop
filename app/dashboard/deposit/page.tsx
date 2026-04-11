@@ -70,6 +70,12 @@ export default function DepositPage() {
     } catch { /* silently fail */ }
   }
 
+  useEffect(() => {
+    if (!isLoading && user) {
+      posthog.capture('deposit_page_viewed', { wallet_balance: authWalletBalance })
+    }
+  }, [isLoading, user])
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -77,12 +83,6 @@ export default function DepositPage() {
       </div>
     )
   }
-
-  useEffect(() => {
-    if (!isLoading && user) {
-      posthog.capture('deposit_page_viewed', { wallet_balance: authWalletBalance })
-    }
-  }, [isLoading, user])
 
   if (!user) { router.push('/'); return null }
 
