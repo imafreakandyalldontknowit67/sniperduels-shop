@@ -301,7 +301,7 @@ export async function storeOAuthState(provider: 'roblox' | 'discord'): Promise<{
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 60 * 10,
+    maxAge: 60 * 15,
     path: '/',
   })
 
@@ -309,19 +309,33 @@ export async function storeOAuthState(provider: 'roblox' | 'discord'): Promise<{
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 60 * 10,
+    maxAge: 60 * 15,
     path: '/',
   })
 
   return { state, codeChallenge }
 }
 
-export async function validateOAuthState(provider: 'roblox' | 'discord', state: string | null): Promise<boolean> {
-  if (!state) return false
+export async function validateOAuthState(provider: 'roblox' | 'discord', state: string | null): Promise<'valid' | 'consumed' | 'invalid'> {
+  if (!state) return 'invalid'
   const cookieStore = await cookies()
   const stored = cookieStore.get(`oauth_state_${provider}`)?.value
-  cookieStore.delete(`oauth_state_${provider}`)
-  return !!stored && stored === state
+
+  // Already consumed by a previous request (duplicate callback)
+  if (stored?.startsWith('consumed:')) return 'consumed'
+
+  if (!stored || stored !== state) return 'invalid'
+
+  // Mark as consumed instead of deleting — lets duplicate requests detect this
+  cookieStore.set(`oauth_state_${provider}`, `consumed:${Date.now()}`, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60, // Auto-cleanup after 1 minute
+    path: '/',
+  })
+
+  return 'valid'
 }
 
 export async function retrieveCodeVerifier(provider: 'roblox' | 'discord'): Promise<string | null> {

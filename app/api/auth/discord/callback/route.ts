@@ -26,9 +26,9 @@ export async function GET(request: NextRequest) {
   }
 
   // Validate OAuth state to prevent CSRF
-  const validState = await validateOAuthState('discord', state)
-  if (!validState) {
-    return NextResponse.redirect(new URL('/dashboard/profile?discord=invalid_state', baseUrl))
+  const stateResult = await validateOAuthState('discord', state)
+  if (stateResult !== 'valid') {
+    return NextResponse.redirect(new URL(`/dashboard/profile?discord=${stateResult === 'consumed' ? 'linked' : 'invalid_state'}`, baseUrl))
   }
 
   // Retrieve PKCE code verifier

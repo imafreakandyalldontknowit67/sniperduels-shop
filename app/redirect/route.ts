@@ -20,13 +20,26 @@ export async function GET(request: NextRequest) {
   }
 
   // Validate OAuth state to prevent CSRF
-  const validState = await validateOAuthState('roblox', state)
-  if (!validState) {
-    // If already logged in (duplicate callback from browser prefetch/back-forward cache), just redirect home
+  const stateResult = await validateOAuthState('roblox', state)
+
+  if (stateResult === 'consumed') {
+    // Duplicate callback (browser prefetch/bfcache) — wait briefly for first request to finish
+    await new Promise(r => setTimeout(r, 1500))
     const existingSession = await getSession()
     if (existingSession) {
       return NextResponse.redirect(new URL('/', baseUrl))
     }
+    console.error('[Auth] State consumed but no session found', { state: state?.slice(0, 8) })
+    return NextResponse.redirect(new URL('/?error=invalid_state', baseUrl))
+  }
+
+  if (stateResult === 'invalid') {
+    // Check if already logged in (e.g. user hit back button after successful login)
+    const existingSession = await getSession()
+    if (existingSession) {
+      return NextResponse.redirect(new URL('/', baseUrl))
+    }
+    console.error('[Auth] Invalid state', { hasState: !!state, state: state?.slice(0, 8) })
     return NextResponse.redirect(new URL('/?error=invalid_state', baseUrl))
   }
 
