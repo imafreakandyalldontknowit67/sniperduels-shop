@@ -296,7 +296,7 @@ export default function DepositPage() {
           </div>
           {!isUsd && amount && parseFloat(amount) > 0 && (
             <p className="text-xs text-center mt-3 text-accent">
-              {currencySymbol}{parseFloat(amount).toFixed(2)} {currency} ~ ${getUsdAmount().toFixed(2)} USD
+              {currencySymbol}{parseFloat(amount).toFixed(2)} {currency} = ${getUsdAmount().toFixed(2)} USD
             </p>
           )}
           {tab === 'crypto' && (
