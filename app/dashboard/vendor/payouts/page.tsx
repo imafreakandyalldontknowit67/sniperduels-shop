@@ -190,7 +190,7 @@ export default function VendorPayoutsPage() {
               <div className="text-right">
                 {statusBadge(p.status)}
                 <span className="text-gray-500 text-[10px] block mt-1">
-                  {new Date(p.createdAt).toLocaleDateString()}
+                  {new Date(p.createdAt).toLocaleDateString()} {new Date(p.createdAt).toLocaleTimeString()}
                 </span>
               </div>
             </div>

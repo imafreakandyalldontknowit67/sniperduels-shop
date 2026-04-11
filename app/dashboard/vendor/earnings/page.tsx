@@ -106,9 +106,10 @@ export default function VendorEarningsPage() {
                 <p className="text-green-400 text-sm font-bold">+{formatPrice(e.netAmount)}</p>
                 <p className="text-red-400 text-[10px]">-{formatPrice(e.platformFee)} fee</p>
               </div>
-              <span className="text-gray-500 text-[10px]">
-                {new Date(e.createdAt).toLocaleDateString()}
-              </span>
+              <div className="text-right text-gray-500 text-[10px] flex flex-col">
+                <span>{new Date(e.createdAt).toLocaleDateString()}</span>
+                <span>{new Date(e.createdAt).toLocaleTimeString()}</span>
+              </div>
             </div>
           ))}
         </div>
