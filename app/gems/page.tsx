@@ -203,7 +203,7 @@ export default function GemsPage() {
         )}
 
         {!isUsd && (
-          <p className="text-[10px] text-gray-500 mb-4 text-center uppercase">Prices shown in {currency} are approximate. All payments are charged in USD.</p>
+          <p className="text-[10px] text-gray-500 mb-4 text-center uppercase">Prices shown in {currency} are approximate.</p>
         )}
 
         {/* Page Header */}

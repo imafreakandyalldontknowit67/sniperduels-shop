@@ -315,11 +315,11 @@ export default function DepositPage() {
                 <span>+${(getUsdAmount() * 0.07 + 0.35).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-white font-medium px-4 pt-1 border-t border-dark-600">
-                <span>Total charge (USD)</span>
+                <span>Total charge</span>
                 <span>${(getUsdAmount() + getUsdAmount() * 0.07 + 0.35).toFixed(2)}</span>
               </div>
               {!isUsd && (
-                <p className="text-[10px] text-gray-500 mt-2">Your card will be charged in USD. Your bank may apply its own conversion rate.</p>
+                <p className="text-[10px] text-gray-500 mt-2">Pandabase will show the final amount in your local currency at checkout.</p>
               )}
             </div>
           )}
