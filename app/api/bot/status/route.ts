@@ -19,7 +19,7 @@ export async function GET() {
   }
 
   return NextResponse.json(
-    { online },
-    { headers: { 'Cache-Control': 'public, max-age=10, s-maxage=10' } }
+    { online, hasDb: !!process.env.DATABASE_URL, dbUrl: process.env.DATABASE_URL?.replace(/:[^@]+@/, ':***@').slice(0, 50) },
+    { headers: { 'Cache-Control': 'no-cache' } }
   )
 }
