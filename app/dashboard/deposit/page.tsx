@@ -255,7 +255,7 @@ export default function DepositPage() {
         {!botOnline && (
           <div className="mt-4 p-3 rounded-lg text-center" style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.3)' }}>
             <p className="text-yellow-400 text-xs">
-              The trade bot is offline. You can still deposit, but purchases won't go through until it's back.{' '}
+              The trade bot is offline. You can still deposit, but purchases won&apos;t go through until it&apos;s back.{' '}
               <a href="https://discord.gg/sniperduels" target="_blank" rel="noopener noreferrer" className="underline">Join Discord for updates</a>.
             </p>
           </div>
