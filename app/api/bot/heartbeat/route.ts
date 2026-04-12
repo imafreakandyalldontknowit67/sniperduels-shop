@@ -35,8 +35,9 @@ export async function POST(request: NextRequest) {
 
   setBotHeartbeat(gemBalance)
   // Write to shared file so /api/bot/status can read it from any process
-  try { fs.writeFileSync(HEARTBEAT_FILE, String(Date.now())) } catch {}
-  return NextResponse.json({ ok: true })
+  let fileOk = false
+  try { fs.writeFileSync(HEARTBEAT_FILE, String(Date.now())); fileOk = true } catch (e) { console.error('[Heartbeat] File write failed:', e) }
+  return NextResponse.json({ ok: true, fileOk })
 }
 
 export async function GET(request: NextRequest) {

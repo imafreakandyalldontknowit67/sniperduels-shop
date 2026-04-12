@@ -7,16 +7,24 @@ const HEARTBEAT_FILE = path.join('/tmp', 'bot-heartbeat.txt')
 
 export async function GET() {
   let online = false
+  let debug = ''
   try {
-    const ts = fs.readFileSync(HEARTBEAT_FILE, 'utf-8').trim()
-    const lastHeartbeat = parseInt(ts, 10) || 0
-    online = lastHeartbeat > 0 && (Date.now() - lastHeartbeat) < BOT_OFFLINE_THRESHOLD_MS
-  } catch {
-    // File doesn't exist yet — offline until first heartbeat
+    const exists = fs.existsSync(HEARTBEAT_FILE)
+    if (exists) {
+      const ts = fs.readFileSync(HEARTBEAT_FILE, 'utf-8').trim()
+      const lastHeartbeat = parseInt(ts, 10) || 0
+      const ago = Math.floor((Date.now() - lastHeartbeat) / 1000)
+      online = lastHeartbeat > 0 && (Date.now() - lastHeartbeat) < BOT_OFFLINE_THRESHOLD_MS
+      debug = `file exists, value=${ts}, ago=${ago}s`
+    } else {
+      debug = `file not found at ${HEARTBEAT_FILE}`
+    }
+  } catch (err) {
+    debug = `read error: ${err instanceof Error ? err.message : String(err)}`
   }
 
   return NextResponse.json(
-    { online },
-    { headers: { 'Cache-Control': 'public, max-age=10, s-maxage=10' } }
+    { online, debug },
+    { headers: { 'Cache-Control': 'no-cache' } }
   )
 }
