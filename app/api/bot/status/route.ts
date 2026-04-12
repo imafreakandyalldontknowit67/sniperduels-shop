@@ -1,21 +1,21 @@
 import { NextResponse } from 'next/server'
-import pg from 'pg'
+import { prisma } from '@/lib/prisma'
 
 const BOT_OFFLINE_THRESHOLD_MS = 120_000
 
 export async function GET() {
   let online = false
   try {
-    const client = new pg.Client({ connectionString: process.env.DATABASE_URL })
-    await client.connect()
-    const res = await client.query(`SELECT value FROM "BotState" WHERE key = 'lastHeartbeat' LIMIT 1`)
-    await client.end()
-    if (res.rows.length > 0) {
-      const lastHeartbeat = parseInt(res.rows[0].value, 10) || 0
-      online = lastHeartbeat > 0 && (Date.now() - lastHeartbeat) < BOT_OFFLINE_THRESHOLD_MS
-    }
+    // Use $executeRawUnsafe to check heartbeat age — returns 1 if heartbeat is recent, 0 if not
+    // This works because $executeRawUnsafe returns affected row count for UPDATE
+    const threshold = Date.now() - BOT_OFFLINE_THRESHOLD_MS
+    const count = await prisma.$executeRawUnsafe(
+      `UPDATE "BotState" SET "updatedAt" = "updatedAt" WHERE key = 'lastHeartbeat' AND CAST(value AS BIGINT) > $1`,
+      String(threshold)
+    )
+    online = count > 0
   } catch {
-    // DB not available — report offline
+    // Table doesn't exist or query failed — offline
   }
 
   return NextResponse.json(
