@@ -14,6 +14,7 @@ export async function getBotLastHeartbeat(): Promise<number> {
   if (!hydrated) {
     hydrated = true
     try {
+      // @ts-expect-error botState model pending migration
       const row = await prisma.botState.findUnique({ where: { key: 'lastHeartbeat' } })
       if (row) {
         lastHeartbeat = parseInt(row.value, 10) || 0
@@ -34,6 +35,7 @@ export function setBotHeartbeat(gemBalance?: number): void {
   if (gemBalance != null) botGemBalance = gemBalance
 
   // Fire-and-forget DB write
+  // @ts-expect-error botState model pending migration
   prisma.botState.upsert({
     where: { key: 'lastHeartbeat' },
     update: { value: String(lastHeartbeat) },
