@@ -1,25 +1,14 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { getBotLastHeartbeat, BOT_OFFLINE_THRESHOLD_MS } from '@/lib/bot-heartbeat'
 
-const BOT_OFFLINE_THRESHOLD_MS = 120_000
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  let online = false
-  try {
-    // Use $executeRawUnsafe to check heartbeat age — returns 1 if heartbeat is recent, 0 if not
-    // This works because $executeRawUnsafe returns affected row count for UPDATE
-    const threshold = Date.now() - BOT_OFFLINE_THRESHOLD_MS
-    const count = await prisma.$executeRawUnsafe(
-      `UPDATE "BotState" SET "updatedAt" = "updatedAt" WHERE key = 'lastHeartbeat' AND CAST(value AS BIGINT) > $1`,
-      String(threshold)
-    )
-    online = count > 0
-  } catch {
-    // Table doesn't exist or query failed — offline
-  }
+  const lastHeartbeat = await getBotLastHeartbeat()
+  const online = lastHeartbeat > 0 && (Date.now() - lastHeartbeat) < BOT_OFFLINE_THRESHOLD_MS
 
   return NextResponse.json(
-    { online, hasDb: !!process.env.DATABASE_URL, dbUrl: process.env.DATABASE_URL?.replace(/:[^@]+@/, ':***@').slice(0, 50) },
-    { headers: { 'Cache-Control': 'no-cache' } }
+    { online },
+    { headers: { 'Cache-Control': 'public, max-age=10, s-maxage=10' } }
   )
 }
