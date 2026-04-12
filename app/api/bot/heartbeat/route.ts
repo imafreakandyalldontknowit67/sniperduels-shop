@@ -33,15 +33,21 @@ export async function POST(request: NextRequest) {
   setBotHeartbeat(gemBalance)
   // Write to DB via raw SQL so /api/bot/status can read from any process
   const ts = String(Date.now())
-  prisma.$executeRawUnsafe(
-    `CREATE TABLE IF NOT EXISTS "BotState" (key TEXT PRIMARY KEY, value TEXT NOT NULL, "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW())`
-  ).then(() =>
-    prisma.$executeRawUnsafe(
+  let dbOk = false
+  let dbErr = ''
+  try {
+    await prisma.$executeRawUnsafe(
+      `CREATE TABLE IF NOT EXISTS "BotState" (key TEXT PRIMARY KEY, value TEXT NOT NULL, "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW())`
+    )
+    await prisma.$executeRawUnsafe(
       `INSERT INTO "BotState" (key, value, "updatedAt") VALUES ('lastHeartbeat', $1, NOW()) ON CONFLICT (key) DO UPDATE SET value = $1, "updatedAt" = NOW()`,
       ts
     )
-  ).catch(() => {})
-  return NextResponse.json({ ok: true })
+    dbOk = true
+  } catch (e) {
+    dbErr = e instanceof Error ? e.message : String(e)
+  }
+  return NextResponse.json({ ok: true, dbOk, dbErr: dbErr || undefined, ts })
 }
 
 export async function GET(request: NextRequest) {
