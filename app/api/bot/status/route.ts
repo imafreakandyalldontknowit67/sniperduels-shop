@@ -7,9 +7,9 @@ export async function GET() {
   let online = false
   let debug = ''
   try {
-    const rows = await prisma.$queryRawUnsafe<Array<{ value: string }>>(
-      `SELECT value FROM "BotState" WHERE key = 'lastHeartbeat' LIMIT 1`
-    )
+    const rows = await prisma.$queryRaw<Array<{ value: string }>>`
+      SELECT value FROM "BotState" WHERE key = 'lastHeartbeat' LIMIT 1
+    `
     if (rows.length > 0) {
       const lastHeartbeat = parseInt(rows[0].value, 10) || 0
       const ago = Math.floor((Date.now() - lastHeartbeat) / 1000)
