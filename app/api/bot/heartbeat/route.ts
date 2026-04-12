@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
+import * as fs from 'fs'
+import * as path from 'path'
 import { getBotLastHeartbeat, setBotHeartbeat, BOT_OFFLINE_THRESHOLD_MS } from '@/lib/bot-heartbeat'
+
+const HEARTBEAT_FILE = path.join('/tmp', 'bot-heartbeat.txt')
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -30,6 +34,8 @@ export async function POST(request: NextRequest) {
   }
 
   setBotHeartbeat(gemBalance)
+  // Write to shared file so /api/bot/status can read it from any process
+  try { fs.writeFileSync(HEARTBEAT_FILE, String(Date.now())) } catch {}
   return NextResponse.json({ ok: true })
 }
 

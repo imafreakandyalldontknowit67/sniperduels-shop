@@ -1,21 +1,18 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import * as fs from 'fs'
+import * as path from 'path'
 
 const BOT_OFFLINE_THRESHOLD_MS = 120_000
+const HEARTBEAT_FILE = path.join('/tmp', 'bot-heartbeat.txt')
 
 export async function GET() {
   let online = false
   try {
-    // Raw SQL bypasses generated Prisma client model issues
-    const rows = await prisma.$queryRaw<Array<{ value: string }>>`
-      SELECT value FROM "BotState" WHERE key = 'lastHeartbeat' LIMIT 1
-    `
-    if (rows.length > 0) {
-      const lastHeartbeat = parseInt(rows[0].value, 10) || 0
-      online = lastHeartbeat > 0 && (Date.now() - lastHeartbeat) < BOT_OFFLINE_THRESHOLD_MS
-    }
+    const ts = fs.readFileSync(HEARTBEAT_FILE, 'utf-8').trim()
+    const lastHeartbeat = parseInt(ts, 10) || 0
+    online = lastHeartbeat > 0 && (Date.now() - lastHeartbeat) < BOT_OFFLINE_THRESHOLD_MS
   } catch {
-    // Table might not exist — report offline
+    // File doesn't exist yet — offline until first heartbeat
   }
 
   return NextResponse.json(
