@@ -1,25 +1,13 @@
 import { NextResponse } from 'next/server'
-import { BOT_OFFLINE_THRESHOLD_MS } from '@/lib/bot-heartbeat'
-import { prisma } from '@/lib/prisma'
+import { getBotLastHeartbeat, BOT_OFFLINE_THRESHOLD_MS } from '@/lib/bot-heartbeat'
 
 export async function GET() {
-  let online = false
-  let debug: string | null = null
-  try {
-    const row = await prisma.botState.findUnique({ where: { key: 'lastHeartbeat' } })
-    if (row) {
-      const lastHeartbeat = parseInt(row.value, 10) || 0
-      online = lastHeartbeat > 0 && (Date.now() - lastHeartbeat) < BOT_OFFLINE_THRESHOLD_MS
-      debug = `db=${row.value}, ago=${Math.floor((Date.now() - lastHeartbeat) / 1000)}s, threshold=${BOT_OFFLINE_THRESHOLD_MS / 1000}s`
-    } else {
-      debug = 'no row found for key=lastHeartbeat'
-    }
-  } catch (err) {
-    debug = `error: ${err instanceof Error ? err.message : String(err)}`
-  }
+  // Uses in-memory lastHeartbeat set by bot heartbeat POST (same Node process in standalone mode)
+  const lastHeartbeat = await getBotLastHeartbeat()
+  const online = lastHeartbeat > 0 && (Date.now() - lastHeartbeat) < BOT_OFFLINE_THRESHOLD_MS
 
   return NextResponse.json(
-    { online, debug },
-    { headers: { 'Cache-Control': 'no-cache' } }
+    { online },
+    { headers: { 'Cache-Control': 'public, max-age=10, s-maxage=10' } }
   )
 }
