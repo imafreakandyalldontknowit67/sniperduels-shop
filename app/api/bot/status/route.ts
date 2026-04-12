@@ -1,30 +1,24 @@
 import { NextResponse } from 'next/server'
-import * as fs from 'fs'
-import * as path from 'path'
+import { prisma } from '@/lib/prisma'
 
 const BOT_OFFLINE_THRESHOLD_MS = 120_000
-const HEARTBEAT_FILE = path.join('/tmp', 'bot-heartbeat.txt')
 
 export async function GET() {
   let online = false
-  let debug = ''
   try {
-    const exists = fs.existsSync(HEARTBEAT_FILE)
-    if (exists) {
-      const ts = fs.readFileSync(HEARTBEAT_FILE, 'utf-8').trim()
-      const lastHeartbeat = parseInt(ts, 10) || 0
-      const ago = Math.floor((Date.now() - lastHeartbeat) / 1000)
+    const rows = await prisma.$queryRawUnsafe<Array<{ value: string }>>(
+      `SELECT value FROM "BotState" WHERE key = 'lastHeartbeat' LIMIT 1`
+    )
+    if (rows.length > 0) {
+      const lastHeartbeat = parseInt(rows[0].value, 10) || 0
       online = lastHeartbeat > 0 && (Date.now() - lastHeartbeat) < BOT_OFFLINE_THRESHOLD_MS
-      debug = `file exists, value=${ts}, ago=${ago}s`
-    } else {
-      debug = `file not found at ${HEARTBEAT_FILE}`
     }
-  } catch (err) {
-    debug = `read error: ${err instanceof Error ? err.message : String(err)}`
+  } catch {
+    // Table might not exist yet — will be created on first heartbeat
   }
 
   return NextResponse.json(
-    { online, debug },
-    { headers: { 'Cache-Control': 'no-cache' } }
+    { online },
+    { headers: { 'Cache-Control': 'public, max-age=10, s-maxage=10' } }
   )
 }

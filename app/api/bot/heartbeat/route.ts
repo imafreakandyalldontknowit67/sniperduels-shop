@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
-import * as fs from 'fs'
-import * as path from 'path'
 import { getBotLastHeartbeat, setBotHeartbeat, BOT_OFFLINE_THRESHOLD_MS } from '@/lib/bot-heartbeat'
-
-const HEARTBEAT_FILE = path.join('/tmp', 'bot-heartbeat.txt')
+import { prisma } from '@/lib/prisma'
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -34,10 +31,17 @@ export async function POST(request: NextRequest) {
   }
 
   setBotHeartbeat(gemBalance)
-  // Write to shared file so /api/bot/status can read it from any process
-  let fileOk = false
-  try { fs.writeFileSync(HEARTBEAT_FILE, String(Date.now())); fileOk = true } catch (e) { console.error('[Heartbeat] File write failed:', e) }
-  return NextResponse.json({ ok: true, fileOk })
+  // Write to DB via raw SQL so /api/bot/status can read from any process
+  const ts = String(Date.now())
+  prisma.$executeRawUnsafe(
+    `CREATE TABLE IF NOT EXISTS "BotState" (key TEXT PRIMARY KEY, value TEXT NOT NULL, "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW())`
+  ).then(() =>
+    prisma.$executeRawUnsafe(
+      `INSERT INTO "BotState" (key, value, "updatedAt") VALUES ('lastHeartbeat', $1, NOW()) ON CONFLICT (key) DO UPDATE SET value = $1, "updatedAt" = NOW()`,
+      ts
+    )
+  ).catch(() => {})
+  return NextResponse.json({ ok: true })
 }
 
 export async function GET(request: NextRequest) {
