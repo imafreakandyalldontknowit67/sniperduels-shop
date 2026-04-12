@@ -26,6 +26,7 @@ export default function DepositPage() {
   const [hpField, setHpField] = useState('')
   const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const [botOnline, setBotOnline] = useState(true)
 
   // Crypto-specific state
   const [allCurrencies, setAllCurrencies] = useState<string[]>([])
@@ -47,6 +48,7 @@ export default function DepositPage() {
       if (user) {
         fetchDeposits()
         fetchCurrencies()
+        fetch('/api/bot/status').then(r => r.json()).then(d => setBotOnline(d.online)).catch(() => {})
       }
     }
   }, [isLoading, user, authWalletBalance])
@@ -250,6 +252,14 @@ export default function DepositPage() {
         <p className="text-gray-400 mt-1 text-center">
           Current balance: <span className="text-white font-medium">{formatPrice(walletBalance)}</span>
         </p>
+        {!botOnline && (
+          <div className="mt-4 p-3 rounded-lg text-center" style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.3)' }}>
+            <p className="text-yellow-400 text-xs">
+              The trade bot is offline. You can still deposit, but purchases won't go through until it's back.{' '}
+              <a href="https://discord.gg/sniperduels" target="_blank" rel="noopener noreferrer" className="underline">Join Discord for updates</a>.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="w-full max-w-xl">

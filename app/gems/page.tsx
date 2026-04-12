@@ -40,11 +40,23 @@ export default function GemsPage() {
   const [purchasing, setPurchasing] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const [botOnline, setBotOnline] = useState(true)
 
   useEffect(() => {
     fetchUser()
     fetchListings()
+    fetchBotStatus()
   }, [])
+
+  async function fetchBotStatus() {
+    try {
+      const res = await fetch('/api/bot/status')
+      if (res.ok) {
+        const data = await res.json()
+        setBotOnline(data.online)
+      }
+    } catch { /* assume online */ }
+  }
 
   useEffect(() => {
     if (toast) {
@@ -131,7 +143,11 @@ export default function GemsPage() {
   function handlePurchaseClick() {
     posthog.capture('gems_buy_clicked', { amount_k: amount, total_price: discountedPrice })
     if (!userInfo?.user) {
-      window.location.href = '/api/auth/roblox'
+      setToast({ type: 'error', text: 'You need to login first to purchase gems.' })
+      return
+    }
+    if (!botOnline) {
+      setToast({ type: 'error', text: 'The trade bot is currently offline. Join our Discord for updates!' })
       return
     }
     setAgreedToTerms(false)
@@ -200,6 +216,19 @@ export default function GemsPage() {
                 <X className="w-4 h-4" />
               </button>
             </div>
+          </div>
+        )}
+
+        {!botOnline && (
+          <div className="mb-6 p-4 text-center" style={{ background: 'rgba(239,68,68,0.1)', border: '2px solid rgba(239,68,68,0.3)' }}>
+            <p className="text-red-400 text-xs uppercase font-bold mb-1">Trade bot is offline</p>
+            <p className="text-gray-400 text-[10px]">
+              Purchases are unavailable right now.{' '}
+              <a href="https://discord.gg/sniperduels" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+                Join our Discord
+              </a>{' '}
+              to know when it&apos;s back!
+            </p>
           </div>
         )}
 

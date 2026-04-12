@@ -43,11 +43,13 @@ export default function ShopPage() {
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [comingSoon, setComingSoon] = useState(false)
   const [comingSoonLoading, setComingSoonLoading] = useState(true)
+  const [botOnline, setBotOnline] = useState(true)
 
   useEffect(() => {
     fetchComingSoon()
     fetchItems()
     fetchUser()
+    fetch('/api/bot/status').then(r => r.json()).then(d => setBotOnline(d.online)).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -113,7 +115,11 @@ export default function ShopPage() {
       price: item.priceUsd,
     })
     if (!userInfo?.user) {
-      window.location.href = '/api/auth/roblox'
+      setToast({ type: 'error', text: 'You need to login first to purchase items.' })
+      return
+    }
+    if (!botOnline) {
+      setToast({ type: 'error', text: 'The trade bot is currently offline. Join our Discord for updates!' })
       return
     }
     setAgreedToTerms(false)
