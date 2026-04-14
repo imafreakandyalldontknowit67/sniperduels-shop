@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { getUserDeposits, createDeposit, expireStaleDeposits, getSiteSettings } from '@/lib/storage'
-import { createCryptoPayment, getMinimumAmount } from '@/lib/nowpayments'
+import { createCryptoPayment } from '@/lib/nowpayments'
 import { flagAndBlacklist } from '@/lib/blacklist'
 
 export async function POST(request: NextRequest) {
@@ -69,16 +69,7 @@ export async function POST(request: NextRequest) {
       pandabaseRefId: currency,
     })
 
-    // Check minimum amount from NOWPayments API
-    const minForCurrency = await getMinimumAmount(currency.toLowerCase())
-    if (roundedAmount < minForCurrency) {
-      return NextResponse.json(
-        { error: `Minimum deposit for ${currency.toUpperCase()} is $${Math.ceil(minForCurrency)}. Try a higher amount or use a different currency.` },
-        { status: 400 }
-      )
-    }
-
-    // Create NearPayments payment
+    // Create NOWPayments payment
     let paymentResult
     try {
       paymentResult = await createCryptoPayment(roundedAmount, deposit.id, currency)
