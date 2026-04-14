@@ -1,5 +1,6 @@
 import { prisma } from './prisma'
 import { addToWallet, createLedgerEntry } from './storage'
+import { captureServerEvent } from './posthog-api'
 
 const REFERRAL_COMMISSION_REFERRER = 0.75
 const REFERRAL_COMMISSION_REFERRED = 0.50
@@ -91,6 +92,19 @@ export async function processReferralCommission(orderId: string, userId: string)
   })
   if (!user?.referredBy || user.referralCreditedAt) return
 
+  // Verify this is genuinely the user's first completed order
+  // Prevents retroactive exploit: apply code after first order, get credit on second
+  const completedOrders = await prisma.order.count({
+    where: {
+      userId,
+      status: 'completed',
+      totalPrice: { gt: 0 }, // Exclude vendor deposit/withdrawal $0 orders
+    },
+  })
+  // If they have more than 1 completed order, this isn't their first — skip
+  // (the current order being completed is already counted)
+  if (completedOrders > 1) return
+
   // Atomically claim the referral (only first completed order triggers this)
   const result = await prisma.referral.updateMany({
     where: { referredUserId: userId, status: 'pending' },
@@ -138,6 +152,12 @@ export async function processReferralCommission(orderId: string, userId: string)
   } else {
     console.error(`[Referral] Failed to credit referred user ${userId} $${REFERRAL_COMMISSION_REFERRED} (wallet at max?)`)
   }
+
+  captureServerEvent(user.referredBy, 'referral_commission_earned', {
+    amount: REFERRAL_COMMISSION_REFERRER,
+    referredUserId: userId,
+    orderId,
+  })
 }
 
 export async function getReferralStats(userId: string): Promise<{

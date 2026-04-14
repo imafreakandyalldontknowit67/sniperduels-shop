@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { captureServerEvent } from '@/lib/posthog-api'
 
 export async function GET(
   request: NextRequest,
@@ -16,6 +17,8 @@ export async function GET(
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
   })
+
+  captureServerEvent('anonymous', 'referral_link_visited', { code: code.toUpperCase() })
 
   return NextResponse.redirect(new URL('/', baseUrl))
 }

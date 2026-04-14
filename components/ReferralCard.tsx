@@ -116,7 +116,7 @@ export default function ReferralCard({ referredBy }: { referredBy: string | null
       )}
 
       {/* Stats */}
-      {data && data.totalReferred > 0 && (
+      {data && (
         <div className="grid grid-cols-3 gap-3 mb-4">
           <div className="bg-dark-600 rounded-lg p-3 text-center">
             <p className="text-xl font-bold text-white">{data.totalReferred}</p>

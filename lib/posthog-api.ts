@@ -1,6 +1,24 @@
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com'
 const POSTHOG_API_KEY = process.env.POSTHOG_PERSONAL_API_KEY || ''
 const POSTHOG_PROJECT_ID = process.env.POSTHOG_PROJECT_ID || '1'
+const POSTHOG_PROJECT_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY || ''
+
+export async function captureServerEvent(distinctId: string, event: string, properties?: Record<string, unknown>) {
+  try {
+    await fetch(`${POSTHOG_HOST}/capture/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: POSTHOG_PROJECT_KEY,
+        distinct_id: distinctId,
+        event,
+        properties: { ...properties, $lib: 'server' },
+      }),
+    })
+  } catch {
+    // Non-critical — don't break the flow
+  }
+}
 
 interface PostHogQueryOptions {
   dateFrom?: string
