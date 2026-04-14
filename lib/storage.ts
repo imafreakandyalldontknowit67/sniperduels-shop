@@ -38,6 +38,7 @@ export interface StoredUser {
   walletBalance: number
   lifetimeSpend: number
   discordFirstPurchaseUsed: boolean
+  referredBy?: string
   createdAt: string
   lastLogin: string
   isAdmin: boolean
@@ -57,6 +58,9 @@ function toStoredUser(row: {
   walletBalance: Decimal
   lifetimeSpend: Decimal
   discordFirstPurchaseUsed: boolean
+  referralCode: string | null
+  referredBy: string | null
+  referralCreditedAt: string | null
   createdAt: string
   lastLogin: string
   isAdmin: boolean
@@ -75,6 +79,7 @@ function toStoredUser(row: {
     walletBalance: d(row.walletBalance),
     lifetimeSpend: d(row.lifetimeSpend),
     discordFirstPurchaseUsed: row.discordFirstPurchaseUsed,
+    referredBy: row.referredBy ?? undefined,
     createdAt: row.createdAt,
     lastLogin: row.lastLogin,
     isAdmin: row.isAdmin,
@@ -1203,7 +1208,7 @@ export async function getOrderStats() {
 
 // ─── Transaction Ledger ──────────────────────────────────────────────────────
 
-export type LedgerType = 'deposit' | 'purchase' | 'vendor_earning' | 'vendor_payout' | 'refund'
+export type LedgerType = 'deposit' | 'purchase' | 'vendor_earning' | 'vendor_payout' | 'refund' | 'referral_commission'
 
 export interface LedgerEntry {
   id: string

@@ -3,6 +3,7 @@ import { getUser, getUserLoyaltyInfo, LOYALTY_TIERS, canUseDiscordFirstPurchaseD
 import { User, Check, ExternalLink, Crown, Gift } from 'lucide-react'
 import Link from 'next/link'
 import { Price } from '@/components/ui'
+import ReferralCard from '@/components/ReferralCard'
 
 // Roblox icon component
 function RobloxIcon({ className }: { className?: string }) {
@@ -171,6 +172,9 @@ export default async function ProfilePage({
             )}
           </div>
         )}
+
+        {/* Referral Program Card */}
+        <ReferralCard referredBy={storedUser?.referredBy ?? null} />
 
         {/* Linked Accounts Card */}
         <div className="bg-dark-800/50 rounded-xl p-6">

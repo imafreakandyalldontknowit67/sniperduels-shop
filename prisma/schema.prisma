@@ -28,6 +28,11 @@ model User {
   lifetimeSpend             Decimal @default(0) @db.Decimal(12, 2)
   discordFirstPurchaseUsed  Boolean @default(false)
 
+  // Referral
+  referralCode       String?  @unique
+  referredBy         String?
+  referralCreditedAt String?
+
   // Timestamps & status
   createdAt String
   lastLogin String
@@ -245,6 +250,7 @@ enum TransactionType {
   vendor_earning
   vendor_payout
   refund
+  referral_commission
 }
 
 model TransactionLedger {
@@ -274,4 +280,35 @@ model SessionBlacklist {
   expiresAt Int    // Unix timestamp (seconds)
 
   @@index([expiresAt])
+}
+
+// ─── OAuth State (DB-backed, fallback for cookie loss) ──────────────────────
+model OAuthState {
+  state        String   @id
+  codeVerifier String
+  provider     String   // 'roblox' | 'discord'
+  consumed     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// ─── Referrals ──────────────────────────────────────────────────────────────
+enum ReferralStatus {
+  pending
+  credited
+  expired
+}
+
+model Referral {
+  id               String         @id @default(cuid())
+  referrerUserId   String
+  referredUserId   String         @unique
+  orderId          String?        @unique
+  commissionAmount Decimal?       @db.Decimal(12, 2)
+  status           ReferralStatus @default(pending)
+  createdAt        String
+  creditedAt       String?
+
+  @@index([referrerUserId])
 }

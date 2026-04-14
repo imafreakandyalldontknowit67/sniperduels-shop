@@ -297,6 +297,7 @@ export async function storeOAuthState(provider: 'roblox' | 'discord'): Promise<{
   const codeChallenge = generateCodeChallenge(codeVerifier)
   const cookieStore = await cookies()
 
+  // Store in cookie (primary — fast)
   cookieStore.set(`oauth_state_${provider}`, state, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -313,6 +314,19 @@ export async function storeOAuthState(provider: 'roblox' | 'discord'): Promise<{
     path: '/',
   })
 
+  // Store in DB (fallback — survives cookie loss on mobile Safari etc.)
+  try {
+    await prisma.oAuthState.create({
+      data: { state, codeVerifier, provider },
+    })
+    // Clean up old states (>15 min)
+    await prisma.oAuthState.deleteMany({
+      where: { createdAt: { lt: new Date(Date.now() - 15 * 60 * 1000) } },
+    })
+  } catch (err) {
+    console.error('[Auth] Failed to store OAuth state in DB:', err)
+  }
+
   return { state, codeChallenge }
 }
 
@@ -321,28 +335,79 @@ export async function validateOAuthState(provider: 'roblox' | 'discord', state: 
   const cookieStore = await cookies()
   const stored = cookieStore.get(`oauth_state_${provider}`)?.value
 
-  // Already consumed by a previous request (duplicate callback)
+  // Already consumed by a previous request (duplicate callback) — cookie path
   if (stored?.startsWith('consumed:')) return 'consumed'
 
-  if (!stored || stored !== state) return 'invalid'
+  // Try cookie first (fast path)
+  if (stored && stored === state) {
+    // Mark as consumed in cookie
+    cookieStore.set(`oauth_state_${provider}`, `consumed:${Date.now()}`, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60,
+      path: '/',
+    })
+    // Mark as consumed in DB
+    try { await prisma.oAuthState.update({ where: { state }, data: { consumed: true } }) } catch { /* ok */ }
+    console.log(`[Auth] State validated via cookie | state=${state.slice(0, 8)}`)
+    return 'valid'
+  }
 
-  // Mark as consumed instead of deleting — lets duplicate requests detect this
-  cookieStore.set(`oauth_state_${provider}`, `consumed:${Date.now()}`, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60, // Auto-cleanup after 1 minute
-    path: '/',
-  })
+  // Cookie missing — fall back to DB
+  try {
+    const dbState = await prisma.oAuthState.findUnique({ where: { state } })
+    if (dbState && dbState.provider === provider) {
+      if (dbState.consumed) {
+        console.log(`[Auth] State already consumed (DB) | state=${state.slice(0, 8)}`)
+        return 'consumed'
+      }
+      // Claim it atomically
+      const claimed = await prisma.oAuthState.updateMany({
+        where: { state, consumed: false },
+        data: { consumed: true },
+      })
+      if (claimed.count > 0) {
+        console.log(`[Auth] State validated via DB fallback (cookie was missing) | state=${state.slice(0, 8)}`)
+        return 'valid'
+      }
+      return 'consumed'
+    }
+  } catch (err) {
+    console.error('[Auth] DB state lookup failed:', err)
+  }
 
-  return 'valid'
+  console.error(`[Auth] Invalid state | cookie=${!!stored} | state=${state.slice(0, 8)}`)
+  return 'invalid'
 }
 
 export async function retrieveCodeVerifier(provider: 'roblox' | 'discord'): Promise<string | null> {
   const cookieStore = await cookies()
   const verifier = cookieStore.get(`oauth_pkce_${provider}`)?.value || null
-  cookieStore.delete(`oauth_pkce_${provider}`)
-  return verifier
+  if (verifier) {
+    cookieStore.delete(`oauth_pkce_${provider}`)
+    return verifier
+  }
+
+  // Cookie missing — try DB fallback
+  // We need the state to look up the verifier, but we don't have it here.
+  // The state was already validated, so we look for the most recent consumed state for this provider.
+  try {
+    const recent = await prisma.oAuthState.findFirst({
+      where: { provider, consumed: true },
+      orderBy: { createdAt: 'desc' },
+    })
+    if (recent) {
+      // Delete it to prevent replay
+      await prisma.oAuthState.delete({ where: { state: recent.state } })
+      console.log(`[Auth] Code verifier retrieved via DB fallback | state=${recent.state.slice(0, 8)}`)
+      return recent.codeVerifier
+    }
+  } catch (err) {
+    console.error('[Auth] DB verifier lookup failed:', err)
+  }
+
+  return null
 }
 
 // Discord OAuth helpers

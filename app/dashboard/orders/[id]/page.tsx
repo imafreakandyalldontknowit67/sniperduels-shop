@@ -64,6 +64,10 @@ export default function OrderTrackingPage() {
   const [inServer, setInServer] = useState(false)
   const [copied, setCopied] = useState(false)
   const prevStatusRef = useRef<string | null>(null)
+  const prevShowServerLinkRef = useRef(false)
+  const bellPlayedRef = useRef(false)
+  const titleFlashRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const originalTitleRef = useRef<string>('')
   const routerRef = useRef(router)
   routerRef.current = router
 
@@ -133,6 +137,7 @@ export default function OrderTrackingPage() {
         body: JSON.stringify({ confirm: true }),
       })
       if (res.ok) {
+        posthog.capture('order_player_ready_confirmed', { order_id: orderId })
         setToast({ type: 'info', text: 'Confirmed! The bot will find you in the server and start your trade.' })
         const statusRes = await fetch(`/api/orders/${orderId}/status`)
         if (statusRes.ok) {
@@ -199,6 +204,31 @@ export default function OrderTrackingPage() {
           }
         }
 
+        // Play notification bell + flash tab when reaching #1 in queue
+        if (data.showServerLink && !prevShowServerLinkRef.current && !bellPlayedRef.current) {
+          bellPlayedRef.current = true
+          const bell = new Audio('/audio/notification-bell.mp3')
+          bell.play().catch(() => {})
+          posthog.capture('order_notification_bell_played', { order_id: orderId })
+          posthog.capture('order_reached_front', { order_id: orderId })
+
+          // Flash tab title
+          if (!originalTitleRef.current) originalTitleRef.current = document.title
+          titleFlashRef.current = setInterval(() => {
+            document.title = document.title === originalTitleRef.current
+              ? "YOUR TURN! - Sniper Duels"
+              : originalTitleRef.current
+          }, 1000)
+        }
+        prevShowServerLinkRef.current = data.showServerLink
+
+        // Stop title flash on terminal states
+        if (['completed', 'failed', 'refunded'].includes(newStatus) && titleFlashRef.current) {
+          clearInterval(titleFlashRef.current)
+          titleFlashRef.current = null
+          if (originalTitleRef.current) document.title = originalTitleRef.current
+        }
+
         if (!prevStatusRef.current) {
           posthog.capture('order_tracking_viewed', { order_id: orderId, order_status: newStatus })
         }
@@ -224,6 +254,11 @@ export default function OrderTrackingPage() {
     return () => {
       cancelled = true
       clearTimeout(timeoutId)
+      if (titleFlashRef.current) {
+        clearInterval(titleFlashRef.current)
+        titleFlashRef.current = null
+        if (originalTitleRef.current) document.title = originalTitleRef.current
+      }
     }
   }, [orderId])
 

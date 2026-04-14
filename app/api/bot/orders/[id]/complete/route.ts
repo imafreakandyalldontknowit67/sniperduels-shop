@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import { getOrder, updateOrder, updateOrderStatus, addVendorStock, claimVendorDeposit, addGemStock, deductGemStock, deductVendorStock, deductFromWallet, addToLifetimeSpend, createLedgerEntry, createVendorEarning } from '@/lib/storage'
+import { processReferralCommission } from '@/lib/referral'
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -150,6 +151,13 @@ export async function POST(
         relatedId: order.id,
       }).catch(err => console.error('Ledger write failed (vendor_earning complete):', err))
     }
+  }
+
+  // Process referral commission on first completed order
+  if (isRegularPurchase) {
+    processReferralCommission(id, order.userId).catch(err =>
+      console.error(`[Referral] Commission processing failed for order ${id}:`, err)
+    )
   }
 
   return NextResponse.json({ order: updated })

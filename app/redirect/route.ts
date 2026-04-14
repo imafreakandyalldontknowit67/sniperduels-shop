@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { exchangeCodeForTokens, getRobloxUserInfo, createSession, isAdmin, isAccountTooYoung, validateOAuthState, retrieveCodeVerifier, getSession } from '@/lib/auth'
 import { upsertUser } from '@/lib/storage'
+import { applyReferralCode } from '@/lib/referral'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -94,6 +95,15 @@ export async function GET(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 7, // 7 days
       path: '/',
     })
+
+    // Auto-apply referral code from cookie (set by /r/[code] link)
+    const referralCode = cookieStore.get('referral_code')?.value
+    if (referralCode) {
+      cookieStore.delete('referral_code')
+      applyReferralCode(user.id, referralCode).catch(err =>
+        console.error('[Referral] Auto-apply failed:', err)
+      )
+    }
 
     // Redirect all users to home (admins can access admin panel via header link)
     return NextResponse.redirect(new URL('/', baseUrl))
