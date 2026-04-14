@@ -394,25 +394,74 @@ export default function DepositPage() {
           </>
         )}
 
-        {/* Crypto Tab Content — Manual via Discord */}
+        {/* Crypto Tab Content — Currency selector + deposit */}
         {tab === 'crypto' && !cryptoPayment && (
-          <div className="bg-dark-800/50 rounded-xl p-6 mb-6 text-center">
-            <svg className="w-12 h-12 mx-auto mb-4 text-[#5865F2]" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
-            </svg>
-            <h3 className="text-white font-semibold text-lg mb-2">Crypto Deposits via Discord</h3>
-            <p className="text-gray-400 text-sm mb-6">
-              To deposit with crypto, open a support ticket in our Discord and we&apos;ll process it for you manually. No processing fees.
-            </p>
-            <a
-              href="https://discord.gg/sniperduels"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block w-full py-4 bg-[#5865F2] hover:bg-[#4752C4] text-white font-medium rounded-xl text-lg transition-colors"
+          <>
+            <div className="bg-dark-800/50 rounded-xl p-6 mb-6">
+              <label className="block text-sm text-gray-400 mb-3 text-center">Select cryptocurrency</label>
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                {POPULAR_CURRENCIES.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setCryptoCurrency(c)}
+                    className={`py-3 text-sm font-medium rounded-lg transition-colors ${cryptoCurrency === c ? 'bg-accent text-white' : 'bg-dark-600 hover:bg-dark-500 text-gray-300'}`}
+                  >
+                    {c.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+
+              {/* Search for more currencies */}
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search other currencies..."
+                  value={cryptoSearch}
+                  onChange={(e) => { setCryptoSearch(e.target.value); setShowCryptoDropdown(true) }}
+                  onFocus={() => setShowCryptoDropdown(true)}
+                  className="w-full bg-dark-800 border border-dark-500 rounded-lg px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-accent"
+                />
+                {showCryptoDropdown && cryptoSearch && (
+                  <div className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto bg-dark-800 border border-dark-500 rounded-lg">
+                    {allCurrencies
+                      .filter((c) => c.toLowerCase().includes(cryptoSearch.toLowerCase()))
+                      .slice(0, 20)
+                      .map((c) => (
+                        <button
+                          key={c}
+                          onClick={() => { setCryptoCurrency(c); setCryptoSearch(''); setShowCryptoDropdown(false) }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-dark-600 hover:text-white"
+                        >
+                          {c.toUpperCase()}
+                        </button>
+                      ))}
+                    {allCurrencies.filter((c) => c.toLowerCase().includes(cryptoSearch.toLowerCase())).length === 0 && (
+                      <p className="px-4 py-2 text-sm text-gray-500">No results</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <p className="text-xs text-gray-500 text-center mt-3">No processing fees on crypto deposits</p>
+            </div>
+
+            <div className="absolute opacity-0 h-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
+              <input type="text" name="website" value={hpField} onChange={(e) => setHpField(e.target.value)} autoComplete="off" tabIndex={-1} />
+            </div>
+
+            <button
+              onClick={handleCryptoDeposit}
+              disabled={loading || !amount || getUsdAmount() < 5 || !agreedToTerms}
+              className="w-full py-4 bg-accent hover:bg-accent-light disabled:bg-accent/50 disabled:cursor-not-allowed text-white font-medium rounded-xl text-lg transition-colors"
             >
-              Open a Ticket on Discord
-            </a>
-          </div>
+              {loading ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Generating address...
+                </span>
+              ) : `Deposit with ${cryptoCurrency.toUpperCase()}`}
+            </button>
+          </>
         )}
 
         {/* Crypto Payment Details */}

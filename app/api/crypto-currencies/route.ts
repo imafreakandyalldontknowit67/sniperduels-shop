@@ -11,7 +11,9 @@ export async function GET() {
   }
 
   try {
-    const res = await fetch('https://api.nearpayments.io/v1/currencies')
+    const res = await fetch('https://api.nowpayments.io/v1/currencies', {
+      headers: { 'x-api-key': process.env.NOWPAYMENTS_API_KEY || '' },
+    })
     if (!res.ok) {
       return NextResponse.json(cachedCurrencies || [], { status: 502 })
     }
