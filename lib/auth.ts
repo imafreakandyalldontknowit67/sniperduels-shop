@@ -295,119 +295,61 @@ export async function storeOAuthState(provider: 'roblox' | 'discord'): Promise<{
   const state = generateState()
   const codeVerifier = generateCodeVerifier()
   const codeChallenge = generateCodeChallenge(codeVerifier)
-  const cookieStore = await cookies()
 
-  // Store in cookie (primary — fast)
-  cookieStore.set(`oauth_state_${provider}`, state, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 15,
-    path: '/',
+  // Store in DB — cookies don't survive cross-origin redirect chains
+  // (Safari ITP, Chrome cookie partitioning strip them during OAuth flows)
+  await prisma.oAuthState.create({
+    data: { state, codeVerifier, provider },
   })
 
-  cookieStore.set(`oauth_pkce_${provider}`, codeVerifier, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 15,
-    path: '/',
-  })
-
-  // Store in DB (fallback — survives cookie loss on mobile Safari etc.)
-  try {
-    await prisma.oAuthState.create({
-      data: { state, codeVerifier, provider },
-    })
-    // Clean up old states (>15 min)
-    await prisma.oAuthState.deleteMany({
-      where: { createdAt: { lt: new Date(Date.now() - 15 * 60 * 1000) } },
-    })
-  } catch (err) {
-    console.error('[Auth] Failed to store OAuth state in DB:', err)
-  }
+  // Clean up old states (>15 min)
+  prisma.oAuthState.deleteMany({
+    where: { createdAt: { lt: new Date(Date.now() - 15 * 60 * 1000) } },
+  }).catch(() => {})
 
   return { state, codeChallenge }
 }
 
 export async function validateOAuthState(provider: 'roblox' | 'discord', state: string | null): Promise<'valid' | 'consumed' | 'invalid'> {
   if (!state) return 'invalid'
-  const cookieStore = await cookies()
-  const stored = cookieStore.get(`oauth_state_${provider}`)?.value
 
-  // Already consumed by a previous request (duplicate callback) — cookie path
-  if (stored?.startsWith('consumed:')) return 'consumed'
-
-  // Try cookie first (fast path)
-  if (stored && stored === state) {
-    // Mark as consumed in cookie
-    cookieStore.set(`oauth_state_${provider}`, `consumed:${Date.now()}`, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60,
-      path: '/',
-    })
-    // Mark as consumed in DB
-    try { await prisma.oAuthState.update({ where: { state }, data: { consumed: true } }) } catch { /* ok */ }
-    console.log(`[Auth] State validated via cookie | state=${state.slice(0, 8)}`)
-    return 'valid'
-  }
-
-  // Cookie missing — fall back to DB
   try {
     const dbState = await prisma.oAuthState.findUnique({ where: { state } })
-    if (dbState && dbState.provider === provider) {
-      if (dbState.consumed) {
-        console.log(`[Auth] State already consumed (DB) | state=${state.slice(0, 8)}`)
-        return 'consumed'
-      }
-      // Claim it atomically
-      const claimed = await prisma.oAuthState.updateMany({
-        where: { state, consumed: false },
-        data: { consumed: true },
-      })
-      if (claimed.count > 0) {
-        console.log(`[Auth] State validated via DB fallback (cookie was missing) | state=${state.slice(0, 8)}`)
-        return 'valid'
-      }
-      return 'consumed'
+    if (!dbState || dbState.provider !== provider) {
+      console.error(`[Auth] State not found in DB | state=${state.slice(0, 8)}`)
+      return 'invalid'
     }
-  } catch (err) {
-    console.error('[Auth] DB state lookup failed:', err)
-  }
+    if (dbState.consumed) return 'consumed'
 
-  console.error(`[Auth] Invalid state | cookie=${!!stored} | state=${state.slice(0, 8)}`)
-  return 'invalid'
+    // Claim atomically (prevents duplicate callbacks from double-crediting)
+    const claimed = await prisma.oAuthState.updateMany({
+      where: { state, consumed: false },
+      data: { consumed: true },
+    })
+    if (claimed.count === 0) return 'consumed'
+
+    console.log(`[Auth] State validated | state=${state.slice(0, 8)}`)
+    return 'valid'
+  } catch (err) {
+    console.error('[Auth] State validation failed:', err)
+    return 'invalid'
+  }
 }
 
-export async function retrieveCodeVerifier(provider: 'roblox' | 'discord'): Promise<string | null> {
-  const cookieStore = await cookies()
-  const verifier = cookieStore.get(`oauth_pkce_${provider}`)?.value || null
-  if (verifier) {
-    cookieStore.delete(`oauth_pkce_${provider}`)
-    return verifier
-  }
+export async function retrieveCodeVerifier(provider: 'roblox' | 'discord', state: string | null): Promise<string | null> {
+  if (!state) return null
 
-  // Cookie missing — try DB fallback
-  // We need the state to look up the verifier, but we don't have it here.
-  // The state was already validated, so we look for the most recent consumed state for this provider.
   try {
-    const recent = await prisma.oAuthState.findFirst({
-      where: { provider, consumed: true },
-      orderBy: { createdAt: 'desc' },
-    })
-    if (recent) {
-      // Delete it to prevent replay
-      await prisma.oAuthState.delete({ where: { state: recent.state } })
-      console.log(`[Auth] Code verifier retrieved via DB fallback | state=${recent.state.slice(0, 8)}`)
-      return recent.codeVerifier
-    }
-  } catch (err) {
-    console.error('[Auth] DB verifier lookup failed:', err)
-  }
+    const dbState = await prisma.oAuthState.findUnique({ where: { state } })
+    if (!dbState) return null
 
-  return null
+    // Delete to prevent replay
+    await prisma.oAuthState.delete({ where: { state } }).catch(() => {})
+    return dbState.codeVerifier
+  } catch (err) {
+    console.error('[Auth] Code verifier retrieval failed:', err)
+    return null
+  }
 }
 
 // Discord OAuth helpers

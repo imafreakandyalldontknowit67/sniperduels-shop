@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Retrieve PKCE code verifier
-  const codeVerifier = await retrieveCodeVerifier('discord')
+  const codeVerifier = await retrieveCodeVerifier('discord', state)
   if (!codeVerifier) {
     return NextResponse.redirect(new URL('/dashboard/profile?discord=error', baseUrl))
   }

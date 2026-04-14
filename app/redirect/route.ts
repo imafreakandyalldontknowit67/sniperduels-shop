@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Retrieve PKCE code verifier
-  const codeVerifier = await retrieveCodeVerifier('roblox')
+  const codeVerifier = await retrieveCodeVerifier('roblox', state)
   if (!codeVerifier) {
     return NextResponse.redirect(new URL('/?error=auth_failed', baseUrl))
   }
