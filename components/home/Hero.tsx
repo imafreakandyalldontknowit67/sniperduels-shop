@@ -105,7 +105,7 @@ export function Hero() {
         {/* CTA Button */}
         <div className="mb-4 sm:mb-6 animate-pixel-fade-up opacity-0" style={{ animationDelay: '0.45s', animationFillMode: 'forwards' }}>
           <Link
-            href="/shop"
+            href="/gems"
             className="relative inline-flex items-center justify-center pixel-btn-press"
             style={{ textDecoration: 'none' }}
           >
@@ -115,7 +115,7 @@ export function Hero() {
               className="h-[64px] sm:h-[68px] w-auto"
             />
             <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-xs sm:text-sm uppercase tracking-wider">
-              Browse the Shop
+              Buy Gems
             </span>
           </Link>
         </div>
