@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getDiscordAuthUrl, getCurrentUser, storeOAuthState } from '@/lib/auth'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   // Ensure user is logged in first
   const user = await getCurrentUser()
