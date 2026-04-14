@@ -114,7 +114,7 @@ export function Hero() {
               alt=""
               className="h-[64px] sm:h-[68px] w-auto"
             />
-            <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-xs sm:text-sm uppercase tracking-wider">
+            <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-sm sm:text-base uppercase tracking-wider">
               Buy Gems
             </span>
           </Link>
