@@ -24,8 +24,11 @@ export async function POST(request: NextRequest) {
   try {
     const { token } = await request.json()
     if (!token || typeof token !== 'string') {
+      console.log('[set-session] Missing token')
       return NextResponse.json({ error: 'Missing token' }, { status: 400 })
     }
+
+    console.log(`[set-session] Received token (${token.length} chars)`)
 
     // Verify the JWT is valid and signed by us — prevents arbitrary cookie injection
     const { payload } = await jwtVerify(token, SESSION_SECRET)
@@ -34,10 +37,12 @@ export async function POST(request: NextRequest) {
     pruneConsumed()
     const jti = payload.jti as string
     if (!jti || consumedJtis.has(jti)) {
+      console.log(`[set-session] Token already consumed jti=${jti?.slice(0, 8)}`)
       return NextResponse.json({ error: 'Token already used' }, { status: 400 })
     }
     consumedJtis.add(jti)
 
+    console.log(`[set-session] Setting cookie, jti=${jti.slice(0, 8)}`)
     const response = NextResponse.json({ ok: true })
     response.cookies.set('session', token, {
       httpOnly: true,
@@ -47,7 +52,8 @@ export async function POST(request: NextRequest) {
       path: '/',
     })
     return response
-  } catch {
+  } catch (err) {
+    console.error('[set-session] Error:', err)
     return NextResponse.json({ error: 'Invalid token' }, { status: 400 })
   }
 }
