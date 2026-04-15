@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import { getBotLastHeartbeat, setBotHeartbeat, BOT_OFFLINE_THRESHOLD_MS } from '@/lib/bot-heartbeat'
+import { cancelAllPendingOrders } from '@/lib/order-expiry'
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -29,7 +30,21 @@ export async function POST(request: NextRequest) {
     } catch { /* ignore parse errors */ }
   }
 
+  // Check if bot was offline before this heartbeat
+  const prevHeartbeat = await getBotLastHeartbeat()
+  const wasOffline = prevHeartbeat > 0 && (Date.now() - prevHeartbeat) > BOT_OFFLINE_THRESHOLD_MS
+
   setBotHeartbeat(gemBalance)
+
+  // Bot came back online — cancel all stale pending orders and refund
+  if (wasOffline) {
+    cancelAllPendingOrders('Bot went offline — order auto-cancelled and refunded')
+      .then(count => {
+        if (count > 0) console.log(`[Heartbeat] Bot back online, cancelled ${count} stale orders`)
+      })
+      .catch(err => console.error('[Heartbeat] Failed to cancel stale orders:', err))
+  }
+
   return NextResponse.json({ ok: true })
 }
 

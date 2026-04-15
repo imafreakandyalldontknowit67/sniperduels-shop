@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
-import { getOrders, getUser, updateOrder, updateOrderStatus, addToWallet, addToLifetimeSpend, addGemStock, getStock, updateStockItem, updateVendorDepositStatus, addVendorStock } from '@/lib/storage'
+import { getOrders, getUser, updateOrder } from '@/lib/storage'
 import type { Order } from '@/lib/storage'
+import { expireOrder } from '@/lib/order-expiry'
 
 // Orders older than this are auto-expired (in milliseconds)
 const ORDER_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
@@ -19,58 +20,6 @@ function authenticateBot(request: NextRequest): boolean {
     )
   } catch {
     return false
-  }
-}
-
-async function expireOrder(order: { id: string; userId: string; totalPrice: number; type: string; itemName: string; quantity: number; notes?: string; vendorListingId?: string }) {
-  // Atomic transition: only expire if still pending/processing. If someone else already handled it, bail out.
-  const expired = await updateOrderStatus(order.id, ['pending', 'processing'], {
-    status: 'failed',
-    notes: order.notes
-      ? `${order.notes} | Auto-expired: timed out after 30 minutes`
-      : 'Auto-expired: timed out after 30 minutes',
-  })
-  if (!expired) return // Another process already changed this order — skip refund
-
-  // Platform withdraw: refund stock
-  if (order.notes?.startsWith('platform-withdraw')) {
-    await addGemStock(order.quantity)
-    return
-  }
-
-  // Platform deposit: no refund needed
-  if (order.notes === 'platform-deposit') return
-
-  // Vendor deposit: mark deposit as failed, no refund
-  if (order.notes?.startsWith('vendor-deposit:')) {
-    const depositId = order.notes.replace('vendor-deposit:', '')
-    await updateVendorDepositStatus(depositId, 'failed')
-    return
-  }
-
-  // Vendor withdrawal: refund vendor stock
-  if (order.notes?.startsWith('vendor-withdrawal:')) {
-    const vendorId = order.notes.replace('vendor-withdrawal:', '')
-    await addVendorStock(vendorId, order.quantity)
-    return
-  }
-
-  // Regular order: refund wallet + restore stock
-  await addToWallet(order.userId, order.totalPrice)
-  await addToLifetimeSpend(order.userId, -order.totalPrice)
-
-  if (order.type === 'gems') {
-    if (order.vendorListingId && order.vendorListingId !== 'platform') {
-      await addVendorStock(order.vendorListingId, order.quantity)
-    } else {
-      await addGemStock(order.quantity)
-    }
-  } else {
-    const stock = await getStock()
-    const stockItem = stock.find(i => i.name === order.itemName)
-    if (stockItem) {
-      await updateStockItem(stockItem.id, { stock: stockItem.stock + order.quantity })
-    }
   }
 }
 
@@ -124,7 +73,7 @@ export async function GET(request: NextRequest) {
   for (const o of pendingOrProcessing) {
     const age = now - new Date(o.createdAt).getTime()
     if (age > ORDER_TIMEOUT_MS && o.status === 'pending') {
-      await expireOrder(o)
+      await expireOrder(o, 'Auto-expired: timed out after 30 minutes')
     } else {
       activeOrders.push(o)
     }
