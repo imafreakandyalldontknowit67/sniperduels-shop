@@ -106,6 +106,7 @@ model Deposit {
   pandabaseInvoiceId    String        @unique
   pandabaseRefId        String?
   pandabaseCheckoutUrl  String
+  paymentProviderId     String?       // NOWPayments payment_id for crypto deposits
   createdAt             String
   updatedAt             String
   completedAt           String?

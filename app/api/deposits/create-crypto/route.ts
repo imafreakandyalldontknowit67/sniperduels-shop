@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
-import { getUserDeposits, createDeposit, expireStaleDeposits, getSiteSettings } from '@/lib/storage'
+import { getUserDeposits, createDeposit, updateDeposit, expireStaleDeposits, getSiteSettings } from '@/lib/storage'
 import { createCryptoPayment } from '@/lib/nowpayments'
 import { flagAndBlacklist } from '@/lib/blacklist'
 
@@ -87,6 +87,9 @@ export async function POST(request: NextRequest) {
         { status: 503 }
       )
     }
+
+    // Store payment provider ID for status polling and recovery
+    await updateDeposit(deposit.id, { paymentProviderId: paymentResult.paymentId })
 
     return NextResponse.json({
       depositId: deposit.id,

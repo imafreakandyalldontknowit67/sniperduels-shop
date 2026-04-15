@@ -617,6 +617,7 @@ export interface Deposit {
   pandabaseInvoiceId: string
   pandabaseRefId?: string
   pandabaseCheckoutUrl: string
+  paymentProviderId?: string
   createdAt: string
   updatedAt: string
   completedAt?: string
@@ -633,6 +634,7 @@ function toDeposit(row: Record<string, unknown>): Deposit {
     pandabaseInvoiceId: row.pandabaseInvoiceId as string,
     pandabaseRefId: (row.pandabaseRefId as string | null) ?? undefined,
     pandabaseCheckoutUrl: row.pandabaseCheckoutUrl as string,
+    paymentProviderId: (row.paymentProviderId as string | null) ?? undefined,
     createdAt: row.createdAt as string,
     updatedAt: row.updatedAt as string,
     completedAt: (row.completedAt as string | null) ?? undefined,
@@ -735,6 +737,22 @@ export async function updateDeposit(id: string, updates: Partial<Deposit>): Prom
 export async function claimPendingDeposit(id: string): Promise<boolean> {
   const result = await prisma.deposit.updateMany({
     where: { id, status: 'pending' },
+    data: {
+      status: 'completed',
+      completedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  })
+  return result.count > 0
+}
+
+/**
+ * Atomically claim an expired deposit (late webhook recovery).
+ * Same pattern as claimPendingDeposit but for expired → completed.
+ */
+export async function claimExpiredDeposit(id: string): Promise<boolean> {
+  const result = await prisma.deposit.updateMany({
+    where: { id, status: 'expired' },
     data: {
       status: 'completed',
       completedAt: new Date().toISOString(),
