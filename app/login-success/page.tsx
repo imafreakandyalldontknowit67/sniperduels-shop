@@ -1,13 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 
-// Intermediate page that sets the session cookie via a same-origin fetch.
-// Safari ITP strips Set-Cookie from redirect responses in cross-origin chains
-// (Roblox OAuth -> our domain), so we land here first, set the cookie via
-// a normal POST, then redirect to home.
-export default function LoginSuccess() {
+function LoginHandler() {
   const searchParams = useSearchParams()
 
   useEffect(() => {
@@ -34,9 +30,16 @@ export default function LoginSuccess() {
       })
   }, [searchParams])
 
+  return <p className="text-white text-lg">Logging you in...</p>
+}
+
+// useSearchParams() requires a Suspense boundary for static generation
+export default function LoginSuccess() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-black">
-      <p className="text-white text-lg">Logging you in...</p>
+      <Suspense fallback={<p className="text-white text-lg">Logging you in...</p>}>
+        <LoginHandler />
+      </Suspense>
     </div>
   )
 }
