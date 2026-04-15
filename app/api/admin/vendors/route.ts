@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser, isAdmin } from '@/lib/auth'
 import { getVendors, getUser, setVendorStatus, getVendorListing, getVendorEarningsSummary, deleteVendorListing, updateVendorPlatformFeeRate } from '@/lib/storage'
+import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
@@ -10,10 +11,25 @@ export async function GET() {
     }
 
     const vendors = await getVendors()
+
+    // 30d summary for all vendors in one query (for sorting)
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString()
+    const recent30d = await prisma.vendorEarning.groupBy({
+      by: ['vendorId'],
+      where: { createdAt: { gte: thirtyDaysAgo } },
+      _count: true,
+      _sum: { saleAmount: true },
+    })
+    const recentMap = new Map(recent30d.map(r => [r.vendorId, {
+      count30d: r._count,
+      gross30d: Number(r._sum.saleAmount ?? 0),
+    }]))
+
     const vendorsWithDetails = await Promise.all(
       vendors.map(async (v) => {
         const listing = await getVendorListing(v.id)
         const earnings = await getVendorEarningsSummary(v.id)
+        const recent = recentMap.get(v.id) || { count30d: 0, gross30d: 0 }
         return {
           id: v.id,
           name: v.name,
@@ -26,6 +42,7 @@ export async function GET() {
             platformFeeRate: listing.platformFeeRate,
           } : null,
           earnings,
+          recent,
         }
       })
     )
