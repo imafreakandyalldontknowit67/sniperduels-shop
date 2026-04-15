@@ -104,25 +104,10 @@ export async function GET(request: NextRequest) {
       expiresAt: Date.now() + tokens.expires_in * 1000,
     })
 
-    // Build redirect response and set cookie directly on it.
-    // Using response.cookies.set() instead of cookieStore.set() ensures the
-    // Set-Cookie header is on the redirect response itself — Safari ITP strips
-    // Set-Cookie from redirect responses when using the cookies() store API
-    // in cross-origin navigation chains (Roblox OAuth → our domain).
-    const response = NextResponse.redirect(new URL('/', baseUrl))
-    response.cookies.set('session', sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
-    })
-
     // Auto-apply referral code from cookie (set by /r/[code] link)
     const cookieStore = await cookies()
     const referralCode = cookieStore.get('referral_code')?.value
     if (referralCode) {
-      response.cookies.delete('referral_code')
       applyReferralCode(user.id, referralCode).catch(err =>
         console.error('[Referral] Auto-apply failed:', err)
       )
@@ -132,6 +117,19 @@ export async function GET(request: NextRequest) {
       roblox_username: user.name,
       user_agent: userAgent,
     })
+
+    // Redirect to intermediate page that sets the cookie via same-origin fetch.
+    // Safari ITP strips Set-Cookie from redirect responses in cross-origin chains
+    // (Roblox OAuth → our domain), so we can't set it here directly.
+    // The token is a signed JWT — /login-success verifies it before setting.
+    const successUrl = new URL('/login-success', baseUrl)
+    successUrl.searchParams.set('token', sessionToken)
+    const response = NextResponse.redirect(successUrl)
+
+    // Also delete referral cookie on the redirect response
+    if (referralCode) {
+      response.cookies.delete('referral_code')
+    }
 
     return response
   } catch (error) {
