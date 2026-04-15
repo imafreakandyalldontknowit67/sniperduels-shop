@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { exchangeCodeForTokens, getRobloxUserInfo, createSession, isAdmin, isAccountTooYoung, validateOAuthState, retrieveCodeVerifier, getSession } from '@/lib/auth'
 import { upsertUser } from '@/lib/storage'
 import { applyReferralCode } from '@/lib/referral'
+import { captureServerEvent } from '@/lib/posthog-api'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -10,13 +11,24 @@ export async function GET(request: NextRequest) {
   const error = searchParams.get('error')
   const state = searchParams.get('state')
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+  const userAgent = request.headers.get('user-agent') || 'unknown'
+
+  // Track callback received
+  captureServerEvent('anonymous', 'login_callback_received', {
+    has_code: !!code,
+    has_state: !!state,
+    has_error: !!error,
+    user_agent: userAgent,
+  })
 
   if (error) {
     console.error('OAuth error:', error)
+    captureServerEvent('anonymous', 'login_failed', { reason: 'oauth_denied', error, user_agent: userAgent })
     return NextResponse.redirect(new URL('/?error=oauth_denied', baseUrl))
   }
 
   if (!code) {
+    captureServerEvent('anonymous', 'login_failed', { reason: 'no_code', user_agent: userAgent })
     return NextResponse.redirect(new URL('/?error=no_code', baseUrl))
   }
 
@@ -31,6 +43,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/', baseUrl))
     }
     console.error('[Auth] State consumed but no session found', { state: state?.slice(0, 8) })
+    captureServerEvent('anonymous', 'login_failed', { reason: 'state_consumed_no_session', user_agent: userAgent })
     return NextResponse.redirect(new URL('/?error=invalid_state', baseUrl))
   }
 
@@ -41,12 +54,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/', baseUrl))
     }
     console.error('[Auth] Invalid state', { hasState: !!state, state: state?.slice(0, 8) })
+    captureServerEvent('anonymous', 'login_failed', { reason: 'invalid_state', user_agent: userAgent })
     return NextResponse.redirect(new URL('/?error=invalid_state', baseUrl))
   }
 
   // Retrieve PKCE code verifier
   const codeVerifier = await retrieveCodeVerifier('roblox', state)
   if (!codeVerifier) {
+    captureServerEvent('anonymous', 'login_failed', { reason: 'no_code_verifier', user_agent: userAgent })
     return NextResponse.redirect(new URL('/?error=auth_failed', baseUrl))
   }
 
@@ -54,18 +69,21 @@ export async function GET(request: NextRequest) {
     // Exchange code for tokens
     const tokens = await exchangeCodeForTokens(code, codeVerifier, baseUrl)
     if (!tokens) {
+      captureServerEvent('anonymous', 'login_failed', { reason: 'token_exchange_failed', user_agent: userAgent })
       return NextResponse.redirect(new URL('/?error=token_exchange_failed', baseUrl))
     }
 
     // Get user info
     const user = await getRobloxUserInfo(tokens.access_token)
     if (!user) {
+      captureServerEvent('anonymous', 'login_failed', { reason: 'user_info_failed', user_agent: userAgent })
       return NextResponse.redirect(new URL('/?error=auth_failed', baseUrl))
     }
 
     // Check account age (must be at least 30 days old)
     // Use same generic error to prevent user enumeration
     if (user.robloxCreatedAt && isAccountTooYoung(user.robloxCreatedAt)) {
+      captureServerEvent(user.id, 'login_failed', { reason: 'account_too_young', user_agent: userAgent })
       return NextResponse.redirect(new URL('/?error=auth_failed', baseUrl))
     }
 
@@ -86,9 +104,13 @@ export async function GET(request: NextRequest) {
       expiresAt: Date.now() + tokens.expires_in * 1000,
     })
 
-    // Set cookie
-    const cookieStore = await cookies()
-    cookieStore.set('session', sessionToken, {
+    // Build redirect response and set cookie directly on it.
+    // Using response.cookies.set() instead of cookieStore.set() ensures the
+    // Set-Cookie header is on the redirect response itself — Safari ITP strips
+    // Set-Cookie from redirect responses when using the cookies() store API
+    // in cross-origin navigation chains (Roblox OAuth → our domain).
+    const response = NextResponse.redirect(new URL('/', baseUrl))
+    response.cookies.set('session', sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -97,18 +119,24 @@ export async function GET(request: NextRequest) {
     })
 
     // Auto-apply referral code from cookie (set by /r/[code] link)
+    const cookieStore = await cookies()
     const referralCode = cookieStore.get('referral_code')?.value
     if (referralCode) {
-      cookieStore.delete('referral_code')
+      response.cookies.delete('referral_code')
       applyReferralCode(user.id, referralCode).catch(err =>
         console.error('[Referral] Auto-apply failed:', err)
       )
     }
 
-    // Redirect all users to home (admins can access admin panel via header link)
-    return NextResponse.redirect(new URL('/', baseUrl))
+    captureServerEvent(user.id, 'login_completed', {
+      roblox_username: user.name,
+      user_agent: userAgent,
+    })
+
+    return response
   } catch (error) {
     console.error('Auth callback error:', error)
+    captureServerEvent('anonymous', 'login_failed', { reason: 'exception', error: String(error), user_agent: userAgent })
     return NextResponse.redirect(new URL('/?error=auth_failed', baseUrl))
   }
 }

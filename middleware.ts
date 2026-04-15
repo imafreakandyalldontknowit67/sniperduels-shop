@@ -353,6 +353,8 @@ export async function middleware(request: NextRequest) {
     // Check lockout first
     const lockout = checkAuthLockout(ip)
     if (lockout.locked) {
+      const ua = request.headers.get('user-agent') || 'unknown'
+      console.log(`[Auth Lockout] ip=${ip} path=${pathname} retry_after=${lockout.retryAfter}s ua=${ua.slice(0, 120)}`)
       return new NextResponse(
         JSON.stringify({ error: 'Too many authentication attempts. Please try again later.' }),
         {
@@ -368,6 +370,8 @@ export async function middleware(request: NextRequest) {
     // Then check per-endpoint rate limit
     const { allowed, retryAfter } = checkRateLimit(ip, pathname)
     if (!allowed) {
+      const ua = request.headers.get('user-agent') || 'unknown'
+      console.log(`[Auth Rate Limit] ip=${ip} path=${pathname} retry_after=${retryAfter}s ua=${ua.slice(0, 120)}`)
       return new NextResponse(
         JSON.stringify({ error: 'Too many requests' }),
         {
