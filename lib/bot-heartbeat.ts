@@ -53,24 +53,27 @@ export function setBotHeartbeat(gemBalance?: number): void {
 }
 
 async function syncPlatformStock(botBalanceRaw: number) {
-  // Only sync when no pending/processing orders to avoid overwriting mid-purchase deductions
-  const pendingCount = await prisma.order.count({
-    where: { status: { in: ['pending', 'processing'] } },
+  // Account for gems that are already deducted from stock but not yet sent by the bot
+  // (pending/processing orders have already been deducted from GemStock/VendorStock)
+  const pendingGems = await prisma.order.aggregate({
+    where: { status: { in: ['pending', 'processing'] }, type: 'gems' },
+    _sum: { quantity: true },
   })
-  if (pendingCount > 0) return
+  const pendingK = pendingGems._sum.quantity ?? 0
 
   const botBalanceK = Math.floor(botBalanceRaw / 1000)
   const vendorStock = await prisma.vendorGemListing.aggregate({ _sum: { stockK: true } })
   const vendorTotalK = vendorStock._sum.stockK ?? 0
-  const platformK = Math.max(0, botBalanceK - vendorTotalK)
+
+  // Bot balance = platform stock + vendor stock + pending orders (already deducted from counters)
+  const platformK = Math.max(0, botBalanceK - vendorTotalK - pendingK)
 
   const current = await prisma.gemStock.findUnique({ where: { id: 'singleton' } })
   const currentK = current?.balanceInK ?? 0
 
-  // Only update if meaningful difference (>1k) to avoid noisy writes
   if (Math.abs(platformK - currentK) > 1) {
     await setGemStock(platformK)
-    console.log(`[Stock Sync] ${currentK}k → ${platformK}k (bot: ${botBalanceK}k, vendor: ${vendorTotalK}k)`)
+    console.log(`[Stock Sync] ${currentK}k → ${platformK}k (bot: ${botBalanceK}k, vendor: ${vendorTotalK}k, pending: ${pendingK}k)`)
   }
   lastSyncTime = Date.now()
 }
