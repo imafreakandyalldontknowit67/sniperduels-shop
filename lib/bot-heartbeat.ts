@@ -37,7 +37,9 @@ export function setBotHeartbeat(gemBalance?: number): void {
   if (gemBalance != null) {
     botGemBalance = gemBalance
     // Sync platform stock counter to bot's real balance
-    if (Date.now() - lastSyncTime > SYNC_INTERVAL) {
+    const timeSinceSync = Date.now() - lastSyncTime
+    if (timeSinceSync > SYNC_INTERVAL) {
+      console.log(`[Stock Sync] Triggering sync (${Math.round(timeSinceSync / 1000)}s since last, balance=${gemBalance})`)
       syncPlatformStock(gemBalance).catch(err =>
         console.error('[Stock Sync] Failed:', err)
       )
