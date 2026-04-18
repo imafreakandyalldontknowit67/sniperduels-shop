@@ -6,7 +6,7 @@ import posthog from 'posthog-js'
 import { Minus, Plus, X, Wallet, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import { PixelButton } from '@/components/ui'
-import { useCurrency } from '@/components/providers'
+import { useCurrency, useAuth } from '@/components/providers'
 
 interface GemListing {
   id: string
@@ -30,6 +30,7 @@ interface UserInfo {
 
 export default function GemsPage() {
   const router = useRouter()
+  const { login } = useAuth()
   const { formatPrice, formatPricePerK, isUsd, currency } = useCurrency()
   const [amount, setAmount] = useState(5)
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
@@ -142,17 +143,12 @@ export default function GemsPage() {
 
   function handlePurchaseClick() {
     posthog.capture('gems_buy_clicked', { amount_k: amount, total_price: discountedPrice })
-    if (!userInfo?.user) {
-      posthog.capture('gems_buy_blocked', { reason: 'not_logged_in', amount_k: amount })
-      setToast({ type: 'error', text: 'You need to login first to purchase gems.' })
-      return
-    }
     if (!botOnline) {
       posthog.capture('gems_buy_blocked', { reason: 'bot_offline', amount_k: amount })
       setToast({ type: 'error', text: 'The trade bot is currently offline. Join our Discord for updates!' })
       return
     }
-    if (userInfo.walletBalance < discountedPrice) {
+    if (userInfo && userInfo.walletBalance < discountedPrice) {
       posthog.capture('gems_buy_blocked', { reason: 'insufficient_balance', amount_k: amount, balance: userInfo.walletBalance, required: discountedPrice })
     }
     setAgreedToTerms(false)
@@ -370,26 +366,43 @@ export default function GemsPage() {
 
             {/* Purchase Button */}
             <div className="flex justify-center">
-              <button
-                onClick={handlePurchaseClick}
-                disabled={selectedStockK < amount}
-                className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <img
-                  src="/images/pixel/pngs/asset-88.png"
-                  alt=""
-                  className="h-[52px] sm:h-[58px] w-auto"
-                  style={{ imageRendering: 'pixelated' }}
-                />
-                <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-[10px] sm:text-xs uppercase tracking-wider">
-                  {totalStockK === 0
-                    ? 'Out of Stock'
-                    : selectedStockK < amount
-                      ? `Only ${selectedStockK.toLocaleString()}k available`
-                      : 'Finish Purchase'
-                  }
-                </span>
-              </button>
+              {!userInfo?.user ? (
+                <button
+                  onClick={() => { posthog.capture('gems_buy_blocked', { reason: 'not_logged_in', amount_k: amount }); login() }}
+                  className="relative inline-flex items-center justify-center pixel-btn-press"
+                >
+                  <img
+                    src="/images/pixel/pngs/asset-88.png"
+                    alt=""
+                    className="h-[52px] sm:h-[58px] w-auto"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                  <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-[10px] sm:text-xs uppercase tracking-wider">
+                    Login to Buy
+                  </span>
+                </button>
+              ) : (
+                <button
+                  onClick={handlePurchaseClick}
+                  disabled={selectedStockK < amount}
+                  className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <img
+                    src="/images/pixel/pngs/asset-88.png"
+                    alt=""
+                    className="h-[52px] sm:h-[58px] w-auto"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                  <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-[10px] sm:text-xs uppercase tracking-wider">
+                    {totalStockK === 0
+                      ? 'Out of Stock'
+                      : selectedStockK < amount
+                        ? `Only ${selectedStockK.toLocaleString()}k available`
+                        : 'Finish Purchase'
+                    }
+                  </span>
+                </button>
+              )}
             </div>
           </div>
 

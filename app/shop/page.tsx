@@ -8,7 +8,7 @@ import { Card, Button } from '@/components/ui'
 import { Loader2, X } from 'lucide-react'
 import Link from 'next/link'
 import type { StockItem } from '@/lib/storage'
-import { useCurrency } from '@/components/providers'
+import { useCurrency, useAuth } from '@/components/providers'
 
 const rarityColors: Record<string, string> = {
   Collectible: 'bg-pink-500/20 text-pink-400 border-pink-500/30',
@@ -32,6 +32,7 @@ interface UserInfo {
 
 export default function ShopPage() {
   const router = useRouter()
+  const { login } = useAuth()
   const { formatPrice, isUsd, currency } = useCurrency()
   const [items, setItems] = useState<StockItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -114,17 +115,12 @@ export default function ShopPage() {
       item_rarity: item.rarity,
       price: item.priceUsd,
     })
-    if (!userInfo?.user) {
-      posthog.capture('item_buy_blocked', { reason: 'not_logged_in', item_id: item.id })
-      setToast({ type: 'error', text: 'You need to login first to purchase items.' })
-      return
-    }
     if (!botOnline) {
       posthog.capture('item_buy_blocked', { reason: 'bot_offline', item_id: item.id })
       setToast({ type: 'error', text: 'The trade bot is currently offline. Join our Discord for updates!' })
       return
     }
-    if (userInfo.walletBalance < getDiscountedPrice(item.priceUsd)) {
+    if (userInfo && userInfo.walletBalance < getDiscountedPrice(item.priceUsd)) {
       posthog.capture('item_buy_blocked', { reason: 'insufficient_balance', item_id: item.id, balance: userInfo.walletBalance, required: getDiscountedPrice(item.priceUsd) })
     }
     setAgreedToTerms(false)
@@ -414,9 +410,16 @@ export default function ShopPage() {
                             size="sm"
                             variant="blue"
                             disabled={item.stock === 0}
-                            onClick={() => item.stock > 0 && handleBuyClick(item)}
+                            onClick={() => {
+                              if (!userInfo?.user) {
+                                posthog.capture('item_buy_blocked', { reason: 'not_logged_in', item_id: item.id })
+                                login()
+                              } else if (item.stock > 0) {
+                                handleBuyClick(item)
+                              }
+                            }}
                           >
-                            {item.stock === 0 ? 'Out of Stock' : 'Buy Now'}
+                            {item.stock === 0 ? 'Out of Stock' : !userInfo?.user ? 'Login to Buy' : 'Buy Now'}
                           </Button>
                         </div>
                       </div>
