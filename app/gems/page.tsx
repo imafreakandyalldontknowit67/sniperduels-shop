@@ -123,16 +123,19 @@ export default function GemsPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D/g, '')
     setInputValue(digits)
+    const parsed = parseInt(digits)
+    if (!isNaN(parsed) && parsed >= 1 && parsed <= 500) {
+      handleAmountChange(parsed)
+    }
   }
 
   const handleInputBlur = () => {
     const parsed = parseInt(inputValue)
     if (!inputValue || isNaN(parsed) || parsed < 1) {
       setInputValue(String(amount))
-      return
+    } else if (parsed > 500) {
+      handleAmountChange(500)
     }
-    const clamped = Math.min(parsed, 500)
-    handleAmountChange(clamped)
   }
 
   const currentRate = selectedListing ? getEffectiveRate(selectedListing, amount) : 2.90
