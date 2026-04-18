@@ -177,7 +177,7 @@ export default function ShopPage() {
 
   const getDiscountedPrice = (price: number) => {
     const combinedDiscount = (userInfo?.loyaltyDiscount || 0) + (userInfo?.canUseDiscordDiscount ? 0.025 : 0)
-    if (!combinedDiscount) return price
+    if (!combinedDiscount) return Math.round(price * 100) / 100
     return Math.round(price * (1 - combinedDiscount) * 100) / 100
   }
 

@@ -127,7 +127,7 @@ export default function GemsPage() {
   }
 
   const currentRate = selectedListing ? getEffectiveRate(selectedListing, amount) : 2.90
-  const totalPrice = amount * currentRate
+  const totalPrice = Math.round(amount * currentRate * 100) / 100
   const isVendorSelected = selectedListing?.type === 'vendor'
   const combinedDiscount = isVendorSelected ? 0 : (userInfo?.loyaltyDiscount || 0) + (userInfo?.canUseDiscordDiscount ? 0.025 : 0)
   const discountedPrice = combinedDiscount > 0

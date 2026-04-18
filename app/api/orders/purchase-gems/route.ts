@@ -120,11 +120,11 @@ export async function POST(request: NextRequest) {
     const loyalty = await getUserLoyaltyInfo(user.id)
     const discordEligible = await canUseDiscordFirstPurchaseDiscount(user.id)
     const combinedDiscount = isVendorPurchase ? 0 : loyalty.discount + (discordEligible ? 0.025 : 0)
-    const basePrice = roundedAmount * rate
+    const basePrice = Math.round(roundedAmount * rate * 100) / 100
     const totalPrice = Math.round(basePrice * (1 - combinedDiscount) * 100) / 100
 
-    // Check wallet balance
-    const balance = await getWalletBalance(user.id)
+    // Check wallet balance (round to cents to avoid floating point comparison issues)
+    const balance = Math.round(await getWalletBalance(user.id) * 100) / 100
     if (balance < totalPrice) {
       return NextResponse.json(
         { error: 'Insufficient wallet balance', balance, required: totalPrice },

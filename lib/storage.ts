@@ -238,12 +238,12 @@ export async function deductFromWallet(userId: string, amount: number): Promise<
     )
     if (!locked.length) return null
 
-    const currentBalance = d(locked[0].walletBalance)
-    if (currentBalance < amount) return null
+    const currentBalance = Math.round(d(locked[0].walletBalance) * 100) / 100
+    if (currentBalance < Math.round(amount * 100) / 100) return null
 
     const row = await tx.user.update({
       where: { id: userId },
-      data: { walletBalance: currentBalance - amount },
+      data: { walletBalance: Math.round((currentBalance - amount) * 100) / 100 },
     })
     return toStoredUser(row)
   })

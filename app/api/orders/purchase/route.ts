@@ -80,8 +80,8 @@ export async function POST(request: NextRequest) {
     const pricePerUnit = item.priceUsd * (1 - combinedDiscount)
     const totalPrice = Math.round(pricePerUnit * quantity * 100) / 100
 
-    // Check wallet balance
-    const balance = await getWalletBalance(user.id)
+    // Check wallet balance (round to cents to avoid floating point comparison issues)
+    const balance = Math.round(await getWalletBalance(user.id) * 100) / 100
     if (balance < totalPrice) {
       return NextResponse.json(
         { error: 'Insufficient wallet balance', balance, required: totalPrice },
