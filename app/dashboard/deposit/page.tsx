@@ -133,7 +133,7 @@ export default function DepositPage() {
             checkout.destroy()
           },
           onPaymentFailed: () => { posthog.capture('deposit_failed', { amount: usdAmount, method: 'card', reason: 'payment_failed' }); setMessage({ type: 'error', text: 'Payment failed. Please try again.' }); checkout.destroy() },
-          onClose: () => { fetchDeposits() },
+          onClose: () => { posthog.capture('deposit_checkout_closed', { amount: usdAmount, method: 'card' }); fetchDeposits() },
         })
         checkout.open()
         posthog.capture('checkout_modal_opened', { amount: usdAmount, method: 'card' })

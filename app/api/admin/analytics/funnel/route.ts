@@ -17,7 +17,9 @@ export async function GET(req: NextRequest) {
 
   try {
     const steps = type === 'gems'
-      ? ['$pageview', 'gems_buy_clicked', 'gems_purchased']
+      ? ['$pageview', 'gems_buy_clicked', 'gems_confirm_modal_opened', 'terms_agreed', 'gems_purchased']
+      : type === 'deposits'
+      ? ['deposit_page_viewed', 'deposit_initiated', 'checkout_modal_opened', 'deposit_completed']
       : ['$pageview', 'item_buy_clicked', 'item_purchased']
 
     const data = await queryFunnel(steps, { dateFrom, dateTo })

@@ -143,12 +143,17 @@ export default function GemsPage() {
   function handlePurchaseClick() {
     posthog.capture('gems_buy_clicked', { amount_k: amount, total_price: discountedPrice })
     if (!userInfo?.user) {
+      posthog.capture('gems_buy_blocked', { reason: 'not_logged_in', amount_k: amount })
       setToast({ type: 'error', text: 'You need to login first to purchase gems.' })
       return
     }
     if (!botOnline) {
+      posthog.capture('gems_buy_blocked', { reason: 'bot_offline', amount_k: amount })
       setToast({ type: 'error', text: 'The trade bot is currently offline. Join our Discord for updates!' })
       return
+    }
+    if (userInfo.walletBalance < discountedPrice) {
+      posthog.capture('gems_buy_blocked', { reason: 'insufficient_balance', amount_k: amount, balance: userInfo.walletBalance, required: discountedPrice })
     }
     setAgreedToTerms(false)
     setShowConfirm(true)

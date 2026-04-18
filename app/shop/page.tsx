@@ -115,12 +115,17 @@ export default function ShopPage() {
       price: item.priceUsd,
     })
     if (!userInfo?.user) {
+      posthog.capture('item_buy_blocked', { reason: 'not_logged_in', item_id: item.id })
       setToast({ type: 'error', text: 'You need to login first to purchase items.' })
       return
     }
     if (!botOnline) {
+      posthog.capture('item_buy_blocked', { reason: 'bot_offline', item_id: item.id })
       setToast({ type: 'error', text: 'The trade bot is currently offline. Join our Discord for updates!' })
       return
+    }
+    if (userInfo.walletBalance < getDiscountedPrice(item.priceUsd)) {
+      posthog.capture('item_buy_blocked', { reason: 'insufficient_balance', item_id: item.id, balance: userInfo.walletBalance, required: getDiscountedPrice(item.priceUsd) })
     }
     setAgreedToTerms(false)
     setConfirmItem(item)

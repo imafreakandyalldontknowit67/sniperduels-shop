@@ -96,6 +96,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = () => {
     posthog.capture('login_initiated')
+    // Store current page so we can redirect back after login
+    document.cookie = `return_to=${encodeURIComponent(window.location.pathname + window.location.search)};path=/;max-age=600;SameSite=Lax`
     window.location.href = '/api/auth/roblox'
   }
 

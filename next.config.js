@@ -17,6 +17,16 @@ const nextConfig = {
       { protocol: 'https', hostname: 'cdn.discordapp.com' },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.sniperduels.shop' }],
+        destination: 'https://sniperduels.shop/:path*',
+        permanent: true,
+      },
+    ]
+  },
   async headers() {
     return [
       {

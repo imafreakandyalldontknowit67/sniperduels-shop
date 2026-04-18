@@ -13,6 +13,12 @@ function LoginHandler() {
       return
     }
 
+    // Read return_to cookie to redirect back to where the user was before login
+    const returnTo = document.cookie.split('; ').find(c => c.startsWith('return_to='))
+    const returnPath = returnTo ? decodeURIComponent(returnTo.split('=').slice(1).join('=')) : '/'
+    // Clear the cookie
+    document.cookie = 'return_to=;path=/;max-age=0'
+
     fetch('/api/auth/set-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -20,7 +26,7 @@ function LoginHandler() {
     })
       .then(res => {
         if (res.ok) {
-          window.location.href = '/'
+          window.location.href = returnPath
         } else {
           window.location.href = '/?error=session_failed'
         }
