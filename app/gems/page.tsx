@@ -92,7 +92,7 @@ export default function GemsPage() {
         setListings(data.listings)
         // Auto-select cheapest with enough stock for default amount
         if (data.listings.length > 0) {
-          const available = data.listings.filter((l: GemListing) => l.stockK >= amount && amount >= l.minOrderK && amount <= l.maxOrderK)
+          const available = data.listings.filter((l: GemListing) => l.stockK >= amount && amount >= l.minOrderK)
           setSelectedListing(available[0] || data.listings.filter((l: GemListing) => l.stockK > 0)[0] || data.listings[0])
         }
       }
@@ -117,8 +117,8 @@ export default function GemsPage() {
       setAmount(newAmount)
       setInputValue(String(newAmount))
       // Auto-switch listing if current one can't fulfill the new amount
-      if (selectedListing && (selectedListing.stockK < newAmount || newAmount < selectedListing.minOrderK || newAmount > selectedListing.maxOrderK)) {
-        const best = listings.find(l => l.stockK >= newAmount && newAmount >= l.minOrderK && newAmount <= l.maxOrderK)
+      if (selectedListing && (selectedListing.stockK < newAmount || newAmount < selectedListing.minOrderK)) {
+        const best = listings.find(l => l.stockK >= newAmount && newAmount >= l.minOrderK)
         if (best) setSelectedListing(best)
       }
     }
@@ -436,7 +436,7 @@ export default function GemsPage() {
                   const rate = getEffectiveRate(listing, amount)
                   const isSelected = selectedListing?.id === listing.id
                   const hasStock = listing.stockK >= amount
-                  const inRange = amount >= listing.minOrderK && amount <= listing.maxOrderK
+                  const inRange = amount >= listing.minOrderK
                   const hasBulk = listing.bulkTiers && listing.bulkTiers.length > 0
                   // For display, include base price as a tier so the dropdown shows the full range
                   const allTiers = hasBulk
