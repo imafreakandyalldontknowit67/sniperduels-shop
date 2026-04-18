@@ -108,8 +108,12 @@ export default function GemsPage() {
     return listing.pricePerK
   }
 
+  const maxAmount = listings.length > 0
+    ? Math.max(...listings.map(l => Math.min(l.maxOrderK, l.stockK)))
+    : 10000
+
   const handleAmountChange = (newAmount: number) => {
-    if (newAmount >= 1 && newAmount <= 10000) {
+    if (newAmount >= 1 && newAmount <= maxAmount) {
       setAmount(newAmount)
       setInputValue(String(newAmount))
       // Auto-switch listing if current one can't fulfill the new amount
@@ -124,7 +128,7 @@ export default function GemsPage() {
     const digits = e.target.value.replace(/\D/g, '')
     setInputValue(digits)
     const parsed = parseInt(digits)
-    if (!isNaN(parsed) && parsed >= 1 && parsed <= 10000) {
+    if (!isNaN(parsed) && parsed >= 1 && parsed <= maxAmount) {
       handleAmountChange(parsed)
     }
   }
@@ -133,8 +137,8 @@ export default function GemsPage() {
     const parsed = parseInt(inputValue)
     if (!inputValue || isNaN(parsed) || parsed < 1) {
       setInputValue(String(amount))
-    } else if (parsed > 10000) {
-      handleAmountChange(10000)
+    } else if (parsed > maxAmount) {
+      handleAmountChange(maxAmount)
     }
   }
 
@@ -332,7 +336,7 @@ export default function GemsPage() {
                 </div>
                 <button
                   onClick={() => handleAmountChange(amount + 1)}
-                  disabled={amount >= 10000}
+                  disabled={amount >= maxAmount}
                   className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <img src="/images/pixel/pngs/asset-63.png" alt="" className="h-[36px] sm:h-[40px] w-auto" />
