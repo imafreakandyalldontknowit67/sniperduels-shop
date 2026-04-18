@@ -109,7 +109,7 @@ export default function GemsPage() {
   }
 
   const maxAmount = listings.length > 0
-    ? Math.max(...listings.map(l => l.stockK))
+    ? Math.max(...listings.map(l => l.maxOrderK))
     : 10000
 
   const handleAmountChange = (newAmount: number) => {
