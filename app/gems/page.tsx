@@ -33,6 +33,7 @@ export default function GemsPage() {
   const { login } = useAuth()
   const { formatPrice, formatPricePerK, isUsd, currency } = useCurrency()
   const [amount, setAmount] = useState(5)
+  const [inputValue, setInputValue] = useState('5')
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
   const [listings, setListings] = useState<GemListing[]>([])
   const [selectedListing, setSelectedListing] = useState<GemListing | null>(null)
@@ -110,6 +111,7 @@ export default function GemsPage() {
   const handleAmountChange = (newAmount: number) => {
     if (newAmount >= 1 && newAmount <= 500) {
       setAmount(newAmount)
+      setInputValue(String(newAmount))
       // Auto-switch listing if current one can't fulfill the new amount
       if (selectedListing && (selectedListing.stockK < newAmount || newAmount < selectedListing.minOrderK || newAmount > selectedListing.maxOrderK)) {
         const best = listings.find(l => l.stockK >= newAmount && newAmount >= l.minOrderK && newAmount <= l.maxOrderK)
@@ -119,12 +121,18 @@ export default function GemsPage() {
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value
-    if (raw === '') { setAmount(0); return }
-    const value = parseInt(raw)
-    if (!isNaN(value) && value >= 0 && value <= 500) {
-      setAmount(value)
+    const digits = e.target.value.replace(/\D/g, '')
+    setInputValue(digits)
+  }
+
+  const handleInputBlur = () => {
+    const parsed = parseInt(inputValue)
+    if (!inputValue || isNaN(parsed) || parsed < 1) {
+      setInputValue(String(amount))
+      return
     }
+    const clamped = Math.min(parsed, 500)
+    handleAmountChange(clamped)
   }
 
   const currentRate = selectedListing ? getEffectiveRate(selectedListing, amount) : 2.90
@@ -309,12 +317,12 @@ export default function GemsPage() {
                 </button>
                 <div className="flex-1 relative">
                   <input
-                    type="number"
-                    value={amount}
+                    type="text"
+                    inputMode="numeric"
+                    value={inputValue}
                     onChange={handleInputChange}
-                    min={1}
-                    max={500}
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-center text-lg sm:text-xl font-bold text-white focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    onBlur={handleInputBlur}
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-center text-lg sm:text-xl font-bold text-white focus:outline-none"
                     style={{ background: '#1a1a1e', border: '3px solid #2a2a2e' }}
                   />
                   <span className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm sm:text-base uppercase">k</span>
