@@ -413,7 +413,8 @@ export default function ShopPage() {
                             onClick={() => {
                               if (!userInfo?.user) {
                                 posthog.capture('item_buy_blocked', { reason: 'not_logged_in', item_id: item.id })
-                                login()
+                                document.cookie = `return_to=${encodeURIComponent(`/dashboard/deposit?amount=${item.priceUsd}`)};path=/;max-age=600;SameSite=Lax`
+                                window.location.href = '/api/auth/roblox'
                               } else if (item.stock > 0) {
                                 handleBuyClick(item)
                               }

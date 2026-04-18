@@ -368,7 +368,11 @@ export default function GemsPage() {
             <div className="flex justify-center">
               {!userInfo?.user ? (
                 <button
-                  onClick={() => { posthog.capture('gems_buy_blocked', { reason: 'not_logged_in', amount_k: amount }); login() }}
+                  onClick={() => {
+                    posthog.capture('gems_buy_blocked', { reason: 'not_logged_in', amount_k: amount })
+                    document.cookie = `return_to=${encodeURIComponent(`/dashboard/deposit?amount=${discountedPrice}`)};path=/;max-age=600;SameSite=Lax`
+                    window.location.href = '/api/auth/roblox'
+                  }}
                   className="relative inline-flex items-center justify-center pixel-btn-press"
                 >
                   <img
