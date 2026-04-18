@@ -109,7 +109,7 @@ export default function GemsPage() {
   }
 
   const handleAmountChange = (newAmount: number) => {
-    if (newAmount >= 1 && newAmount <= 500) {
+    if (newAmount >= 1 && newAmount <= 10000) {
       setAmount(newAmount)
       setInputValue(String(newAmount))
       // Auto-switch listing if current one can't fulfill the new amount
@@ -124,7 +124,7 @@ export default function GemsPage() {
     const digits = e.target.value.replace(/\D/g, '')
     setInputValue(digits)
     const parsed = parseInt(digits)
-    if (!isNaN(parsed) && parsed >= 1 && parsed <= 500) {
+    if (!isNaN(parsed) && parsed >= 1 && parsed <= 10000) {
       handleAmountChange(parsed)
     }
   }
@@ -133,8 +133,8 @@ export default function GemsPage() {
     const parsed = parseInt(inputValue)
     if (!inputValue || isNaN(parsed) || parsed < 1) {
       setInputValue(String(amount))
-    } else if (parsed > 500) {
-      handleAmountChange(500)
+    } else if (parsed > 10000) {
+      handleAmountChange(10000)
     }
   }
 
@@ -332,7 +332,7 @@ export default function GemsPage() {
                 </div>
                 <button
                   onClick={() => handleAmountChange(amount + 1)}
-                  disabled={amount >= 500}
+                  disabled={amount >= 10000}
                   className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <img src="/images/pixel/pngs/asset-63.png" alt="" className="h-[36px] sm:h-[40px] w-auto" />
