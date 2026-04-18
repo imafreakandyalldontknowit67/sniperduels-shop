@@ -109,7 +109,7 @@ export default function GemsPage() {
   }
 
   const maxAmount = listings.length > 0
-    ? Math.max(...listings.map(l => l.maxOrderK))
+    ? Math.max(...listings.map(l => l.stockK))
     : 10000
 
   const handleAmountChange = (newAmount: number) => {
@@ -432,7 +432,7 @@ export default function GemsPage() {
               <h3 className="text-lg sm:text-xl font-bold text-accent mb-2 uppercase text-center">Select Price</h3>
               <p className="text-gray-400 text-[10px] sm:text-xs uppercase text-center mb-4 sm:mb-6">Choose a price tier &mdash; cheapest first</p>
               <div className="space-y-2 sm:space-y-3">
-                {listings.filter(l => amount >= l.minOrderK && amount <= l.maxOrderK).map((listing) => {
+                {listings.map((listing) => {
                   const rate = getEffectiveRate(listing, amount)
                   const isSelected = selectedListing?.id === listing.id
                   const hasStock = listing.stockK >= amount
