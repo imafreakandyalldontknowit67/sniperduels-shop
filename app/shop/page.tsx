@@ -498,7 +498,7 @@ export default function ShopPage() {
             {userInfo.walletBalance < getDiscountedPrice(confirmItem.priceUsd) ? (
               <div className="space-y-3">
                 <p className="text-red-400 text-xs text-center uppercase">Insufficient balance</p>
-                <Button href="/dashboard/deposit" className="w-full">Add Funds</Button>
+                <Button href={`/dashboard/deposit?amount=${Math.ceil((getDiscountedPrice(confirmItem.priceUsd) - userInfo.walletBalance) * 100) / 100}`} className="w-full">Add Funds</Button>
               </div>
             ) : (
               <div className="flex gap-3">

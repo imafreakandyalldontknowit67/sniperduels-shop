@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useAuth, useCurrency } from '@/components/providers'
 import type { Deposit } from '@/lib/storage'
@@ -13,10 +13,14 @@ type Tab = 'card' | 'crypto'
 
 export default function DepositPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user, isLoading, walletBalance: authWalletBalance } = useAuth()
   const { formatPrice, isUsd, currency, currencySymbol, convertToUsd, convertFromUsd } = useCurrency()
   const [tab, setTab] = useState<Tab>('card')
-  const [amount, setAmount] = useState('')
+  const [amount, setAmount] = useState(() => {
+    const prefill = searchParams.get('amount')
+    return prefill && !isNaN(Number(prefill)) ? prefill : ''
+  })
   const [walletBalance, setWalletBalance] = useState(0)
   const [loading, setLoading] = useState(false)
   const [verifyingId, setVerifyingId] = useState<string | null>(null)

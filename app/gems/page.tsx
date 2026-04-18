@@ -589,7 +589,7 @@ export default function GemsPage() {
               <div className="space-y-3">
                 <p className="text-red-400 text-xs text-center uppercase">Insufficient balance</p>
                 <Link
-                  href="/dashboard/deposit"
+                  href={`/dashboard/deposit?amount=${Math.ceil((discountedPrice - userInfo.walletBalance) * 100) / 100}`}
                   className="relative inline-flex items-center justify-center pixel-btn-press w-full"
                   style={{ textDecoration: 'none' }}
                 >
