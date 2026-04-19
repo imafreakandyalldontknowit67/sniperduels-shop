@@ -9,6 +9,22 @@ import type { Deposit } from '@/lib/storage'
 const PRESET_AMOUNTS = [5, 10, 25, 50, 100]
 const POPULAR_CURRENCIES = ['btc', 'eth', 'sol', 'usdtsol', 'usdcsol', 'ltc']
 
+const CURRENCY_NAMES: Record<string, string> = {
+  btc: 'Bitcoin', eth: 'Ethereum', sol: 'Solana', usdt: 'Tether', usdc: 'USD Coin',
+  usdtsol: 'USDT (Solana)', usdcsol: 'USDC (Solana)', usdterc20: 'USDT (ERC-20)', usdcerc20: 'USDC (ERC-20)',
+  ltc: 'Litecoin', xrp: 'Ripple', doge: 'Dogecoin', ada: 'Cardano', bnbbsc: 'BNB',
+  matic: 'Polygon', avax: 'Avalanche', trx: 'TRON', dot: 'Polkadot', shib: 'Shiba Inu',
+  link: 'Chainlink', uni: 'Uniswap', ton: 'Toncoin', near: 'NEAR', apt: 'Aptos', xmr: 'Monero',
+  bch: 'Bitcoin Cash', dash: 'Dash', xlm: 'Stellar', atom: 'Cosmos', algo: 'Algorand',
+}
+
+// Local SVGs we have downloaded — fallback to NOWPayments CDN for others
+function getCryptoIcon(id: string): string {
+  const localCoins = ['btc','eth','sol','usdt','usdc','usdtsol','usdcsol','usdterc20','usdcerc20','ltc','xrp','doge','ada','bnbbsc','matic','avax','trx','dot','shib','link','uni','ton','near','apt','xmr']
+  if (localCoins.includes(id)) return `/images/crypto/${id}.svg`
+  return `https://nowpayments.io/images/coins/${id}.svg`
+}
+
 type Tab = 'card' | 'crypto'
 
 export default function DepositPage() {
@@ -37,6 +53,10 @@ export default function DepositPage() {
   const [cryptoSearch, setCryptoSearch] = useState('')
   const [showCryptoDropdown, setShowCryptoDropdown] = useState(false)
   const [cryptoCurrency, setCryptoCurrency] = useState('btc')
+  const [showFiatTooltip, setShowFiatTooltip] = useState(false)
+  const [showCryptoTooltip, setShowCryptoTooltip] = useState(false)
+  const fiatTooltipRef = useRef<HTMLDivElement>(null)
+  const cryptoTooltipRef = useRef<HTMLDivElement>(null)
   const [cryptoPayment, setCryptoPayment] = useState<{
     depositId: string
     payAddress: string
@@ -67,6 +87,16 @@ export default function DepositPage() {
   // Cleanup polling on unmount
   useEffect(() => {
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
+  }, [])
+
+  // Click-outside handler for tooltips (mobile)
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (fiatTooltipRef.current && !fiatTooltipRef.current.contains(e.target as Node)) setShowFiatTooltip(false)
+      if (cryptoTooltipRef.current && !cryptoTooltipRef.current.contains(e.target as Node)) setShowCryptoTooltip(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   async function fetchDeposits() {
@@ -272,63 +302,79 @@ export default function DepositPage() {
           </div>
         )}
 
-        {/* Tab Selector */}
+        {/* Tab Selector with Tooltips */}
         <div className="flex gap-3 mb-6 justify-center">
-          <button
-            onClick={() => { setTab('card'); setCryptoPayment(null); if (pollRef.current) clearInterval(pollRef.current) }}
-            className="relative inline-flex items-center justify-center pixel-btn-press"
-          >
-            <img src="/images/pixel/pngs/asset-60.png" alt="" className="h-[42px] sm:h-[46px] w-auto" style={{ imageRendering: 'pixelated', filter: tab === 'card' ? 'none' : 'brightness(0.5)' }} />
-            <span className={`absolute inset-0 flex items-center justify-center font-bold text-xs sm:text-sm uppercase tracking-wider ${tab === 'card' ? 'text-white' : 'text-gray-500'}`}>
-              Card & Cash
-            </span>
-          </button>
-          <button
-            onClick={() => setTab('crypto')}
-            className="relative inline-flex items-center justify-center pixel-btn-press"
-          >
-            <img src="/images/pixel/pngs/asset-60.png" alt="" className="h-[42px] sm:h-[46px] w-auto" style={{ imageRendering: 'pixelated', filter: tab === 'crypto' ? 'none' : 'brightness(0.5)' }} />
-            <span className={`absolute inset-0 flex items-center justify-center font-bold text-xs sm:text-sm uppercase tracking-wider ${tab === 'crypto' ? 'text-white' : 'text-gray-500'}`}>
-              Crypto
-            </span>
-          </button>
-        </div>
-
-        {/* Payment Methods Carousel (card tab only) */}
-        {tab === 'card' && (
-          <div className="mb-6 p-5" style={{ background: 'rgba(26,26,30,0.5)', border: '2px solid #2a2a2e' }}>
-            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-gray-500 mb-3 text-center">Payment methods</p>
-            <div className="relative overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)' }}>
-              <div className="flex w-max animate-[marquee_35s_linear_infinite] hover:[animation-play-state:paused]">
-                {[0, 1].map((setIdx) => (
-                  <div key={setIdx} className="flex shrink-0 items-center gap-8 pr-8" aria-hidden={setIdx === 1 || undefined}>
-                    {[
-                      { name: 'Visa', src: '/images/payment/visa.svg' },
-                      { name: 'Mastercard', src: '/images/payment/mastercard.svg' },
-                      { name: 'Apple Pay', src: '/images/payment/applepay.svg' },
-                      { name: 'Google Pay', src: '/images/payment/googlepay.svg' },
-                      { name: 'Cash App', src: '/images/payment/cashapp.svg' },
-                      { name: 'Pix', src: '/images/payment/pix.svg' },
-                      { name: 'iDEAL', src: '/images/payment/ideal.svg' },
-                      { name: 'Alipay', src: '/images/payment/alipay.svg' },
-                      { name: 'Samsung Pay', src: '/images/payment/samsungpay.svg' },
-                      { name: 'Bancontact', src: '/images/payment/bancontact.svg' },
-                      { name: 'SEPA', src: '/images/payment/sepa.svg' },
-                    ].map((pm) => (
-                      <div key={pm.name} className="flex shrink-0 flex-col items-center gap-1.5 opacity-50 hover:opacity-100 transition-opacity duration-400">
-                        <div className="w-[44px] h-[28px] flex items-center justify-center">
-                          <img src={pm.src} alt={pm.name} className="max-w-full max-h-full object-contain" style={{ filter: 'grayscale(0.3) brightness(1.1)' }} />
-                        </div>
-                        <span className="text-[8px] font-semibold tracking-[0.08em] uppercase text-gray-600 whitespace-nowrap">{pm.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                ))}
+          {/* Pay Online Button + Tooltip */}
+          <div className="relative group" ref={fiatTooltipRef}>
+            <button
+              onClick={() => { setTab('card'); setCryptoPayment(null); if (pollRef.current) clearInterval(pollRef.current); setShowFiatTooltip(v => !v); setShowCryptoTooltip(false) }}
+              onMouseEnter={() => setShowFiatTooltip(true)}
+              onMouseLeave={() => setShowFiatTooltip(false)}
+              className="relative inline-flex items-center justify-center pixel-btn-press"
+            >
+              <img src="/images/pixel/pngs/asset-60.png" alt="" className="h-[42px] sm:h-[46px] w-auto" style={{ imageRendering: 'pixelated', filter: tab === 'card' ? 'none' : 'brightness(0.5)' }} />
+              <span className={`absolute inset-0 flex items-center justify-center font-bold text-xs sm:text-sm uppercase tracking-wider ${tab === 'card' ? 'text-white' : 'text-gray-500'}`}>
+                Pay Online
+              </span>
+            </button>
+            {showFiatTooltip && (
+              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-20 w-[280px] sm:w-[320px] p-4 rounded-lg border border-dark-500 bg-dark-900/95 backdrop-blur-sm shadow-xl shadow-black/40">
+                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 bg-dark-900/95 border-l border-t border-dark-500" />
+                <p className="text-[9px] sm:text-[10px] font-bold tracking-[0.15em] uppercase text-gray-400 text-center mb-3">
+                  Online Payment Powered by Pandabase
+                </p>
+                <div className="flex items-center justify-center gap-3 sm:gap-4 mb-3">
+                  {[
+                    { name: 'Card', src: '/images/payment/visa.svg' },
+                    { name: 'Apple Pay', src: '/images/payment/applepay.svg' },
+                    { name: 'Google Pay', src: '/images/payment/googlepay.svg' },
+                    { name: 'Cash App', src: '/images/payment/cashapp.svg' },
+                  ].map((pm) => (
+                    <div key={pm.name} className="w-[40px] h-[26px] sm:w-[48px] sm:h-[30px] flex items-center justify-center rounded border border-dark-500 bg-white/5 p-1">
+                      <img src={pm.src} alt={pm.name} className="max-w-full max-h-full object-contain" />
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[8px] sm:text-[9px] font-semibold tracking-[0.12em] uppercase text-gray-500 text-center">
+                  And 15+ Regional Payment Methods
+                </p>
               </div>
-            </div>
-            <p className="text-[8px] text-gray-600 text-center mt-2.5 uppercase tracking-[0.1em]">Powered by Pandabase</p>
+            )}
           </div>
-        )}
+
+          {/* Use Crypto Button + Tooltip */}
+          <div className="relative group" ref={cryptoTooltipRef}>
+            <button
+              onClick={() => { setTab('crypto'); setShowCryptoTooltip(v => !v); setShowFiatTooltip(false) }}
+              onMouseEnter={() => setShowCryptoTooltip(true)}
+              onMouseLeave={() => setShowCryptoTooltip(false)}
+              className="relative inline-flex items-center justify-center pixel-btn-press"
+            >
+              <img src="/images/pixel/pngs/asset-60.png" alt="" className="h-[42px] sm:h-[46px] w-auto" style={{ imageRendering: 'pixelated', filter: tab === 'crypto' ? 'none' : 'brightness(0.5)' }} />
+              <span className={`absolute inset-0 flex items-center justify-center font-bold text-xs sm:text-sm uppercase tracking-wider ${tab === 'crypto' ? 'text-white' : 'text-gray-500'}`}>
+                Use Crypto
+              </span>
+            </button>
+            {showCryptoTooltip && (
+              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-20 w-[280px] sm:w-[320px] p-4 rounded-lg border border-dark-500 bg-dark-900/95 backdrop-blur-sm shadow-xl shadow-black/40">
+                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 bg-dark-900/95 border-l border-t border-dark-500" />
+                <p className="text-[9px] sm:text-[10px] font-bold tracking-[0.15em] uppercase text-gray-400 text-center mb-3">
+                  Crypto Payment via NOWPayments
+                </p>
+                <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3">
+                  {['btc', 'eth', 'sol', 'usdt', 'usdc', 'ltc'].map((coin) => (
+                    <div key={coin} className="w-[32px] h-[32px] sm:w-[36px] sm:h-[36px] flex items-center justify-center rounded-full border border-dark-500 bg-white/5 p-1.5">
+                      <img src={getCryptoIcon(coin)} alt={coin} className="w-full h-full object-contain" />
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[8px] sm:text-[9px] font-semibold tracking-[0.12em] uppercase text-gray-500 text-center">
+                  And 100+ Supported Cryptocurrencies
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Amount Input (shared) */}
         <div className="bg-dark-800/50 rounded-xl p-6 mb-6">
@@ -444,10 +490,10 @@ export default function DepositPage() {
                   <button
                     key={c}
                     onClick={() => setCryptoCurrency(c)}
-                    className="relative inline-flex items-center justify-center pixel-btn-press"
+                    className={`relative flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border transition-all duration-200 ${cryptoCurrency === c ? 'border-accent/60 bg-accent/10' : 'border-dark-500 bg-dark-800 hover:border-dark-400'}`}
                   >
-                    <img src="/images/pixel/pngs/asset-62.png" alt="" className="h-[36px] w-auto" style={{ imageRendering: 'pixelated', filter: cryptoCurrency === c ? 'none' : 'brightness(0.55)' }} />
-                    <span className={`absolute inset-0 flex items-center justify-center font-bold text-[10px] sm:text-xs uppercase tracking-wider ${cryptoCurrency === c ? 'text-white' : 'text-gray-400'}`}>
+                    <img src={getCryptoIcon(c)} alt={c} className="w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] object-contain" style={{ filter: cryptoCurrency === c ? 'none' : 'brightness(0.6)' }} />
+                    <span className={`font-bold text-[10px] sm:text-xs uppercase tracking-wider ${cryptoCurrency === c ? 'text-white' : 'text-gray-400'}`}>
                       {c.toUpperCase()}
                     </span>
                   </button>
@@ -456,30 +502,50 @@ export default function DepositPage() {
 
               {/* Search for more currencies */}
               <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search other currencies..."
-                  value={cryptoSearch}
-                  onChange={(e) => { setCryptoSearch(e.target.value); setShowCryptoDropdown(true) }}
-                  onFocus={() => setShowCryptoDropdown(true)}
-                  className="w-full bg-dark-800 border border-dark-500 rounded-lg px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-accent"
-                />
+                <div className="relative">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Search 100+ currencies..."
+                    value={cryptoSearch}
+                    onChange={(e) => { setCryptoSearch(e.target.value); setShowCryptoDropdown(true) }}
+                    onFocus={() => setShowCryptoDropdown(true)}
+                    className="w-full bg-dark-800 border border-dark-500 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-accent transition-colors"
+                  />
+                </div>
                 {showCryptoDropdown && cryptoSearch && (
-                  <div className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto bg-dark-800 border border-dark-500 rounded-lg">
+                  <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-dark-800 border border-dark-500 rounded-lg shadow-xl shadow-black/30">
                     {allCurrencies
-                      .filter((c) => c.toLowerCase().includes(cryptoSearch.toLowerCase()))
+                      .filter((c) => {
+                        const q = cryptoSearch.toLowerCase()
+                        const name = CURRENCY_NAMES[c]?.toLowerCase() || ''
+                        return c.toLowerCase().includes(q) || name.includes(q)
+                      })
                       .slice(0, 20)
                       .map((c) => (
                         <button
                           key={c}
                           onClick={() => { setCryptoCurrency(c); setCryptoSearch(''); setShowCryptoDropdown(false) }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-dark-600 hover:text-white"
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-dark-600 hover:text-white transition-colors"
                         >
-                          {c.toUpperCase()}
+                          <img
+                            src={getCryptoIcon(c)}
+                            alt={c}
+                            className="w-5 h-5 object-contain shrink-0"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                          />
+                          <span className="font-medium">{c.toUpperCase()}</span>
+                          {CURRENCY_NAMES[c] && <span className="text-gray-500 text-xs ml-auto">{CURRENCY_NAMES[c]}</span>}
                         </button>
                       ))}
-                    {allCurrencies.filter((c) => c.toLowerCase().includes(cryptoSearch.toLowerCase())).length === 0 && (
-                      <p className="px-4 py-2 text-sm text-gray-500">No results</p>
+                    {allCurrencies.filter((c) => {
+                      const q = cryptoSearch.toLowerCase()
+                      const name = CURRENCY_NAMES[c]?.toLowerCase() || ''
+                      return c.toLowerCase().includes(q) || name.includes(q)
+                    }).length === 0 && (
+                      <p className="px-4 py-3 text-sm text-gray-500 text-center">No currencies found</p>
                     )}
                   </div>
                 )}
