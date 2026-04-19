@@ -53,10 +53,6 @@ export default function DepositPage() {
   const [cryptoSearch, setCryptoSearch] = useState('')
   const [showCryptoDropdown, setShowCryptoDropdown] = useState(false)
   const [cryptoCurrency, setCryptoCurrency] = useState('btc')
-  const [showFiatTooltip, setShowFiatTooltip] = useState(false)
-  const [showCryptoTooltip, setShowCryptoTooltip] = useState(false)
-  const fiatTooltipRef = useRef<HTMLDivElement>(null)
-  const cryptoTooltipRef = useRef<HTMLDivElement>(null)
   const [cryptoPayment, setCryptoPayment] = useState<{
     depositId: string
     payAddress: string
@@ -89,15 +85,6 @@ export default function DepositPage() {
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
   }, [])
 
-  // Click-outside handler for tooltips (mobile)
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (fiatTooltipRef.current && !fiatTooltipRef.current.contains(e.target as Node)) setShowFiatTooltip(false)
-      if (cryptoTooltipRef.current && !cryptoTooltipRef.current.contains(e.target as Node)) setShowCryptoTooltip(false)
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   async function fetchDeposits() {
     try {
@@ -302,78 +289,26 @@ export default function DepositPage() {
           </div>
         )}
 
-        {/* Tab Selector with Tooltips */}
+        {/* Tab Selector */}
         <div className="flex gap-3 mb-6 justify-center">
-          {/* Pay Online Button + Tooltip */}
-          <div className="relative group" ref={fiatTooltipRef}>
-            <button
-              onClick={() => { setTab('card'); setCryptoPayment(null); if (pollRef.current) clearInterval(pollRef.current); setShowFiatTooltip(v => !v); setShowCryptoTooltip(false) }}
-              onMouseEnter={() => setShowFiatTooltip(true)}
-              onMouseLeave={() => setShowFiatTooltip(false)}
-              className="relative inline-flex items-center justify-center pixel-btn-press"
-            >
-              <img src="/images/pixel/pngs/asset-60.png" alt="" className="h-[42px] sm:h-[46px] w-auto" style={{ imageRendering: 'pixelated', filter: tab === 'card' ? 'none' : 'brightness(0.5)' }} />
-              <span className={`absolute inset-0 flex items-center justify-center font-bold text-xs sm:text-sm uppercase tracking-wider ${tab === 'card' ? 'text-white' : 'text-gray-500'}`}>
-                Pay Online
-              </span>
-            </button>
-            {showFiatTooltip && (
-              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-20 w-[280px] sm:w-[320px] p-4 rounded-lg border border-dark-500 bg-dark-900/95 backdrop-blur-sm shadow-xl shadow-black/40">
-                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 bg-dark-900/95 border-l border-t border-dark-500" />
-                <p className="text-[9px] sm:text-[10px] font-bold tracking-[0.15em] uppercase text-gray-400 text-center mb-3">
-                  Online Payment Powered by Pandabase
-                </p>
-                <div className="flex items-center justify-center gap-3 sm:gap-4 mb-3">
-                  {[
-                    { name: 'Card', src: '/images/payment/visa.svg' },
-                    { name: 'Apple Pay', src: '/images/payment/applepay.svg' },
-                    { name: 'Google Pay', src: '/images/payment/googlepay.svg' },
-                    { name: 'Cash App', src: '/images/payment/cashapp.svg' },
-                  ].map((pm) => (
-                    <div key={pm.name} className="w-[40px] h-[26px] sm:w-[48px] sm:h-[30px] flex items-center justify-center rounded border border-dark-500 bg-white/5 p-1">
-                      <img src={pm.src} alt={pm.name} className="max-w-full max-h-full object-contain" />
-                    </div>
-                  ))}
-                </div>
-                <p className="text-[8px] sm:text-[9px] font-semibold tracking-[0.12em] uppercase text-gray-500 text-center">
-                  And 15+ Regional Payment Methods
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Use Crypto Button + Tooltip */}
-          <div className="relative group" ref={cryptoTooltipRef}>
-            <button
-              onClick={() => { setTab('crypto'); setShowCryptoTooltip(v => !v); setShowFiatTooltip(false) }}
-              onMouseEnter={() => setShowCryptoTooltip(true)}
-              onMouseLeave={() => setShowCryptoTooltip(false)}
-              className="relative inline-flex items-center justify-center pixel-btn-press"
-            >
-              <img src="/images/pixel/pngs/asset-60.png" alt="" className="h-[42px] sm:h-[46px] w-auto" style={{ imageRendering: 'pixelated', filter: tab === 'crypto' ? 'none' : 'brightness(0.5)' }} />
-              <span className={`absolute inset-0 flex items-center justify-center font-bold text-xs sm:text-sm uppercase tracking-wider ${tab === 'crypto' ? 'text-white' : 'text-gray-500'}`}>
-                Use Crypto
-              </span>
-            </button>
-            {showCryptoTooltip && (
-              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-20 w-[280px] sm:w-[320px] p-4 rounded-lg border border-dark-500 bg-dark-900/95 backdrop-blur-sm shadow-xl shadow-black/40">
-                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 bg-dark-900/95 border-l border-t border-dark-500" />
-                <p className="text-[9px] sm:text-[10px] font-bold tracking-[0.15em] uppercase text-gray-400 text-center mb-3">
-                  Crypto Payment via NOWPayments
-                </p>
-                <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3">
-                  {['btc', 'eth', 'sol', 'usdt', 'usdc', 'ltc'].map((coin) => (
-                    <div key={coin} className="w-[32px] h-[32px] sm:w-[36px] sm:h-[36px] flex items-center justify-center rounded-full border border-dark-500 bg-white/5 p-1.5">
-                      <img src={getCryptoIcon(coin)} alt={coin} className="w-full h-full object-contain" />
-                    </div>
-                  ))}
-                </div>
-                <p className="text-[8px] sm:text-[9px] font-semibold tracking-[0.12em] uppercase text-gray-500 text-center">
-                  And 100+ Supported Cryptocurrencies
-                </p>
-              </div>
-            )}
-          </div>
+          <button
+            onClick={() => { setTab('card'); setCryptoPayment(null); if (pollRef.current) clearInterval(pollRef.current) }}
+            className="relative inline-flex items-center justify-center pixel-btn-press"
+          >
+            <img src="/images/pixel/pngs/asset-60.png" alt="" className="h-[42px] sm:h-[46px] w-auto" style={{ imageRendering: 'pixelated', filter: tab === 'card' ? 'none' : 'brightness(0.5)' }} />
+            <span className={`absolute inset-0 flex items-center justify-center font-bold text-xs sm:text-sm uppercase tracking-wider ${tab === 'card' ? 'text-white' : 'text-gray-500'}`}>
+              Pay Online
+            </span>
+          </button>
+          <button
+            onClick={() => setTab('crypto')}
+            className="relative inline-flex items-center justify-center pixel-btn-press"
+          >
+            <img src="/images/pixel/pngs/asset-60.png" alt="" className="h-[42px] sm:h-[46px] w-auto" style={{ imageRendering: 'pixelated', filter: tab === 'crypto' ? 'none' : 'brightness(0.5)' }} />
+            <span className={`absolute inset-0 flex items-center justify-center font-bold text-xs sm:text-sm uppercase tracking-wider ${tab === 'crypto' ? 'text-white' : 'text-gray-500'}`}>
+              Use Crypto
+            </span>
+          </button>
         </div>
 
         {/* Amount Input (shared) */}
@@ -437,6 +372,49 @@ export default function DepositPage() {
             </div>
           )}
         </div>
+
+        {/* Payment Info Section (card tab) */}
+        {tab === 'card' && (
+          <div className="mb-6 py-5 text-center">
+            <p className="text-[10px] sm:text-[11px] font-bold tracking-[0.15em] uppercase text-gray-400 mb-3">
+              Online Payment Powered by Pandabase
+            </p>
+            <div className="flex items-center justify-center gap-3 sm:gap-4 mb-3">
+              {[
+                { name: 'Card', src: '/images/payment/visa.svg' },
+                { name: 'Apple Pay', src: '/images/payment/applepay.svg' },
+                { name: 'Google Pay', src: '/images/payment/googlepay.svg' },
+                { name: 'Cash App', src: '/images/payment/cashapp.svg' },
+              ].map((pm) => (
+                <div key={pm.name} className="w-[48px] h-[30px] sm:w-[56px] sm:h-[34px] flex items-center justify-center rounded border border-dark-500 bg-white/5 p-1.5">
+                  <img src={pm.src} alt={pm.name} className="max-w-full max-h-full object-contain" />
+                </div>
+              ))}
+            </div>
+            <p className="text-[8px] sm:text-[9px] font-semibold tracking-[0.12em] uppercase text-gray-500">
+              And 15+ Regional Payment Methods
+            </p>
+          </div>
+        )}
+
+        {/* Payment Info Section (crypto tab) */}
+        {tab === 'crypto' && !cryptoPayment && (
+          <div className="mb-6 py-5 text-center">
+            <p className="text-[10px] sm:text-[11px] font-bold tracking-[0.15em] uppercase text-gray-400 mb-3">
+              Crypto Payment via NOWPayments
+            </p>
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3">
+              {['btc', 'eth', 'sol', 'usdt', 'usdc', 'ltc'].map((coin) => (
+                <div key={coin} className="w-[32px] h-[32px] sm:w-[36px] sm:h-[36px] flex items-center justify-center rounded-full border border-dark-500 bg-white/5 p-1.5">
+                  <img src={getCryptoIcon(coin)} alt={coin} className="w-full h-full object-contain" />
+                </div>
+              ))}
+            </div>
+            <p className="text-[8px] sm:text-[9px] font-semibold tracking-[0.12em] uppercase text-gray-500">
+              And 100+ Supported Cryptocurrencies
+            </p>
+          </div>
+        )}
 
         <label className="flex items-start gap-2 mb-4 cursor-pointer select-none">
           <input
