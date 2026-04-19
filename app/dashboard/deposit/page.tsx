@@ -274,18 +274,24 @@ export default function DepositPage() {
         )}
 
         {/* Tab Selector */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-3 mb-6 justify-center">
           <button
             onClick={() => { setTab('card'); setCryptoPayment(null); if (pollRef.current) clearInterval(pollRef.current) }}
-            className={`flex-1 py-3 text-sm font-medium rounded-lg transition-colors ${tab === 'card' ? 'bg-accent text-white' : 'bg-dark-600 hover:bg-dark-500 text-gray-400'}`}
+            className="relative inline-flex items-center justify-center pixel-btn-press"
           >
-            Card / CashApp
+            <img src="/images/pixel/pngs/asset-60.png" alt="" className="h-[42px] sm:h-[46px] w-auto" style={{ imageRendering: 'pixelated', filter: tab === 'card' ? 'none' : 'brightness(0.5)' }} />
+            <span className={`absolute inset-0 flex items-center justify-center font-bold text-[10px] sm:text-xs uppercase tracking-wider ${tab === 'card' ? 'text-white' : 'text-gray-500'}`}>
+              Card / CashApp
+            </span>
           </button>
           <button
             onClick={() => setTab('crypto')}
-            className={`flex-1 py-3 text-sm font-medium rounded-lg transition-colors relative ${tab === 'crypto' ? 'bg-accent text-white' : 'bg-dark-600 hover:bg-dark-500 text-gray-400'}`}
+            className="relative inline-flex items-center justify-center pixel-btn-press"
           >
-            Crypto
+            <img src="/images/pixel/pngs/asset-60.png" alt="" className="h-[42px] sm:h-[46px] w-auto" style={{ imageRendering: 'pixelated', filter: tab === 'crypto' ? 'none' : 'brightness(0.5)' }} />
+            <span className={`absolute inset-0 flex items-center justify-center font-bold text-[10px] sm:text-xs uppercase tracking-wider ${tab === 'crypto' ? 'text-white' : 'text-gray-500'}`}>
+              Crypto
+            </span>
           </button>
         </div>
 
@@ -307,14 +313,17 @@ export default function DepositPage() {
               className="w-full bg-dark-800 border border-dark-500 rounded-lg px-4 py-4 pl-14 text-xl text-white placeholder-gray-500 focus:outline-none focus:border-accent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
           </div>
-          <div className="flex gap-2 mt-4">
+          <div className="flex gap-2 mt-4 justify-center flex-wrap">
             {PRESET_AMOUNTS.map((p) => (
               <button
                 key={p}
                 onClick={() => setAmount(p.toString())}
-                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${amount === p.toString() ? 'bg-accent text-white' : 'bg-dark-600 hover:bg-dark-500 text-white'}`}
+                className="relative inline-flex items-center justify-center pixel-btn-press"
               >
-                {currencySymbol}{p}
+                <img src="/images/pixel/pngs/asset-62.png" alt="" className="h-[34px] sm:h-[38px] w-auto" style={{ imageRendering: 'pixelated', filter: amount === p.toString() ? 'none' : 'brightness(0.55)' }} />
+                <span className={`absolute inset-0 flex items-center justify-center font-bold text-[9px] sm:text-[10px] uppercase tracking-wider ${amount === p.toString() ? 'text-white' : 'text-gray-400'}`}>
+                  {currencySymbol}{p}
+                </span>
               </button>
             ))}
           </div>
@@ -367,34 +376,60 @@ export default function DepositPage() {
         {/* Card Tab Content */}
         {tab === 'card' && (
           <>
-            <div className="bg-dark-800/50 rounded-xl p-6 mb-6">
-              <label className="block text-sm text-gray-400 mb-4 text-center">Payment methods</label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {['CashApp', 'Google Pay', 'Apple Pay', 'Bank'].map((method) => (
-                  <div key={method} className="flex items-center justify-center px-4 py-3 bg-dark-800 border border-dark-500 rounded-lg">
-                    <span className="text-sm text-gray-300">{method}</span>
-                  </div>
-                ))}
+            <div className="mb-6 p-5" style={{ background: 'rgba(26,26,30,0.5)', border: '2px solid #2a2a2e' }}>
+              <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-gray-500 mb-3 text-center">Payment methods</p>
+              <div className="relative overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)' }}>
+                <div className="flex w-max animate-[marquee_35s_linear_infinite] hover:[animation-play-state:paused]">
+                  {[0, 1].map((setIdx) => (
+                    <div key={setIdx} className="flex shrink-0 items-center gap-8 pr-8" aria-hidden={setIdx === 1 || undefined}>
+                      {[
+                        { name: 'Visa', src: '/images/payment/visa.svg' },
+                        { name: 'Mastercard', src: '/images/payment/mastercard.svg' },
+                        { name: 'Apple Pay', src: '/images/payment/applepay.svg' },
+                        { name: 'Google Pay', src: '/images/payment/googlepay.svg' },
+                        { name: 'Cash App', src: '/images/payment/cashapp.svg' },
+                        { name: 'Pix', src: '/images/payment/pix.svg' },
+                        { name: 'iDEAL', src: '/images/payment/ideal.svg' },
+                        { name: 'Alipay', src: '/images/payment/alipay.svg' },
+                        { name: 'Samsung Pay', src: '/images/payment/samsungpay.svg' },
+                        { name: 'Bancontact', src: '/images/payment/bancontact.svg' },
+                        { name: 'SEPA', src: '/images/payment/sepa.svg' },
+                      ].map((pm) => (
+                        <div key={pm.name} className="flex shrink-0 flex-col items-center gap-1.5 opacity-50 hover:opacity-100 transition-opacity duration-400">
+                          <div className="w-[44px] h-[28px] flex items-center justify-center">
+                            <img src={pm.src} alt={pm.name} className="max-w-full max-h-full object-contain" style={{ filter: 'grayscale(0.3) brightness(1.1)' }} />
+                          </div>
+                          <span className="text-[8px] font-semibold tracking-[0.08em] uppercase text-gray-600 whitespace-nowrap">{pm.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
               </div>
-              <p className="text-xs text-gray-500 text-center mt-3">Powered by Pandabase</p>
+              <p className="text-[8px] text-gray-600 text-center mt-2.5 uppercase tracking-[0.1em]">Powered by Pandabase</p>
             </div>
 
             <div className="absolute opacity-0 h-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
               <input type="text" name="website" value={hpField} onChange={(e) => setHpField(e.target.value)} autoComplete="off" tabIndex={-1} />
             </div>
 
-            <button
-              onClick={handleCardDeposit}
-              disabled={loading || !amount || getUsdAmount() < 5 || !agreedToTerms}
-              className="w-full py-4 bg-accent hover:bg-accent-light disabled:bg-accent/50 disabled:cursor-not-allowed text-white font-medium rounded-xl text-lg transition-colors"
-            >
-              {loading ? (
-                <span className="inline-flex items-center gap-2">
-                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Creating checkout...
+            <div className="flex justify-center">
+              <button
+                onClick={handleCardDeposit}
+                disabled={loading || !amount || getUsdAmount() < 5 || !agreedToTerms}
+                className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <img src="/images/pixel/pngs/asset-59.png" alt="" className="h-[48px] sm:h-[54px] w-auto" style={{ imageRendering: 'pixelated' }} />
+                <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-[10px] sm:text-xs uppercase tracking-wider">
+                  {loading ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="w-3.5 h-3.5 border-2 border-dark-900 border-t-transparent rounded-full animate-spin" />
+                      Creating...
+                    </span>
+                  ) : 'Continue to Payment'}
                 </span>
-              ) : 'Continue to Payment'}
-            </button>
+              </button>
+            </div>
           </>
         )}
 
@@ -408,9 +443,12 @@ export default function DepositPage() {
                   <button
                     key={c}
                     onClick={() => setCryptoCurrency(c)}
-                    className={`py-3 text-sm font-medium rounded-lg transition-colors ${cryptoCurrency === c ? 'bg-accent text-white' : 'bg-dark-600 hover:bg-dark-500 text-gray-300'}`}
+                    className="relative inline-flex items-center justify-center pixel-btn-press"
                   >
-                    {c.toUpperCase()}
+                    <img src="/images/pixel/pngs/asset-62.png" alt="" className="h-[36px] w-auto" style={{ imageRendering: 'pixelated', filter: cryptoCurrency === c ? 'none' : 'brightness(0.55)' }} />
+                    <span className={`absolute inset-0 flex items-center justify-center font-bold text-[9px] sm:text-[10px] uppercase tracking-wider ${cryptoCurrency === c ? 'text-white' : 'text-gray-400'}`}>
+                      {c.toUpperCase()}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -453,18 +491,23 @@ export default function DepositPage() {
               <input type="text" name="website" value={hpField} onChange={(e) => setHpField(e.target.value)} autoComplete="off" tabIndex={-1} />
             </div>
 
-            <button
-              onClick={handleCryptoDeposit}
-              disabled={loading || !amount || getUsdAmount() < 5 || !agreedToTerms}
-              className="w-full py-4 bg-accent hover:bg-accent-light disabled:bg-accent/50 disabled:cursor-not-allowed text-white font-medium rounded-xl text-lg transition-colors"
-            >
-              {loading ? (
-                <span className="inline-flex items-center gap-2">
-                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Generating address...
+            <div className="flex justify-center">
+              <button
+                onClick={handleCryptoDeposit}
+                disabled={loading || !amount || getUsdAmount() < 5 || !agreedToTerms}
+                className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <img src="/images/pixel/pngs/asset-59.png" alt="" className="h-[48px] sm:h-[54px] w-auto" style={{ imageRendering: 'pixelated' }} />
+                <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-[10px] sm:text-xs uppercase tracking-wider">
+                  {loading ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="w-3.5 h-3.5 border-2 border-dark-900 border-t-transparent rounded-full animate-spin" />
+                      Generating...
+                    </span>
+                  ) : `Deposit with ${cryptoCurrency.toUpperCase()}`}
                 </span>
-              ) : `Deposit with ${cryptoCurrency.toUpperCase()}`}
-            </button>
+              </button>
+            </div>
           </>
         )}
 
@@ -527,18 +570,22 @@ export default function DepositPage() {
                       <span className="text-white font-medium">{formatPrice(deposit.amount)}</span>
                       <span className="text-gray-500 text-sm">{new Date(deposit.createdAt).toLocaleString()}</span>
                     </button>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
                       <button
                         onClick={() => handleVerify(deposit.id)}
                         disabled={verifyingId === deposit.id}
-                        className="px-4 py-2 bg-accent hover:bg-accent-light disabled:bg-accent/50 text-white text-sm font-medium rounded-lg transition-colors"
+                        className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {verifyingId === deposit.id ? 'Checking...' : 'Verify'}
+                        <img src="/images/pixel/pngs/asset-60.png" alt="" className="h-[32px] w-auto" style={{ imageRendering: 'pixelated' }} />
+                        <span className="absolute inset-0 flex items-center justify-center font-bold text-white text-[8px] uppercase tracking-wider">
+                          {verifyingId === deposit.id ? 'Checking...' : 'Verify'}
+                        </span>
                       </button>
                       <button
                         onClick={() => handleCancelDeposit(deposit.id)}
                         disabled={cancellingId === deposit.id}
-                        className="px-3 py-2 bg-dark-600 hover:bg-red-500/20 hover:text-red-400 disabled:opacity-50 text-gray-400 text-sm rounded-lg transition-colors"
+                        className="px-3 py-2 bg-dark-600 hover:bg-red-500/20 hover:text-red-400 disabled:opacity-50 text-gray-400 text-[10px] uppercase font-bold tracking-wider transition-colors"
+                        style={{ border: '2px solid #2a2a2e' }}
                       >
                         {cancellingId === deposit.id ? '...' : 'Cancel'}
                       </button>
