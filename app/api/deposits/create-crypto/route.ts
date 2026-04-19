@@ -36,8 +36,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ depositId: `dep_${Date.now()}`, payAddress: '0x0000', payAmount: 0 })
     }
 
-    if (!amount || typeof amount !== 'number' || amount < 5 || amount > 500) {
-      return NextResponse.json({ error: 'Amount must be between $5 and $500' }, { status: 400 })
+    if (!amount || typeof amount !== 'number' || amount < 5) {
+      return NextResponse.json({ error: 'Amount must be at least $5' }, { status: 400 })
     }
 
     if (!currency || typeof currency !== 'string' || currency.length > 20) {

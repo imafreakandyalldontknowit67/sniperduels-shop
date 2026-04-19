@@ -99,15 +99,14 @@ export default function DepositPage() {
     return isUsd ? numAmount : convertToUsd(numAmount)
   }
 
-  // Get min/max in user's currency
+  // Get min in user's currency
   const minLocal = isUsd ? 5 : convertFromUsd(5)
-  const maxLocal = isUsd ? 500 : convertFromUsd(500)
 
   // ── Card/CashApp deposit (Pandabase) ──
   async function handleCardDeposit() {
     const usdAmount = getUsdAmount()
-    if (!usdAmount || usdAmount < 5 || usdAmount > 500) {
-      setMessage({ type: 'error', text: `Amount must be between ${currencySymbol}${Math.ceil(minLocal)} and ${currencySymbol}${Math.floor(maxLocal)}` })
+    if (!usdAmount || usdAmount < 5) {
+      setMessage({ type: 'error', text: `Amount must be at least ${currencySymbol}${Math.ceil(minLocal)}` })
       return
     }
     setLoading(true)
@@ -154,8 +153,8 @@ export default function DepositPage() {
   // ── Crypto deposit (NearPayments) ──
   async function handleCryptoDeposit() {
     const usdAmount = getUsdAmount()
-    if (!usdAmount || usdAmount < 5 || usdAmount > 500) {
-      setMessage({ type: 'error', text: `Amount must be between ${currencySymbol}${Math.ceil(minLocal)} and ${currencySymbol}${Math.floor(maxLocal)}` })
+    if (!usdAmount || usdAmount < 5) {
+      setMessage({ type: 'error', text: `Amount must be at least ${currencySymbol}${Math.ceil(minLocal)}` })
       return
     }
     setLoading(true)
@@ -344,7 +343,6 @@ export default function DepositPage() {
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
               min={Math.ceil(minLocal)}
-              max={Math.floor(maxLocal)}
               step="0.01"
               className="w-full bg-dark-800 border border-dark-500 rounded-lg px-4 py-4 pl-14 text-xl text-white placeholder-gray-500 focus:outline-none focus:border-accent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
