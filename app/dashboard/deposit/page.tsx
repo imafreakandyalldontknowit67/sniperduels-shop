@@ -18,11 +18,15 @@ const CURRENCY_NAMES: Record<string, string> = {
   bch: 'Bitcoin Cash', dash: 'Dash', xlm: 'Stellar', atom: 'Cosmos', algo: 'Algorand',
 }
 
-// Local SVGs we have downloaded — fallback to NOWPayments CDN for others
+// Map NOWPayments currency IDs to standard ticker symbols for LogoKit
+const TICKER_MAP: Record<string, string> = {
+  usdtsol: 'usdt', usdcsol: 'usdc', usdterc20: 'usdt', usdcerc20: 'usdc',
+  bnbbsc: 'bnb', maticpolygon: 'matic',
+}
+
 function getCryptoIcon(id: string): string {
-  const localCoins = ['btc','eth','sol','usdt','usdc','usdtsol','usdcsol','usdterc20','usdcerc20','ltc','xrp','doge','ada','bnbbsc','matic','avax','trx','dot','shib','link','uni','ton','near','apt','xmr']
-  if (localCoins.includes(id)) return `/images/crypto/${id}.svg`
-  return `https://nowpayments.io/images/coins/${id}.svg`
+  const ticker = TICKER_MAP[id] || id
+  return `https://img.logokit.com/crypto/${ticker.toUpperCase()}?token=pk_frc96be2c501230ad20f49&size=64`
 }
 
 type Tab = 'card' | 'crypto'
@@ -391,9 +395,36 @@ export default function DepositPage() {
                 </div>
               ))}
             </div>
-            <p className="text-[8px] sm:text-[9px] font-semibold tracking-[0.12em] uppercase text-gray-500">
-              And 15+ Regional Payment Methods
-            </p>
+            <div className="relative inline-block group">
+              <p className="text-[8px] sm:text-[9px] font-semibold tracking-[0.12em] uppercase text-gray-500 cursor-default inline-flex items-center gap-1">
+                And 15+ Regional Payment Methods
+                <svg className="w-3 h-3 text-gray-600 group-hover:text-gray-400 transition-colors" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </p>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[200px] sm:w-[240px] p-3 rounded-lg border border-dark-500 bg-dark-900/95 backdrop-blur-sm shadow-xl shadow-black/40 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-200 z-20">
+                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 bg-dark-900/95 border-r border-b border-dark-500" />
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {[
+                    { name: 'Visa', src: '/images/payment/visa.svg' },
+                    { name: 'Mastercard', src: '/images/payment/mastercard.svg' },
+                    { name: 'Pix', src: '/images/payment/pix.svg' },
+                    { name: 'iDEAL', src: '/images/payment/ideal.svg' },
+                    { name: 'Alipay', src: '/images/payment/alipay.svg' },
+                    { name: 'Samsung Pay', src: '/images/payment/samsungpay.svg' },
+                    { name: 'Bancontact', src: '/images/payment/bancontact.svg' },
+                    { name: 'SEPA', src: '/images/payment/sepa.svg' },
+                  ].map((pm) => (
+                    <div key={pm.name} className="flex flex-col items-center gap-0.5">
+                      <div className="w-[32px] h-[20px] flex items-center justify-center">
+                        <img src={pm.src} alt={pm.name} className="max-w-full max-h-full object-contain" style={{ filter: 'brightness(1.1)' }} />
+                      </div>
+                      <span className="text-[6px] uppercase tracking-wider text-gray-600">{pm.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -511,8 +542,7 @@ export default function DepositPage() {
                           <img
                             src={getCryptoIcon(c)}
                             alt={c}
-                            className="w-5 h-5 object-contain shrink-0"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                            className="w-5 h-5 object-contain shrink-0 rounded-full"
                           />
                           <span className="font-medium">{c.toUpperCase()}</span>
                           {CURRENCY_NAMES[c] && <span className="text-gray-500 text-xs ml-auto">{CURRENCY_NAMES[c]}</span>}
