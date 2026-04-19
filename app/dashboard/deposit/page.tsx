@@ -280,8 +280,8 @@ export default function DepositPage() {
             className="relative inline-flex items-center justify-center pixel-btn-press"
           >
             <img src="/images/pixel/pngs/asset-60.png" alt="" className="h-[42px] sm:h-[46px] w-auto" style={{ imageRendering: 'pixelated', filter: tab === 'card' ? 'none' : 'brightness(0.5)' }} />
-            <span className={`absolute inset-0 flex items-center justify-center font-bold text-[10px] sm:text-xs uppercase tracking-wider ${tab === 'card' ? 'text-white' : 'text-gray-500'}`}>
-              Card / CashApp
+            <span className={`absolute inset-0 flex items-center justify-center font-bold text-xs sm:text-sm uppercase tracking-wider ${tab === 'card' ? 'text-white' : 'text-gray-500'}`}>
+              Card & Cash
             </span>
           </button>
           <button
@@ -289,11 +289,47 @@ export default function DepositPage() {
             className="relative inline-flex items-center justify-center pixel-btn-press"
           >
             <img src="/images/pixel/pngs/asset-60.png" alt="" className="h-[42px] sm:h-[46px] w-auto" style={{ imageRendering: 'pixelated', filter: tab === 'crypto' ? 'none' : 'brightness(0.5)' }} />
-            <span className={`absolute inset-0 flex items-center justify-center font-bold text-[10px] sm:text-xs uppercase tracking-wider ${tab === 'crypto' ? 'text-white' : 'text-gray-500'}`}>
+            <span className={`absolute inset-0 flex items-center justify-center font-bold text-xs sm:text-sm uppercase tracking-wider ${tab === 'crypto' ? 'text-white' : 'text-gray-500'}`}>
               Crypto
             </span>
           </button>
         </div>
+
+        {/* Payment Methods Carousel (card tab only) */}
+        {tab === 'card' && (
+          <div className="mb-6 p-5" style={{ background: 'rgba(26,26,30,0.5)', border: '2px solid #2a2a2e' }}>
+            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-gray-500 mb-3 text-center">Payment methods</p>
+            <div className="relative overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)' }}>
+              <div className="flex w-max animate-[marquee_35s_linear_infinite] hover:[animation-play-state:paused]">
+                {[0, 1].map((setIdx) => (
+                  <div key={setIdx} className="flex shrink-0 items-center gap-8 pr-8" aria-hidden={setIdx === 1 || undefined}>
+                    {[
+                      { name: 'Visa', src: '/images/payment/visa.svg' },
+                      { name: 'Mastercard', src: '/images/payment/mastercard.svg' },
+                      { name: 'Apple Pay', src: '/images/payment/applepay.svg' },
+                      { name: 'Google Pay', src: '/images/payment/googlepay.svg' },
+                      { name: 'Cash App', src: '/images/payment/cashapp.svg' },
+                      { name: 'Pix', src: '/images/payment/pix.svg' },
+                      { name: 'iDEAL', src: '/images/payment/ideal.svg' },
+                      { name: 'Alipay', src: '/images/payment/alipay.svg' },
+                      { name: 'Samsung Pay', src: '/images/payment/samsungpay.svg' },
+                      { name: 'Bancontact', src: '/images/payment/bancontact.svg' },
+                      { name: 'SEPA', src: '/images/payment/sepa.svg' },
+                    ].map((pm) => (
+                      <div key={pm.name} className="flex shrink-0 flex-col items-center gap-1.5 opacity-50 hover:opacity-100 transition-opacity duration-400">
+                        <div className="w-[44px] h-[28px] flex items-center justify-center">
+                          <img src={pm.src} alt={pm.name} className="max-w-full max-h-full object-contain" style={{ filter: 'grayscale(0.3) brightness(1.1)' }} />
+                        </div>
+                        <span className="text-[8px] font-semibold tracking-[0.08em] uppercase text-gray-600 whitespace-nowrap">{pm.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <p className="text-[8px] text-gray-600 text-center mt-2.5 uppercase tracking-[0.1em]">Powered by Pandabase</p>
+          </div>
+        )}
 
         {/* Amount Input (shared) */}
         <div className="bg-dark-800/50 rounded-xl p-6 mb-6">
@@ -321,7 +357,7 @@ export default function DepositPage() {
                 className="relative inline-flex items-center justify-center pixel-btn-press"
               >
                 <img src="/images/pixel/pngs/asset-62.png" alt="" className="h-[34px] sm:h-[38px] w-auto" style={{ imageRendering: 'pixelated', filter: amount === p.toString() ? 'none' : 'brightness(0.55)' }} />
-                <span className={`absolute inset-0 flex items-center justify-center font-bold text-[9px] sm:text-[10px] uppercase tracking-wider ${amount === p.toString() ? 'text-white' : 'text-gray-400'}`}>
+                <span className={`absolute inset-0 flex items-center justify-center font-bold text-[10px] sm:text-xs uppercase tracking-wider ${amount === p.toString() ? 'text-white' : 'text-gray-400'}`}>
                   {currencySymbol}{p}
                 </span>
               </button>
@@ -376,39 +412,6 @@ export default function DepositPage() {
         {/* Card Tab Content */}
         {tab === 'card' && (
           <>
-            <div className="mb-6 p-5" style={{ background: 'rgba(26,26,30,0.5)', border: '2px solid #2a2a2e' }}>
-              <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-gray-500 mb-3 text-center">Payment methods</p>
-              <div className="relative overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)' }}>
-                <div className="flex w-max animate-[marquee_35s_linear_infinite] hover:[animation-play-state:paused]">
-                  {[0, 1].map((setIdx) => (
-                    <div key={setIdx} className="flex shrink-0 items-center gap-8 pr-8" aria-hidden={setIdx === 1 || undefined}>
-                      {[
-                        { name: 'Visa', src: '/images/payment/visa.svg' },
-                        { name: 'Mastercard', src: '/images/payment/mastercard.svg' },
-                        { name: 'Apple Pay', src: '/images/payment/applepay.svg' },
-                        { name: 'Google Pay', src: '/images/payment/googlepay.svg' },
-                        { name: 'Cash App', src: '/images/payment/cashapp.svg' },
-                        { name: 'Pix', src: '/images/payment/pix.svg' },
-                        { name: 'iDEAL', src: '/images/payment/ideal.svg' },
-                        { name: 'Alipay', src: '/images/payment/alipay.svg' },
-                        { name: 'Samsung Pay', src: '/images/payment/samsungpay.svg' },
-                        { name: 'Bancontact', src: '/images/payment/bancontact.svg' },
-                        { name: 'SEPA', src: '/images/payment/sepa.svg' },
-                      ].map((pm) => (
-                        <div key={pm.name} className="flex shrink-0 flex-col items-center gap-1.5 opacity-50 hover:opacity-100 transition-opacity duration-400">
-                          <div className="w-[44px] h-[28px] flex items-center justify-center">
-                            <img src={pm.src} alt={pm.name} className="max-w-full max-h-full object-contain" style={{ filter: 'grayscale(0.3) brightness(1.1)' }} />
-                          </div>
-                          <span className="text-[8px] font-semibold tracking-[0.08em] uppercase text-gray-600 whitespace-nowrap">{pm.name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <p className="text-[8px] text-gray-600 text-center mt-2.5 uppercase tracking-[0.1em]">Powered by Pandabase</p>
-            </div>
-
             <div className="absolute opacity-0 h-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
               <input type="text" name="website" value={hpField} onChange={(e) => setHpField(e.target.value)} autoComplete="off" tabIndex={-1} />
             </div>
@@ -420,7 +423,7 @@ export default function DepositPage() {
                 className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <img src="/images/pixel/pngs/asset-59.png" alt="" className="h-[48px] sm:h-[54px] w-auto" style={{ imageRendering: 'pixelated' }} />
-                <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-[10px] sm:text-xs uppercase tracking-wider">
+                <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-xs sm:text-sm uppercase tracking-wider">
                   {loading ? (
                     <span className="inline-flex items-center gap-1.5">
                       <span className="w-3.5 h-3.5 border-2 border-dark-900 border-t-transparent rounded-full animate-spin" />
@@ -446,7 +449,7 @@ export default function DepositPage() {
                     className="relative inline-flex items-center justify-center pixel-btn-press"
                   >
                     <img src="/images/pixel/pngs/asset-62.png" alt="" className="h-[36px] w-auto" style={{ imageRendering: 'pixelated', filter: cryptoCurrency === c ? 'none' : 'brightness(0.55)' }} />
-                    <span className={`absolute inset-0 flex items-center justify-center font-bold text-[9px] sm:text-[10px] uppercase tracking-wider ${cryptoCurrency === c ? 'text-white' : 'text-gray-400'}`}>
+                    <span className={`absolute inset-0 flex items-center justify-center font-bold text-[10px] sm:text-xs uppercase tracking-wider ${cryptoCurrency === c ? 'text-white' : 'text-gray-400'}`}>
                       {c.toUpperCase()}
                     </span>
                   </button>
@@ -498,7 +501,7 @@ export default function DepositPage() {
                 className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <img src="/images/pixel/pngs/asset-59.png" alt="" className="h-[48px] sm:h-[54px] w-auto" style={{ imageRendering: 'pixelated' }} />
-                <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-[10px] sm:text-xs uppercase tracking-wider">
+                <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-xs sm:text-sm uppercase tracking-wider">
                   {loading ? (
                     <span className="inline-flex items-center gap-1.5">
                       <span className="w-3.5 h-3.5 border-2 border-dark-900 border-t-transparent rounded-full animate-spin" />
@@ -577,7 +580,7 @@ export default function DepositPage() {
                         className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <img src="/images/pixel/pngs/asset-60.png" alt="" className="h-[32px] w-auto" style={{ imageRendering: 'pixelated' }} />
-                        <span className="absolute inset-0 flex items-center justify-center font-bold text-white text-[8px] uppercase tracking-wider">
+                        <span className="absolute inset-0 flex items-center justify-center font-bold text-white text-[9px] uppercase tracking-wider">
                           {verifyingId === deposit.id ? 'Checking...' : 'Verify'}
                         </span>
                       </button>

@@ -100,13 +100,12 @@ export default function ReferralCard({ referredBy }: { referredBy: string | null
             </div>
             <button
               onClick={copyCode}
-              className={`px-4 py-3 rounded-lg font-medium text-sm transition-colors ${
-                copied
-                  ? 'bg-green-500 text-white'
-                  : 'bg-accent hover:bg-accent-light text-white'
-              }`}
+              className="relative inline-flex items-center justify-center pixel-btn-press"
             >
-              {copied ? 'Copied!' : 'Copy'}
+              <img src="/images/pixel/pngs/asset-60.png" alt="" className="h-[40px] w-auto" style={{ imageRendering: 'pixelated', filter: copied ? 'hue-rotate(90deg) brightness(1.2)' : 'none' }} />
+              <span className="absolute inset-0 flex items-center justify-center font-bold text-white text-[10px] sm:text-xs uppercase tracking-wider">
+                {copied ? 'Copied!' : 'Copy'}
+              </span>
             </button>
           </div>
           <p className="text-gray-500 text-xs mt-2">
@@ -178,9 +177,12 @@ export default function ReferralCard({ referredBy }: { referredBy: string | null
             <button
               onClick={applyCode}
               disabled={applying || !codeInput.trim()}
-              className="px-4 py-2 bg-accent hover:bg-accent-light text-white font-medium text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {applying ? 'Applying...' : 'Apply'}
+              <img src="/images/pixel/pngs/asset-60.png" alt="" className="h-[36px] w-auto" style={{ imageRendering: 'pixelated' }} />
+              <span className="absolute inset-0 flex items-center justify-center font-bold text-white text-[10px] sm:text-xs uppercase tracking-wider">
+                {applying ? 'Applying...' : 'Apply'}
+              </span>
             </button>
           </div>
           {applyError && <p className="text-red-400 text-xs mt-2">{applyError}</p>}
