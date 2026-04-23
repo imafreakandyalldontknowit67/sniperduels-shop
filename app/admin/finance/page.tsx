@@ -171,7 +171,7 @@ export default function FinancePage() {
         <StatCard
           label="Vendor Platform Fees"
           value={`$${fmt(vs?.platformFees ?? 0)}`}
-          sub={`3% of $${fmt(vs?.totalSales ?? 0)} vendor sales (${vs?.saleCount ?? 0} orders)`}
+          sub={`${vs?.totalSales ? (((vs.platformFees / vs.totalSales) * 100).toFixed(1)) : '0'}% avg rate · $${fmt(vs?.totalSales ?? 0)} total vendor sales (${vs?.saleCount ?? 0} orders)`}
           icon={Users}
           color="text-purple-400"
           bg="bg-purple-500/10"
