@@ -112,8 +112,9 @@ export default function GemsPage() {
     ? Math.max(...listings.map(l => l.stockK))
     : 10000
 
-  const handleAmountChange = (newAmount: number) => {
+  const handleAmountChange = (newAmount: number, source?: 'preset' | 'input') => {
     if (newAmount >= 1 && newAmount <= maxAmount) {
+      if (source) posthog.capture('gems_amount_changed', { amount_k: newAmount, source })
       setAmount(newAmount)
       setInputValue(String(newAmount))
       // Auto-switch listing if current one can't fulfill the new amount
@@ -138,7 +139,9 @@ export default function GemsPage() {
     if (!inputValue || isNaN(parsed) || parsed < 1) {
       setInputValue(String(amount))
     } else if (parsed > maxAmount) {
-      handleAmountChange(maxAmount)
+      handleAmountChange(maxAmount, 'input')
+    } else if (parsed !== amount) {
+      posthog.capture('gems_amount_changed', { amount_k: parsed, source: 'input' })
     }
   }
 
@@ -293,7 +296,7 @@ export default function GemsPage() {
                 {PRESET_AMOUNTS.map((preset) => (
                   <button
                     key={preset}
-                    onClick={() => handleAmountChange(preset)}
+                    onClick={() => handleAmountChange(preset, 'preset')}
                     className={`relative inline-flex items-center justify-center pixel-btn-press ${amount !== preset ? 'opacity-50' : ''}`}
                   >
                     <img
@@ -449,7 +452,7 @@ export default function GemsPage() {
                   return (
                     <div key={listing.id} className={!hasStock || !inRange ? 'opacity-40' : ''}>
                       <button
-                        onClick={() => { if (hasStock && inRange) setSelectedListing(listing) }}
+                        onClick={() => { if (hasStock && inRange) { posthog.capture('gems_listing_selected', { type: listing.type, rate: rate }); setSelectedListing(listing) } }}
                         disabled={!hasStock || !inRange}
                         className={`w-full flex justify-between items-center px-4 sm:px-5 py-3 sm:py-4 text-left transition-colors`}
                         style={{

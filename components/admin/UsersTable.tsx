@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import Image from 'next/image'
 import { Users, Shield, Wallet, Search, MoreVertical, Plus, Minus, X } from 'lucide-react'
 import type { StoredUser } from '@/lib/storage'
 
@@ -160,7 +161,7 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
                   <td className="px-3 md:px-6 py-4">
                     <div className="flex items-center gap-3">
                       {user.avatar ? (
-                        <img src={user.avatar} alt="" className="w-10 h-10 rounded-full" />
+                        <Image src={user.avatar} alt="" width={40} height={40} className="w-10 h-10 rounded-full" />
                       ) : (
                         <div className="w-10 h-10 bg-dark-600 rounded-full flex items-center justify-center">
                           <Users className="w-5 h-5 text-gray-400" />
@@ -283,7 +284,7 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
               {/* User Info */}
               <div className="flex items-center gap-3 mb-6 p-3 bg-dark-700 rounded-lg">
                 {selectedUser.avatar ? (
-                  <img src={selectedUser.avatar} alt="" className="w-10 h-10 rounded-full" />
+                  <Image src={selectedUser.avatar} alt="" width={40} height={40} className="w-10 h-10 rounded-full" />
                 ) : (
                   <div className="w-10 h-10 bg-dark-600 rounded-full flex items-center justify-center">
                     <Users className="w-5 h-5 text-gray-400" />

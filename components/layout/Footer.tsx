@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { CurrencySelector } from '@/components/ui'
 
@@ -17,9 +18,11 @@ export function Footer() {
           {/* Brand */}
           <div className="sm:col-span-2 md:col-span-1">
             <Link href="/" className="inline-block mb-3">
-              <img
+              <Image
                 src="/images/logo.png"
                 alt="Sniper Duels Shop"
+                width={120}
+                height={48}
                 className="h-10 sm:h-12 w-auto"
                 style={{ imageRendering: 'pixelated' }}
               />
