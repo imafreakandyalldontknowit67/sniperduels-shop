@@ -12,39 +12,41 @@ import {
   Loader2,
   Landmark,
   Bitcoin,
-  Clock,
+  ShoppingCart,
+  Users,
 } from 'lucide-react'
 
 interface FinanceData {
-  pandabase: {
-    gross: number
-    net: number
-    fees: number
-    refunded: number
-    completedOrders: number
-    pendingOrders: number
-    totalOrders: number
-    refundedOrders: number
-    avgOrderValue: number
-  } | null
+  deposits: {
+    totalUserDeposits: number
+    totalProcessingFees: number
+    totalChargeAmount: number
+    pandabaseFees: number
+    depositProfit: number
+    count: number
+  }
   crypto: {
     totalDeposited: number
     completedCount: number
     payments: Array<{ id: number; amount: number; currency: string; status: string; date: string }>
   }
-  combined: {
-    totalFiatRevenue: number
-    totalCryptoRevenue: number
-    totalRevenue: number
-    pandabaseFees: number
-    netAfterFees: number
-    vendorPlatformFees: number
+  platformSales: {
+    revenue: number
+    orderCount: number
   }
-  vendors: {
-    earnings: number
+  vendorSales: {
+    totalSales: number
     platformFees: number
+    vendorEarnings: number
+    saleCount: number
     balancesOwed: number
     pendingPayoutCount: number
+  }
+  profitSummary: {
+    depositProfit: number
+    vendorPlatformFees: number
+    platformSalesRevenue: number
+    cryptoDeposits: number
   }
   payouts: {
     items: Array<{ id: string; amount: number; fee: number; status: string; date: string }>
@@ -54,6 +56,10 @@ interface FinanceData {
   }
   dailyRevenue: Array<{ date: string; revenue: number; orders: number }>
   recentTransactions: Array<{ id: string; type: string; userId: string; amount: number; description: string; createdAt: string }>
+  pandabaseRaw: {
+    gross: number; net: number; fees: number; refunded: number
+    completedOrders: number; pendingOrders: number
+  } | null
 }
 
 interface PendingPayout {
@@ -66,6 +72,8 @@ interface PendingPayout {
 }
 
 type Period = 'all' | '7d' | '30d' | '90d'
+
+const fmt = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 export default function FinancePage() {
   const [data, setData] = useState<FinanceData | null>(null)
@@ -120,8 +128,10 @@ export default function FinancePage() {
     )
   }
 
-  const pb = data?.pandabase
-  const combined = data?.combined
+  const dep = data?.deposits
+  const vs = data?.vendorSales
+  const ps = data?.platformSales
+  const pb = data?.pandabaseRaw
 
   return (
     <div>
@@ -147,71 +157,105 @@ export default function FinancePage() {
         ))}
       </div>
 
-      {/* === P&L Summary Cards === */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      {/* ═══ PROFIT SOURCES ═══ */}
+      <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Profit Sources</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <StatCard
-          label="Gross Revenue (Fiat)"
-          value={`$${(pb?.gross ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
-          sub={`${pb?.completedOrders ?? 0} completed orders`}
-          icon={DollarSign}
+          label="Deposit Fee Profit"
+          value={`$${fmt(dep?.depositProfit ?? 0)}`}
+          sub={`Charged ${fmt(dep?.totalProcessingFees ?? 0)} in fees, Pandabase took ${fmt(dep?.pandabaseFees ?? 0)}`}
+          icon={Percent}
           color="text-green-400"
           bg="bg-green-500/10"
         />
         <StatCard
-          label="Pandabase Fees"
-          value={`-$${(pb?.fees ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
-          sub="5.9% + $0.30 per transaction"
-          icon={Percent}
-          color="text-red-400"
-          bg="bg-red-500/10"
+          label="Vendor Platform Fees"
+          value={`$${fmt(vs?.platformFees ?? 0)}`}
+          sub={`3% of $${fmt(vs?.totalSales ?? 0)} vendor sales (${vs?.saleCount ?? 0} orders)`}
+          icon={Users}
+          color="text-purple-400"
+          bg="bg-purple-500/10"
         />
         <StatCard
-          label="Net Fiat Revenue"
-          value={`$${(pb?.net ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
-          sub="Gross minus Pandabase fees"
-          icon={TrendingUp}
-          color="text-accent"
-          bg="bg-accent/10"
+          label="Platform Sales"
+          value={`$${fmt(ps?.revenue ?? 0)}`}
+          sub={`${ps?.orderCount ?? 0} orders from our own stock (includes COGS)`}
+          icon={ShoppingCart}
+          color="text-blue-400"
+          bg="bg-blue-500/10"
+        />
+      </div>
+
+      {/* ═══ MONEY FLOW ═══ */}
+      <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Money Flow</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard
+          label="Total Fiat Deposited"
+          value={`$${fmt(dep?.totalChargeAmount ?? 0)}`}
+          sub={`${dep?.count ?? 0} deposits (users paid this to Pandabase)`}
+          icon={DollarSign}
+          color="text-gray-300"
+          bg="bg-gray-500/10"
         />
         <StatCard
-          label="Crypto Revenue"
-          value={`$${(data?.crypto.totalDeposited ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
-          sub={`${data?.crypto.completedCount ?? 0} completed payments (no fees)`}
+          label="User Wallet Credits"
+          value={`$${fmt(dep?.totalUserDeposits ?? 0)}`}
+          sub="What went into user wallets"
+          icon={Wallet}
+          color="text-gray-300"
+          bg="bg-gray-500/10"
+        />
+        <StatCard
+          label="Crypto Deposited"
+          value={`$${fmt(data?.crypto.totalDeposited ?? 0)}`}
+          sub={`${data?.crypto.completedCount ?? 0} crypto payments (no fees)`}
           icon={Bitcoin}
           color="text-cyan-400"
           bg="bg-cyan-500/10"
         />
         <StatCard
-          label="Vendor Platform Fees"
-          value={`$${(data?.vendors.platformFees ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
-          sub="3% from vendor sales"
-          icon={ArrowDownUp}
-          color="text-purple-400"
-          bg="bg-purple-500/10"
+          label="Pandabase Fees Paid"
+          value={`-$${fmt(dep?.pandabaseFees ?? 0)}`}
+          sub="5.9% + $0.30 per fiat deposit"
+          icon={Percent}
+          color="text-red-400"
+          bg="bg-red-500/10"
+        />
+      </div>
+
+      {/* ═══ BANK PAYOUTS + BALANCES ═══ */}
+      <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Bank & Balances</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <StatCard
+          label="Received in Bank"
+          value={`$${fmt(data?.payouts.totalCompleted ?? 0)}`}
+          sub={`${data?.payouts.items.filter(p => p.status === 'COMPLETED').length ?? 0} completed payouts`}
+          icon={Landmark}
+          color="text-green-400"
+          bg="bg-green-500/10"
         />
         <StatCard
-          label="Total Net Profit"
-          value={`$${((combined?.netAfterFees ?? 0)).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
-          sub="Fiat net + crypto (all yours)"
-          icon={Wallet}
-          color="text-emerald-400"
-          bg="bg-emerald-500/10"
-          highlight
+          label="Pending Payout"
+          value={`$${fmt(data?.payouts.totalPending ?? 0)}`}
+          sub="Awaiting review from Pandabase"
+          icon={Landmark}
+          color="text-yellow-400"
+          bg="bg-yellow-500/10"
+        />
+        <StatCard
+          label="Vendor Balances Owed"
+          value={`$${fmt(vs?.balancesOwed ?? 0)}`}
+          sub={`${vs?.pendingPayoutCount ?? 0} payout requests pending`}
+          icon={ArrowDownUp}
+          color="text-orange-400"
+          bg="bg-orange-500/10"
         />
       </div>
 
-      {/* === Extra Stats Row === */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <MiniStat label="Avg Order Value" value={`$${(pb?.avgOrderValue ?? 0).toFixed(2)}`} />
-        <MiniStat label="Refunded" value={`$${(pb?.refunded ?? 0).toFixed(2)} (${pb?.refundedOrders ?? 0})`} />
-        <MiniStat label="Pending Orders" value={String(pb?.pendingOrders ?? 0)} />
-        <MiniStat label="Vendor Balances Owed" value={`$${(data?.vendors.balancesOwed ?? 0).toFixed(2)}`} />
-      </div>
-
-      {/* === Daily Revenue Chart === */}
+      {/* ═══ Daily Revenue Chart ═══ */}
       {data?.dailyRevenue && data.dailyRevenue.length > 0 && (
         <div className="bg-dark-800/50 rounded-xl p-6 mb-8">
-          <h2 className="text-lg font-semibold text-white mb-4">Daily Revenue</h2>
+          <h2 className="text-lg font-semibold text-white mb-4">Daily Deposit Volume (Pandabase)</h2>
           <div className="flex items-end gap-1 h-40">
             {(() => {
               const maxRev = Math.max(...data.dailyRevenue.map(d => d.revenue), 1)
@@ -225,7 +269,7 @@ export default function FinancePage() {
                     {d.date.slice(5)}
                   </span>
                   <div className="absolute bottom-full mb-2 hidden group-hover:block bg-dark-700 border border-dark-500 rounded px-2 py-1 text-xs text-white whitespace-nowrap z-10">
-                    {d.date}: ${d.revenue.toFixed(2)} ({d.orders} orders)
+                    {d.date}: ${fmt(d.revenue)} ({d.orders} orders)
                   </div>
                 </div>
               ))
@@ -234,21 +278,13 @@ export default function FinancePage() {
         </div>
       )}
 
-      {/* === Bank Payouts === */}
+      {/* ═══ Bank Payouts Table ═══ */}
       {data?.payouts && data.payouts.items.length > 0 && (
         <div className="bg-dark-800/50 rounded-xl p-6 mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              <Landmark className="w-5 h-5 text-accent" />
-              Bank Payouts
-            </h2>
-            <div className="text-sm text-gray-400">
-              Received: <span className="text-green-400 font-medium">${data.payouts.totalCompleted.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-              {data.payouts.totalPending > 0 && (
-                <> · Pending: <span className="text-yellow-400 font-medium">${data.payouts.totalPending.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span></>
-              )}
-            </div>
-          </div>
+          <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
+            <Landmark className="w-5 h-5 text-accent" />
+            Bank Payouts
+          </h2>
           <table className="w-full">
             <thead>
               <tr className="text-gray-400 text-sm border-b border-dark-700">
@@ -261,8 +297,8 @@ export default function FinancePage() {
             <tbody>
               {data.payouts.items.map((p) => (
                 <tr key={p.id} className="border-b border-dark-700/50">
-                  <td className="py-3 text-white font-medium">${p.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                  <td className="py-3 text-gray-400">${p.fee.toFixed(2)}</td>
+                  <td className="py-3 text-white font-medium">${fmt(p.amount)}</td>
+                  <td className="py-3 text-gray-400">${fmt(p.fee)}</td>
                   <td className="py-3">
                     <span className={`text-xs px-2 py-1 rounded ${
                       p.status === 'COMPLETED' ? 'bg-green-500/10 text-green-400' : 'bg-yellow-500/10 text-yellow-400'
@@ -278,7 +314,7 @@ export default function FinancePage() {
         </div>
       )}
 
-      {/* === Crypto Payments === */}
+      {/* ═══ Crypto Payments ═══ */}
       {data?.crypto && data.crypto.payments.length > 0 && (
         <div className="bg-dark-800/50 rounded-xl p-6 mb-8">
           <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
@@ -298,7 +334,7 @@ export default function FinancePage() {
               <tbody>
                 {data.crypto.payments.map((p) => (
                   <tr key={p.id} className="border-b border-dark-700/50">
-                    <td className="py-3 text-white font-medium">${p.amount.toFixed(2)}</td>
+                    <td className="py-3 text-white font-medium">${fmt(p.amount)}</td>
                     <td className="py-3 text-gray-300 text-sm uppercase">{p.currency}</td>
                     <td className="py-3">
                       <span className={`text-xs px-2 py-1 rounded ${
@@ -320,19 +356,17 @@ export default function FinancePage() {
         </div>
       )}
 
-      {/* === Vendor Payouts (from our DB) === */}
+      {/* ═══ Vendor Payouts ═══ */}
       {vendorPayouts.length > 0 && (
         <div className="bg-dark-800/50 rounded-xl p-6 mb-8">
-          <h2 className="text-lg font-semibold text-white mb-4">
-            Pending Vendor Payouts ({vendorPayouts.length})
-          </h2>
+          <h2 className="text-lg font-semibold text-white mb-4">Pending Vendor Payouts ({vendorPayouts.length})</h2>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="text-gray-400 text-sm border-b border-dark-700">
                   <th className="text-left pb-3">Vendor</th>
                   <th className="text-left pb-3">Amount</th>
-                  <th className="text-left pb-3">Payment Method</th>
+                  <th className="text-left pb-3">Method</th>
                   <th className="text-left pb-3">Requested</th>
                   <th className="text-right pb-3">Actions</th>
                 </tr>
@@ -341,23 +375,17 @@ export default function FinancePage() {
                 {vendorPayouts.map((payout) => (
                   <tr key={payout.id} className="border-b border-dark-700/50">
                     <td className="py-3 text-white">{payout.vendorName}</td>
-                    <td className="py-3 text-green-400 font-semibold">${payout.amount.toFixed(2)}</td>
+                    <td className="py-3 text-green-400 font-semibold">${fmt(payout.amount)}</td>
                     <td className="py-3 text-gray-300 text-sm max-w-[200px] truncate">{payout.paymentMethod}</td>
                     <td className="py-3 text-gray-400 text-sm">{new Date(payout.createdAt).toLocaleDateString()}</td>
                     <td className="py-3 text-right">
                       <div className="flex gap-2 justify-end">
-                        <button
-                          onClick={() => handlePayoutAction(payout.id, 'complete')}
-                          disabled={actionLoading === payout.id}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 text-sm disabled:opacity-50"
-                        >
+                        <button onClick={() => handlePayoutAction(payout.id, 'complete')} disabled={actionLoading === payout.id}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 text-sm disabled:opacity-50">
                           <CheckCircle2 className="w-4 h-4" /> Approve
                         </button>
-                        <button
-                          onClick={() => handlePayoutAction(payout.id, 'reject')}
-                          disabled={actionLoading === payout.id}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 text-sm disabled:opacity-50"
-                        >
+                        <button onClick={() => handlePayoutAction(payout.id, 'reject')} disabled={actionLoading === payout.id}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 text-sm disabled:opacity-50">
                           <XCircle className="w-4 h-4" /> Reject
                         </button>
                       </div>
@@ -370,7 +398,7 @@ export default function FinancePage() {
         </div>
       )}
 
-      {/* === Recent Transactions === */}
+      {/* ═══ Recent Transactions ═══ */}
       <div className="bg-dark-800/50 rounded-xl p-6">
         <h2 className="text-lg font-semibold text-white mb-4">Recent Transactions</h2>
         {!data?.recentTransactions?.length ? (
@@ -397,38 +425,44 @@ export default function FinancePage() {
                     {new Date(tx.createdAt).toLocaleString()} · User: {tx.userId}
                   </div>
                 </div>
-                <div className="text-white font-semibold ml-4">${tx.amount.toFixed(2)}</div>
+                <div className="text-white font-semibold ml-4">${fmt(tx.amount)}</div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* ═══ Pandabase Raw (debug) ═══ */}
+      {pb && (
+        <div className="mt-8 bg-dark-800/30 rounded-xl p-4">
+          <h3 className="text-xs text-gray-500 uppercase mb-2">Pandabase Raw Data (for verification)</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <div><span className="text-gray-500">Gross:</span> <span className="text-gray-300">${fmt(pb.gross)}</span></div>
+            <div><span className="text-gray-500">Net:</span> <span className="text-gray-300">${fmt(pb.net)}</span></div>
+            <div><span className="text-gray-500">Fees:</span> <span className="text-gray-300">${fmt(pb.fees)}</span></div>
+            <div><span className="text-gray-500">Refunded:</span> <span className="text-gray-300">${fmt(pb.refunded)}</span></div>
+            <div><span className="text-gray-500">Completed:</span> <span className="text-gray-300">{pb.completedOrders}</span></div>
+            <div><span className="text-gray-500">Pending:</span> <span className="text-gray-300">{pb.pendingOrders}</span></div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-function StatCard({ label, value, sub, icon: Icon, color, bg, highlight }: {
-  label: string; value: string; sub: string; icon: any; color: string; bg: string; highlight?: boolean
+function StatCard({ label, value, sub, icon: Icon, color, bg }: {
+  label: string; value: string; sub: string; icon: any; color: string; bg: string
 }) {
   return (
-    <div className={`rounded-xl p-5 ${highlight ? 'bg-dark-800 border border-accent/30' : 'bg-dark-800/50'}`}>
+    <div className="bg-dark-800/50 rounded-xl p-5">
       <div className="flex items-center justify-between mb-3">
         <div className={`p-2.5 rounded-lg ${bg}`}>
           <Icon className={`w-5 h-5 ${color}`} />
         </div>
       </div>
-      <div className={`text-2xl font-bold mb-1 ${highlight ? 'text-accent' : 'text-white'}`}>{value}</div>
+      <div className="text-2xl font-bold text-white mb-1">{value}</div>
       <div className="text-gray-400 text-sm">{label}</div>
       <div className="text-gray-500 text-xs mt-1">{sub}</div>
-    </div>
-  )
-}
-
-function MiniStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="bg-dark-800/30 rounded-lg p-4">
-      <div className="text-gray-500 text-xs mb-1">{label}</div>
-      <div className="text-white font-semibold text-sm">{value}</div>
     </div>
   )
 }
