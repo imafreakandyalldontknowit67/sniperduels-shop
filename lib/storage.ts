@@ -1207,9 +1207,19 @@ export async function getVendorEarningsSummary(vendorId: string): Promise<{
 export async function getOrderStats() {
   const orders = await getOrders()
   const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  // Use PST for "today" boundary
+  const pstParts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(now)
+  const pstY = +pstParts.find(p => p.type === 'year')!.value
+  const pstM = +pstParts.find(p => p.type === 'month')!.value - 1
+  const pstD = +pstParts.find(p => p.type === 'day')!.value
+  const pstNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }))
+  const utcOff = now.getTime() - pstNow.getTime()
+  const today = new Date(new Date(pstY, pstM, pstD).getTime() + utcOff)
   const thisWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
-  const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  const thisMonth = new Date(new Date(pstY, pstM, 1).getTime() + utcOff)
 
   return {
     total: orders.length,
@@ -1298,7 +1308,17 @@ export async function getFinanceStats(period?: 'today' | 'week' | 'month' | 'all
   let since: string | undefined
   const now = new Date()
   if (period === 'today') {
-    since = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
+    // Use PST midnight, not UTC
+    const pst = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Los_Angeles',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+    }).formatToParts(now)
+    const y = +pst.find(p => p.type === 'year')!.value
+    const m = +pst.find(p => p.type === 'month')!.value - 1
+    const dd = +pst.find(p => p.type === 'day')!.value
+    const pstNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }))
+    const utcOffset = now.getTime() - pstNow.getTime()
+    since = new Date(new Date(y, m, dd).getTime() + utcOffset).toISOString()
   } else if (period === 'week') {
     since = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
   } else if (period === 'month') {

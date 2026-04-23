@@ -44,7 +44,17 @@ export async function GET(
 
   const vendorId = params.id
   const now = new Date()
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  // Use PST for "today" boundary
+  const _pst = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(now)
+  const _pstNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }))
+  const _utcOff = now.getTime() - _pstNow.getTime()
+  const todayStart = new Date(new Date(
+    +_pst.find(p => p.type === 'year')!.value,
+    +_pst.find(p => p.type === 'month')!.value - 1,
+    +_pst.find(p => p.type === 'day')!.value,
+  ).getTime() + _utcOff)
   const weekAgo = new Date(now.getTime() - 7 * 86400000)
   const monthAgo = new Date(now.getTime() - 30 * 86400000)
 
