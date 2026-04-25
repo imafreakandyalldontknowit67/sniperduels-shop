@@ -46,6 +46,8 @@ model User {
   vendorDeposits  VendorDeposit[]
   vendorEarnings  VendorEarning[]
   vendorPayouts   VendorPayout[]
+
+  @@index([discordId])
 }
 
 // ─── Orders ──────────────────────────────────────────────────────────────────
