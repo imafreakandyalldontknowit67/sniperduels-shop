@@ -46,6 +46,7 @@ model User {
   vendorDeposits  VendorDeposit[]
   vendorEarnings  VendorEarning[]
   vendorPayouts   VendorPayout[]
+  creatorProfile  CreatorProfile?
 
   @@index([discordId])
 }
@@ -310,8 +311,28 @@ model Referral {
   orderId          String?        @unique
   commissionAmount Decimal?       @db.Decimal(12, 2)
   status           ReferralStatus @default(pending)
+  discordJoinedAt  String?
   createdAt        String
   creditedAt       String?
 
   @@index([referrerUserId])
+}
+
+// ─── Creator/Referral Program ───────────────────────────────────────────────
+model CreatorProfile {
+  id                String  @id @default(cuid())
+  userId            String  @unique
+  referralCode      String  @unique
+  discordInviteCode String?
+  tier              Int     @default(0)
+  gemsAwarded       Int     @default(0)
+  gemsClaimed       Int     @default(0)
+  exchangeFee       Decimal @default(5.0) @db.Decimal(5, 2)
+  createdAt         String
+  updatedAt         String
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([referralCode])
 }
