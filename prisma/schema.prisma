@@ -16,7 +16,7 @@ model User {
   robloxCreatedAt String?
 
   // Discord linked account
-  discordId         String?
+  discordId         String?  @unique
   discordUsername   String?
   discordAvatar    String?
   discordLinkedAt  String?
@@ -47,8 +47,6 @@ model User {
   vendorEarnings  VendorEarning[]
   vendorPayouts   VendorPayout[]
   creatorProfile  CreatorProfile?
-
-  @@index([discordId])
 }
 
 // ─── Orders ──────────────────────────────────────────────────────────────────

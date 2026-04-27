@@ -51,11 +51,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Link Discord to user account
-    await linkDiscordToUser(user.id, {
+    const linked = await linkDiscordToUser(user.id, {
       id: discordUser.id,
       username: discordUser.username,
       avatar: discordUser.avatar,
     })
+    if (!linked) {
+      // Discord account already linked to a different website user.
+      return NextResponse.redirect(new URL('/dashboard/profile?discord=conflict', baseUrl))
+    }
 
     // Auto-join user to Discord server (non-blocking — link succeeds even if this fails)
     await addUserToGuild(tokens.access_token, discordUser.id)

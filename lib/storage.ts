@@ -151,6 +151,14 @@ export async function linkDiscordToUser(
   discord: { id: string; username: string; avatar?: string }
 ): Promise<StoredUser | null> {
   try {
+    // Reject if this Discord account is already linked to a different user
+    // (the User_discordId_key unique index will also enforce this at the DB level).
+    const existing = await prisma.user.findUnique({
+      where: { discordId: discord.id },
+      select: { id: true },
+    })
+    if (existing && existing.id !== userId) return null
+
     const row = await prisma.user.update({
       where: { id: userId },
       data: {

@@ -55,6 +55,7 @@ export default async function ProfilePage({
   const discordSuccess = params.discord === 'linked'
   const discordUnlinked = params.discord === 'unlinked'
   const discordError = params.discord === 'error'
+  const discordConflict = params.discord === 'conflict'
 
   // Tier colors
   const tierColors = {
@@ -84,6 +85,11 @@ export default async function ProfilePage({
       {discordError && (
         <div className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400">
           Failed to link Discord account. Please try again.
+        </div>
+      )}
+      {discordConflict && (
+        <div className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400">
+          That Discord account is already linked to a different sniperduels.shop user. Unlink it from the other account first.
         </div>
       )}
 
