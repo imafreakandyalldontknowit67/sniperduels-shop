@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
+import { logError } from '@/lib/error-log'
 import {
   getStockItem,
   deductItemStock,
@@ -18,8 +19,9 @@ import { notifyPurchase } from '@/lib/discord-webhook'
 import { getBotLastHeartbeat, BOT_OFFLINE_THRESHOLD_MS } from '@/lib/bot-heartbeat'
 
 export async function POST(request: NextRequest) {
+  let user: Awaited<ReturnType<typeof getCurrentUser>> = null
   try {
-    const user = await getCurrentUser()
+    user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -138,6 +140,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Purchase error:', error)
+    await logError({ where: 'purchase_item.exception', userId: user?.id, error })
     return NextResponse.json(
       { error: 'Failed to process purchase' },
       { status: 500 }

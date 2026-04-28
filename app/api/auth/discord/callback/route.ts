@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser, exchangeDiscordCodeForTokens, getDiscordUserInfo, validateOAuthState, retrieveCodeVerifier, addUserToGuild } from '@/lib/auth'
 import { linkDiscordToUser } from '@/lib/storage'
+import { logError } from '@/lib/error-log'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -18,22 +19,28 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     console.error('Discord OAuth error:', error)
+    await logError({ where: 'discord_callback.oauth_provider_error', userId: user.id, error, context: { provider_error: error } })
     return NextResponse.redirect(new URL('/dashboard/profile?discord=error', baseUrl))
   }
 
   if (!code) {
+    await logError({ where: 'discord_callback.missing_code', userId: user.id, error: 'no code in callback' })
     return NextResponse.redirect(new URL('/dashboard/profile?discord=error', baseUrl))
   }
 
   // Validate OAuth state to prevent CSRF
   const stateResult = await validateOAuthState('discord', state)
   if (stateResult !== 'valid') {
+    if (stateResult !== 'consumed') {
+      await logError({ where: 'discord_callback.invalid_state', userId: user.id, error: `state ${stateResult}` })
+    }
     return NextResponse.redirect(new URL(`/dashboard/profile?discord=${stateResult === 'consumed' ? 'linked' : 'invalid_state'}`, baseUrl))
   }
 
   // Retrieve PKCE code verifier
   const codeVerifier = await retrieveCodeVerifier('discord', state)
   if (!codeVerifier) {
+    await logError({ where: 'discord_callback.missing_code_verifier', userId: user.id, error: 'pkce verifier not found' })
     return NextResponse.redirect(new URL('/dashboard/profile?discord=error', baseUrl))
   }
 
@@ -41,12 +48,14 @@ export async function GET(request: NextRequest) {
     // Exchange code for tokens
     const tokens = await exchangeDiscordCodeForTokens(code, codeVerifier)
     if (!tokens) {
+      await logError({ where: 'discord_callback.token_exchange_failed', userId: user.id, error: 'exchangeDiscordCodeForTokens returned null' })
       return NextResponse.redirect(new URL('/dashboard/profile?discord=error', baseUrl))
     }
 
     // Get Discord user info
     const discordUser = await getDiscordUserInfo(tokens.access_token)
     if (!discordUser) {
+      await logError({ where: 'discord_callback.user_info_failed', userId: user.id, error: 'getDiscordUserInfo returned null' })
       return NextResponse.redirect(new URL('/dashboard/profile?discord=error', baseUrl))
     }
 
@@ -58,6 +67,12 @@ export async function GET(request: NextRequest) {
     })
     if (!linked) {
       // Discord account already linked to a different website user.
+      await logError({
+        where: 'discord_callback.link_conflict',
+        userId: user.id,
+        error: 'discordId already linked to another user',
+        context: { discord_id: discordUser.id, discord_username: discordUser.username },
+      })
       return NextResponse.redirect(new URL('/dashboard/profile?discord=conflict', baseUrl))
     }
 
@@ -67,6 +82,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard/profile?discord=linked', baseUrl))
   } catch (error) {
     console.error('Discord callback error:', error)
+    await logError({ where: 'discord_callback.exception', userId: user.id, error })
     return NextResponse.redirect(new URL('/dashboard/profile?discord=error', baseUrl))
   }
 }

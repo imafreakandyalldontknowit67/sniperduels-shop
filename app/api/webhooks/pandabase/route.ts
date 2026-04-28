@@ -4,6 +4,7 @@ import { getDepositByInvoiceId, getDepositByRefId, claimPendingDeposit, addToWal
 import type { Deposit } from '@/lib/storage'
 import { notifyDeposit, notifyDispute, notifyRefund } from '@/lib/discord-webhook'
 import { flagAndBlacklist } from '@/lib/blacklist'
+import { logError } from '@/lib/error-log'
 
 export const dynamic = 'force-dynamic'
 
@@ -132,6 +133,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true })
   } catch (error) {
     console.error('[Webhook] Error:', error)
+    await logError({ where: 'webhook.pandabase.exception', error })
     return NextResponse.json({ received: true })
   }
 }

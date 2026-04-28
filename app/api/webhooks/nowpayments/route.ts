@@ -3,6 +3,7 @@ import { verifyIpnSignature } from '@/lib/nowpayments'
 import { getDeposit, claimPendingDeposit, claimExpiredDeposit, addToWallet, getUser, createLedgerEntry } from '@/lib/storage'
 import { notifyDeposit } from '@/lib/discord-webhook'
 import { processReferralCommission } from '@/lib/referral'
+import { logError } from '@/lib/error-log'
 
 export const dynamic = 'force-dynamic'
 
@@ -105,6 +106,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true })
   } catch (error) {
     console.error('[NOWPayments IPN] Error:', error)
+    await logError({ where: 'webhook.nowpayments.exception', error })
     return NextResponse.json({ received: true })
   }
 }

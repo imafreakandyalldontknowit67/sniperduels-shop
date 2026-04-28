@@ -284,6 +284,23 @@ model SessionBlacklist {
   @@index([expiresAt])
 }
 
+// ─── Error Log (cross-app structured error capture) ───────────────────────
+// Written from both the website and the Discord bot. Queried by a scheduled
+// review agent to triage failures in critical user flows (auth link, order
+// purchase, deposit webhooks).
+model ErrorLog {
+  id        String   @id @default(cuid())
+  source    String   // 'site' | 'bot'
+  where     String   // handler/function name, e.g. 'discord_callback', 'createDiscordUser'
+  userId    String?  // null when not authenticated yet
+  message   String   @db.VarChar(2000)
+  context   String?  @db.VarChar(4000) // JSON-encoded extra fields
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([source, where])
+}
+
 // ─── OAuth State (DB-backed, fallback for cookie loss) ──────────────────────
 model OAuthState {
   state        String   @id

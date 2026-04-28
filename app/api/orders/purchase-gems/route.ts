@@ -20,6 +20,7 @@ import {
 } from '@/lib/storage'
 import { notifyPurchase } from '@/lib/discord-webhook'
 import { getBotLastHeartbeat, getBotGemBalance, BOT_OFFLINE_THRESHOLD_MS } from '@/lib/bot-heartbeat'
+import { logError } from '@/lib/error-log'
 
 const PRICING_TIERS = [
   { min: 1, max: 99, rate: 2.90 },
@@ -32,8 +33,9 @@ function getRate(amountInK: number): number {
 }
 
 export async function POST(request: NextRequest) {
+  let user: Awaited<ReturnType<typeof getCurrentUser>> = null
   try {
-    const user = await getCurrentUser()
+    user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -145,6 +147,7 @@ export async function POST(request: NextRequest) {
         const refunded = await addToWallet(user.id, totalPrice)
         if (!refunded) {
           console.error(`CRITICAL: Refund failed for user ${user.id}, amount $${totalPrice}. Wallet at max.`)
+          await logError({ where: 'purchase_gems.refund_failed', userId: user.id, error: 'wallet at max during refund', context: { amount: totalPrice, vendor: isVendorPurchase, vendorId } })
           return NextResponse.json(
             { error: 'Vendor stock went out. Refund could not be processed - contact support.' },
             { status: 409 }
@@ -161,6 +164,7 @@ export async function POST(request: NextRequest) {
         const refunded = await addToWallet(user.id, totalPrice)
         if (!refunded) {
           console.error(`CRITICAL: Refund failed for user ${user.id}, amount $${totalPrice}. Wallet at max.`)
+          await logError({ where: 'purchase_gems.refund_failed', userId: user.id, error: 'wallet at max during refund', context: { amount: totalPrice, vendor: isVendorPurchase, vendorId } })
           return NextResponse.json(
             { error: 'Gems went out of stock. Refund could not be processed - contact support.' },
             { status: 409 }
@@ -227,6 +231,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Gems purchase error:', error)
+    await logError({ where: 'purchase_gems.exception', userId: user?.id, error })
     return NextResponse.json(
       { error: 'Failed to process gems purchase' },
       { status: 500 }
