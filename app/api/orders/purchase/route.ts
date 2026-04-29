@@ -103,6 +103,7 @@ export async function POST(request: NextRequest) {
       const refunded = await addToWallet(user.id, totalPrice)
       if (!refunded) {
         console.error(`CRITICAL: Refund failed for user ${user.id}, amount $${totalPrice}. Wallet at max.`)
+        await logError({ where: 'purchase_item.refund_failed', userId: user.id, error: 'wallet at max during refund', context: { amount: totalPrice, itemId } })
         return NextResponse.json(
           { error: 'Item went out of stock. Refund could not be processed - contact support.' },
           { status: 409 }

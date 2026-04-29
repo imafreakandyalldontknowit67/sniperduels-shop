@@ -8,7 +8,12 @@ import { logError } from '@/lib/error-log'
 export const dynamic = 'force-dynamic'
 
 async function creditDeposit(deposit: { id: string; userId: string; amount: number }, source: string) {
-  await addToWallet(deposit.userId, deposit.amount)
+  const credited = await addToWallet(deposit.userId, deposit.amount)
+  if (!credited) {
+    console.error(`[NOWPayments IPN] CRITICAL: addToWallet returned null for deposit ${deposit.id} ($${deposit.amount}) — wallet may be at max`)
+    await logError({ where: 'deposit.credit_wallet_failed', userId: deposit.userId, error: 'addToWallet returned null', context: { depositId: deposit.id, amount: deposit.amount } })
+    return
+  }
   createLedgerEntry({
     type: 'deposit',
     userId: deposit.userId,

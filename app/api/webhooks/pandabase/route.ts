@@ -69,7 +69,12 @@ export async function POST(request: NextRequest) {
           console.log(`[Webhook] Already claimed: ${deposit.id}`)
           return NextResponse.json({ received: true })
         }
-        await addToWallet(deposit.userId, deposit.amount)
+        const credited = await addToWallet(deposit.userId, deposit.amount)
+        if (!credited) {
+          console.error(`[Webhook] CRITICAL: addToWallet returned null for deposit ${deposit.id} ($${deposit.amount}) — wallet may be at max`)
+          await logError({ where: 'deposit.credit_wallet_failed', userId: deposit.userId, error: 'addToWallet returned null', context: { depositId: deposit.id, amount: deposit.amount } })
+          break
+        }
         createLedgerEntry({
           type: 'deposit',
           userId: deposit.userId,
