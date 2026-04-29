@@ -105,7 +105,9 @@ export function convertToUsd(
 ): number {
   if (currencyCode === 'USD') return localAmount
   const rate = rates[currencyCode] ?? FALLBACK_RATES[currencyCode] ?? 1
-  return Math.round((localAmount / rate) * 100) / 100
+  // Ceil so the user always gets at least the USD amount the page displayed —
+  // round-trip via convertFromUsd would otherwise lose a sub-cent and short the wallet.
+  return Math.ceil((localAmount / rate) * 100) / 100
 }
 
 export function convertFromUsd(
