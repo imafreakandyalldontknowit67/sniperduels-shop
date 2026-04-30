@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import posthog from 'posthog-js'
 import { Minus, Plus, X, Wallet, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
@@ -30,6 +30,7 @@ interface UserInfo {
 
 export default function GemsPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { login } = useAuth()
   const { formatPrice, formatPricePerK, isUsd, currency } = useCurrency()
   const [amount, setAmount] = useState(5)
@@ -43,6 +44,8 @@ export default function GemsPage() {
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [botOnline, setBotOnline] = useState(true)
+  const [prefilled, setPrefilled] = useState(false)
+  const fromBot = searchParams?.get('fromBot') === '1'
 
   useEffect(() => {
     fetchUser()
@@ -98,6 +101,41 @@ export default function GemsPage() {
       }
     } catch { /* fallback */ }
   }
+
+  // Quicklink prefill from Discord bot: ?amount=&listing=&fromBot=1
+  useEffect(() => {
+    if (prefilled || listings.length === 0) return
+    const amountParam = searchParams?.get('amount')
+    const listingParam = searchParams?.get('listing')
+
+    let nextAmount = amount
+    if (amountParam) {
+      const parsed = parseInt(amountParam)
+      const ceiling = Math.max(...listings.map(l => l.stockK), 1)
+      if (!isNaN(parsed) && parsed >= 1 && parsed <= ceiling) {
+        nextAmount = parsed
+        setAmount(parsed)
+        setInputValue(String(parsed))
+      }
+    }
+
+    if (listingParam) {
+      const exact = listingParam === 'platform'
+        ? listings.find(l => l.type === 'platform' && l.stockK >= nextAmount && nextAmount >= l.minOrderK)
+        : listings.find(l => l.type === 'vendor' && l.vendorId === listingParam && l.stockK >= nextAmount && nextAmount >= l.minOrderK)
+      if (exact) {
+        setSelectedListing(exact)
+      } else {
+        const fallback = listings.find(l => l.stockK >= nextAmount && nextAmount >= l.minOrderK)
+        if (fallback) setSelectedListing(fallback)
+      }
+    } else if (amountParam) {
+      const fallback = listings.find(l => l.stockK >= nextAmount && nextAmount >= l.minOrderK)
+      if (fallback) setSelectedListing(fallback)
+    }
+
+    setPrefilled(true)
+  }, [listings])
 
   function getEffectiveRate(listing: GemListing, amountK: number): number {
     if (listing.bulkTiers && listing.bulkTiers.length > 0) {
@@ -247,6 +285,15 @@ export default function GemsPage() {
                 Join our Discord
               </a>{' '}
               to know when it&apos;s back!
+            </p>
+          </div>
+        )}
+
+        {fromBot && (
+          <div className="mb-6 p-4 text-center" style={{ background: 'rgba(245,158,11,0.1)', border: '2px solid rgba(245,158,11,0.3)' }}>
+            <p className="text-yellow-400 text-xs uppercase font-bold mb-1">Continuing your Discord order</p>
+            <p className="text-gray-400 text-[10px]">
+              Your gems and seller are pre-filled. Confirm below — you&apos;ll be pinged in Discord for delivery.
             </p>
           </div>
         )}
