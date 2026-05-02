@@ -10,6 +10,15 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // geoip-lite ships .dat data files Next.js can't trace through Webpack —
+  // keep it as a runtime require and bundle the data files into the
+  // standalone server output.
+  experimental: {
+    serverComponentsExternalPackages: ['geoip-lite'],
+    outputFileTracingIncludes: {
+      '/api/geo': ['./node_modules/geoip-lite/data/**/*'],
+    },
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'tr.rbxcdn.com' },
