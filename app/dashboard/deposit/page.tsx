@@ -53,14 +53,24 @@ export default function DepositPage() {
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [botOnline, setBotOnline] = useState(true)
   const [taxRegion, setTaxRegion] = useState<string>('')
+  const [taxRegionDetected, setTaxRegionDetected] = useState(false)
+  const [taxRegionEditing, setTaxRegionEditing] = useState(false)
 
+  // Auto-detect from Cloudflare-injected headers on mount. We never let the
+  // customer downgrade to a lower-tax region from the UI — Pandabase taxes
+  // from their billing address regardless. The "(not me?)" link just expands
+  // the picker for genuine VPN / wrong-country cases.
   useEffect(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('depositTaxRegion') : null
-    if (saved && REGIONS.some(r => r.code === saved)) setTaxRegion(saved)
+    fetch('/api/geo', { cache: 'no-store' })
+      .then(r => r.json())
+      .then((g: { detected: boolean; regionCode: string | null }) => {
+        if (g?.detected && g.regionCode && REGIONS.some(r => r.code === g.regionCode)) {
+          setTaxRegion(g.regionCode)
+          setTaxRegionDetected(true)
+        }
+      })
+      .catch(() => { /* fall back to manual picker */ })
   }, [])
-  useEffect(() => {
-    if (taxRegion && typeof window !== 'undefined') localStorage.setItem('depositTaxRegion', taxRegion)
-  }, [taxRegion])
 
   // Crypto-specific state
   const [allCurrencies, setAllCurrencies] = useState<string[]>([])
@@ -376,21 +386,31 @@ export default function DepositPage() {
             return (
               <div className="text-xs mt-3 space-y-2">
                 <div className="px-4">
-                  <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">Where will you be paying from?</label>
-                  <select
-                    value={taxRegion}
-                    onChange={(e) => setTaxRegion(e.target.value)}
-                    className="w-full bg-dark-800 border border-dark-500 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-accent"
-                  >
-                    <option value="">Select your state / country…</option>
-                    <optgroup label="United States">
-                      {REGIONS.filter(r => r.group === 'us').map(r => <option key={r.code} value={r.code}>{r.label}</option>)}
-                    </optgroup>
-                    <optgroup label="International">
-                      {REGIONS.filter(r => r.group === 'intl').map(r => <option key={r.code} value={r.code}>{r.label}</option>)}
-                    </optgroup>
-                    <option value="OTHER">Other / not listed</option>
-                  </select>
+                  {taxRegionDetected && !taxRegionEditing && taxRegion ? (
+                    <div className="flex items-center justify-between gap-2 text-[11px] text-gray-400 bg-dark-800/50 border border-dark-600 rounded px-2 py-1.5">
+                      <span>📍 Detected: <span className="text-white">{REGIONS.find(r => r.code === taxRegion)?.label || taxRegion}</span></span>
+                      <button onClick={() => setTaxRegionEditing(true)} className="text-[10px] text-gray-500 hover:text-accent uppercase tracking-wider">Not me?</button>
+                    </div>
+                  ) : (
+                    <>
+                      <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">Where will you be paying from?</label>
+                      <select
+                        value={taxRegion}
+                        onChange={(e) => setTaxRegion(e.target.value)}
+                        className="w-full bg-dark-800 border border-dark-500 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-accent"
+                      >
+                        <option value="">Select your state / country…</option>
+                        <optgroup label="United States">
+                          {REGIONS.filter(r => r.group === 'us').map(r => <option key={r.code} value={r.code}>{r.label}</option>)}
+                        </optgroup>
+                        <optgroup label="International">
+                          {REGIONS.filter(r => r.group === 'intl').map(r => <option key={r.code} value={r.code}>{r.label}</option>)}
+                        </optgroup>
+                        <option value="OTHER">Other / not listed</option>
+                      </select>
+                      <p className="text-[9px] text-gray-600 mt-1">Pandabase taxes based on your billing address — picking another region here just changes this preview.</p>
+                    </>
+                  )}
                 </div>
                 <div className="space-y-1 text-center">
                   <div className="flex justify-between text-gray-400 px-4">
