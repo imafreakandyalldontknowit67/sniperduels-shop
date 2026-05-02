@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import posthog from 'posthog-js'
 import { Minus, Plus, X, Wallet, ChevronDown } from 'lucide-react'
@@ -29,6 +29,14 @@ interface UserInfo {
 }
 
 export default function GemsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-dark-900" />}>
+      <GemsContent />
+    </Suspense>
+  )
+}
+
+function GemsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { login } = useAuth()
