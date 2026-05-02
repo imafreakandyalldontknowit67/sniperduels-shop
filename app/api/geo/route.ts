@@ -4,8 +4,7 @@ import { findRegion } from '@/lib/us-sales-tax'
 export const dynamic = 'force-dynamic'
 
 // Lazy require so Webpack doesn't try to bundle the .dat data files at build time.
-// eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-explicit-any
-const geoip: { lookup: (ip: string) => { country?: string; region?: string } | null } = require('geoip-lite')
+const geoip: { lookup: (ip: string) => { country?: string; region?: string } | null } = eval('require')('geoip-lite')
 
 /**
  * Detect the customer's tax region.
