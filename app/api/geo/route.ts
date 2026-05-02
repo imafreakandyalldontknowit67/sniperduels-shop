@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { findRegion } from '@/lib/us-sales-tax'
-// @ts-expect-error — geoip-lite has no types in this version
-import geoip from 'geoip-lite'
 
 export const dynamic = 'force-dynamic'
+
+// Lazy require so Webpack doesn't try to bundle the .dat data files at build time.
+// eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-explicit-any
+const geoip: { lookup: (ip: string) => { country?: string; region?: string } | null } = require('geoip-lite')
 
 /**
  * Detect the customer's tax region.
@@ -22,19 +24,26 @@ export async function GET(req: NextRequest) {
   let source: 'cf' | 'geoip' | null = region ? 'cf' : null
 
   // Fallback: offline IP→region lookup
+  let debugIp: string | null = null
+  let debugLookup: unknown = null
+  let debugError: string | null = null
   if (!region) {
     const ip = req.headers.get('cf-connecting-ip')
               || req.headers.get('x-real-ip')
               || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
               || ''
+    debugIp = ip
     if (ip) {
       try {
         const lookup = geoip.lookup(ip)
+        debugLookup = lookup
         if (lookup?.region) {
           region = String(lookup.region).toUpperCase()
           source = 'geoip'
         }
-      } catch { /* lookup error — drop silently */ }
+      } catch (e) {
+        debugError = e instanceof Error ? e.message : String(e)
+      }
     }
   }
 
@@ -52,5 +61,6 @@ export async function GET(req: NextRequest) {
     label: found?.label ?? null,
     rate: found?.rate ?? null,
     raw: { country, region, source },
+    debug: { ip: debugIp, lookup: debugLookup, error: debugError, hasGeoipFn: typeof geoip?.lookup === 'function' },
   })
 }
