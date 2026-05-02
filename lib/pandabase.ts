@@ -16,14 +16,21 @@ function getConfig() {
 
 /**
  * Create a Pandabase v2 checkout session.
- * Returns the session ID (cs_xxx) and checkout URL.
+ * `amount` is what we charge subtotal-wise (wallet credit + our processing fee).
+ * `walletCredit` is what the customer actually gets in their wallet — embedded in
+ * the line-item name so the Pandabase pay page reads "wallet credit ($X.XX)"
+ * instead of the misleading "Wallet Deposit - $chargeAmount" we used to show.
+ *
+ * The trailing `#${refId}` MUST stay at the end of the name — the webhook
+ * matcher (app/api/webhooks/pandabase/route.ts) extracts it via regex.
  */
-export async function createCheckout(amount: number): Promise<{
+export async function createCheckout(amount: number, walletCredit?: number): Promise<{
   sessionId: string
   checkoutUrl: string
   refId: string
 }> {
   const refId = crypto.randomBytes(4).toString('hex').toUpperCase()
+  const credit = walletCredit ?? amount
 
   if (process.env.PANDABASE_DEV_MODE === 'true') {
     return {
@@ -44,7 +51,7 @@ export async function createCheckout(amount: number): Promise<{
     body: JSON.stringify({
       currency: 'usd',
       items: [{
-        name: `Wallet Deposit - $${amount.toFixed(2)} #${refId}`,
+        name: `sniperduels.shop wallet credit ($${credit.toFixed(2)}) #${refId}`,
         amount: Math.round(amount * 100),
         quantity: 1,
       }],

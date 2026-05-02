@@ -58,8 +58,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Charge the customer the deposit amount + processing fee
-    const { sessionId, checkoutUrl, refId } = await createCheckout(chargeAmount)
+    // Charge the customer the deposit amount + processing fee.
+    // Pass roundedAmount as walletCredit so the Pandabase line-item name shows
+    // what the customer actually receives in their wallet, not the marked-up subtotal.
+    const { sessionId, checkoutUrl, refId } = await createCheckout(chargeAmount, roundedAmount)
 
     // Store the original deposit amount (what gets credited to wallet)
     const deposit = await createDeposit({

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useAuth, useCurrency } from '@/components/providers'
 import type { Deposit } from '@/lib/storage'
+import { REGIONS, estimateRegionTax } from '@/lib/us-sales-tax'
 
 const PRESET_AMOUNTS = [5, 10, 25, 50, 100]
 const POPULAR_CURRENCIES = ['btc', 'eth', 'sol', 'usdtsol', 'usdcsol', 'ltc']
@@ -51,6 +52,15 @@ export default function DepositPage() {
   const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [botOnline, setBotOnline] = useState(true)
+  const [taxRegion, setTaxRegion] = useState<string>('')
+
+  useEffect(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('depositTaxRegion') : null
+    if (saved && REGIONS.some(r => r.code === saved)) setTaxRegion(saved)
+  }, [])
+  useEffect(() => {
+    if (taxRegion && typeof window !== 'undefined') localStorage.setItem('depositTaxRegion', taxRegion)
+  }, [taxRegion])
 
   // Crypto-specific state
   const [allCurrencies, setAllCurrencies] = useState<string[]>([])
@@ -356,25 +366,75 @@ export default function DepositPage() {
               Crypto deposits are processed manually with no fees
             </p>
           )}
-          {tab === 'card' && amount && getUsdAmount() >= 5 && (
-            <div className="text-xs text-center mt-3 space-y-1">
-              <div className="flex justify-between text-gray-400 px-4">
-                <span>Wallet credit</span>
-                <span>${getUsdAmount().toFixed(2)} USD</span>
+          {tab === 'card' && amount && getUsdAmount() >= 5 && (() => {
+            const wallet = getUsdAmount()
+            const fee = wallet * 0.07 + 0.35
+            const charge = wallet + fee
+            const taxEst = estimateRegionTax(taxRegion, charge)
+            const total = charge + (taxEst?.tax ?? 0)
+            const cryptoSavings = total - wallet
+            return (
+              <div className="text-xs mt-3 space-y-2">
+                <div className="px-4">
+                  <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">Where will you be paying from?</label>
+                  <select
+                    value={taxRegion}
+                    onChange={(e) => setTaxRegion(e.target.value)}
+                    className="w-full bg-dark-800 border border-dark-500 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-accent"
+                  >
+                    <option value="">Select your state / country…</option>
+                    <optgroup label="United States">
+                      {REGIONS.filter(r => r.group === 'us').map(r => <option key={r.code} value={r.code}>{r.label}</option>)}
+                    </optgroup>
+                    <optgroup label="International">
+                      {REGIONS.filter(r => r.group === 'intl').map(r => <option key={r.code} value={r.code}>{r.label}</option>)}
+                    </optgroup>
+                    <option value="OTHER">Other / not listed</option>
+                  </select>
+                </div>
+                <div className="space-y-1 text-center">
+                  <div className="flex justify-between text-gray-400 px-4">
+                    <span>Wallet credit</span>
+                    <span>${wallet.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-400 px-4">
+                    <span>Processing fee (7% + $0.35)</span>
+                    <span>+${fee.toFixed(2)}</span>
+                  </div>
+                  {taxRegion === 'OTHER' && (
+                    <div className="flex justify-between text-gray-500 px-4 italic">
+                      <span>+ regional tax (varies)</span>
+                      <span>—</span>
+                    </div>
+                  )}
+                  {taxEst && taxEst.tax > 0 && (
+                    <div className="flex justify-between text-gray-400 px-4">
+                      <span>Estimated tax</span>
+                      <span>+${taxEst.tax.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-white font-medium px-4 pt-1 border-t border-dark-600">
+                    <span>{taxEst || taxRegion === 'OTHER' ? 'Estimated total' : 'Total charge (before tax)'}</span>
+                    <span>${total.toFixed(2)}</span>
+                  </div>
+                  {taxEst && (
+                    <p className="text-[10px] text-gray-500 mt-2">Estimate. Final tax computed by Pandabase at checkout based on your billing address — usually within a few cents.</p>
+                  )}
+                  {!isUsd && (
+                    <p className="text-[10px] text-gray-500 mt-2">Pandabase will show the final amount in your local currency at checkout.</p>
+                  )}
+                </div>
+                {(taxEst && taxEst.tax > 0) || taxRegion === 'OTHER' || !taxRegion ? (
+                  <button
+                    onClick={() => { setTab('crypto'); posthog.capture('crypto_upsell_clicked', { savings: cryptoSavings, region: taxRegion || 'unselected' }) }}
+                    className="w-full mt-2 px-4 py-2 rounded border border-[#e1ad2d]/40 bg-[#e1ad2d]/10 hover:bg-[#e1ad2d]/20 text-[11px] text-[#e1ad2d] uppercase tracking-wider font-bold transition-colors"
+                  >
+                    💸 Pay ${wallet.toFixed(2)} in crypto — no fee, no tax →
+                  </button>
+                ) : null}
               </div>
-              <div className="flex justify-between text-gray-400 px-4">
-                <span>Processing fee (7% + $0.35)</span>
-                <span>+${(getUsdAmount() * 0.07 + 0.35).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-white font-medium px-4 pt-1 border-t border-dark-600">
-                <span>Total charge</span>
-                <span>${(getUsdAmount() + getUsdAmount() * 0.07 + 0.35).toFixed(2)}</span>
-              </div>
-              {!isUsd && (
-                <p className="text-[10px] text-gray-500 mt-2">Pandabase will show the final amount in your local currency at checkout.</p>
-              )}
-            </div>
-          )}
+            )
+          })()}
         </div>
 
         {/* Payment Info Section (card tab) */}
@@ -477,10 +537,10 @@ export default function DepositPage() {
               <input type="text" name="website" value={hpField} onChange={(e) => setHpField(e.target.value)} autoComplete="off" tabIndex={-1} />
             </div>
 
-            <div className="flex justify-center">
+            <div className="flex flex-col items-center gap-2">
               <button
                 onClick={handleCardDeposit}
-                disabled={loading || !amount || getUsdAmount() < 5 || !agreedToTerms}
+                disabled={loading || !amount || getUsdAmount() < 5 || !agreedToTerms || !taxRegion}
                 className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <img src="/images/pixel/pngs/asset-59.png" alt="" className="h-[48px] sm:h-[54px] w-auto" style={{ imageRendering: 'pixelated' }} />
@@ -493,6 +553,9 @@ export default function DepositPage() {
                   ) : 'Continue to Payment'}
                 </span>
               </button>
+              {!taxRegion && amount && getUsdAmount() >= 5 && agreedToTerms && (
+                <p className="text-[10px] text-gray-500">Pick your state / country above so we can show you the total before you pay.</p>
+              )}
             </div>
           </>
         )}
