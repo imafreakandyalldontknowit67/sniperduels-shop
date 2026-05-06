@@ -13,6 +13,36 @@ export async function GET(request: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
   const userAgent = request.headers.get('user-agent') || 'unknown'
 
+  // Refuse to handle the OAuth flow on speculative loads (browser prefetch,
+  // link-preview agents, antivirus URL scanners, Discord/Slack unfurlers).
+  // If we let those run, they consume the OAuthState row and complete the
+  // exchange — but their responses (redirect to /login-success) are discarded,
+  // so the cookie never gets set. The user's real navigation then sees a
+  // consumed state, falls through, and lands logged out.
+  // Headers covered:
+  //   Sec-Purpose: prefetch | prefetch;prerender         (Chrome, Firefox 100+)
+  //   Purpose: prefetch                                  (older Chrome, Safari)
+  //   X-Purpose: prefetch | preview                      (older Safari)
+  //   X-moz: prefetch                                    (older Firefox)
+  const secPurpose = request.headers.get('sec-purpose') || ''
+  const purpose = request.headers.get('purpose') || request.headers.get('x-purpose') || request.headers.get('x-moz') || ''
+  const isPrefetch = /prefetch|prerender|preview/i.test(secPurpose) || /prefetch|preview/i.test(purpose)
+  if (isPrefetch) {
+    console.log(`[Auth] Prefetch refused | sec-purpose="${secPurpose}" purpose="${purpose}" ua="${userAgent.slice(0, 60)}"`)
+    return new NextResponse(null, { status: 204 })
+  }
+
+  // Diagnostic: log the navigation context. Most important for debugging is
+  // sec-fetch-site (cross-site = legit OAuth callback from Roblox) vs
+  // (same-origin / none) which would suggest a speculative load.
+  console.log(
+    `[Auth] /redirect entry | state=${state?.slice(0, 8)} ` +
+    `sec-fetch-site=${request.headers.get('sec-fetch-site') || '-'} ` +
+    `sec-fetch-dest=${request.headers.get('sec-fetch-dest') || '-'} ` +
+    `sec-fetch-mode=${request.headers.get('sec-fetch-mode') || '-'} ` +
+    `referer=${request.headers.get('referer')?.slice(0, 80) || '-'}`
+  )
+
   // Track callback received
   captureServerEvent('anonymous', 'login_callback_received', {
     has_code: !!code,
@@ -61,6 +91,7 @@ export async function GET(request: NextRequest) {
   // currently unused on Roblox login but reserved for B1 buy-intent resume).
   const stateMeta = await retrieveCodeVerifier('roblox', state)
   if (!stateMeta) {
+    console.error(`[Auth] FAIL stage=no_code_verifier state=${state?.slice(0, 8)}`)
     captureServerEvent('anonymous', 'login_failed', { reason: 'no_code_verifier', user_agent: userAgent })
     return NextResponse.redirect(new URL('/?error=auth_failed', baseUrl))
   }
@@ -70,6 +101,7 @@ export async function GET(request: NextRequest) {
     // Exchange code for tokens
     const tokens = await exchangeCodeForTokens(code, codeVerifier, baseUrl)
     if (!tokens) {
+      console.error(`[Auth] FAIL stage=token_exchange_failed state=${state?.slice(0, 8)} code_len=${code?.length}`)
       captureServerEvent('anonymous', 'login_failed', { reason: 'token_exchange_failed', user_agent: userAgent })
       return NextResponse.redirect(new URL('/?error=token_exchange_failed', baseUrl))
     }
@@ -77,6 +109,7 @@ export async function GET(request: NextRequest) {
     // Get user info
     const user = await getRobloxUserInfo(tokens.access_token)
     if (!user) {
+      console.error(`[Auth] FAIL stage=user_info_failed state=${state?.slice(0, 8)} access_token_len=${tokens.access_token?.length}`)
       captureServerEvent('anonymous', 'login_failed', { reason: 'user_info_failed', user_agent: userAgent })
       return NextResponse.redirect(new URL('/?error=auth_failed', baseUrl))
     }
@@ -84,9 +117,11 @@ export async function GET(request: NextRequest) {
     // Check account age (must be at least 30 days old)
     // Use same generic error to prevent user enumeration
     if (user.robloxCreatedAt && isAccountTooYoung(user.robloxCreatedAt)) {
+      console.error(`[Auth] FAIL stage=account_too_young user=${user.id} created=${user.robloxCreatedAt}`)
       captureServerEvent(user.id, 'login_failed', { reason: 'account_too_young', user_agent: userAgent })
       return NextResponse.redirect(new URL('/?error=auth_failed', baseUrl))
     }
+    console.log(`[Auth] Login OK | user=${user.id} (${user.name}) state=${state?.slice(0, 8)}`)
 
     // Store user in our database
     const userIsAdmin = isAdmin(user.id)
