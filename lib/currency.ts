@@ -106,13 +106,19 @@ export function formatPrice(
   const rate = rates[currencyCode] ?? FALLBACK_RATES[currencyCode] ?? 1
   const converted = usdAmount * rate
 
-  const { locale } = SUPPORTED_CURRENCIES[currencyCode]
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency: currencyCode,
-    minimumFractionDigits: currencyCode === 'JPY' ? 0 : 2,
-    maximumFractionDigits: currencyCode === 'JPY' ? 0 : 2,
+  // Prefix with the explicit symbol from SUPPORTED_CURRENCIES (e.g. "MX$",
+  // "CA$", "A$", "R$") instead of letting Intl.NumberFormat use the locale's
+  // default — Intl renders MXN/CAD/AUD/BRL as bare "$" in their native locales,
+  // which a customer reading the page can't tell apart from USD. A Mexican
+  // customer was seeing 10K gems for "$521.69" (52 pesos × 10) thinking they
+  // were being charged USD.
+  const { symbol, locale } = SUPPORTED_CURRENCIES[currencyCode]
+  const digits = currencyCode === 'JPY' ? 0 : 2
+  const formatted = new Intl.NumberFormat(locale, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
   }).format(converted)
+  return `${symbol}${formatted}`
 }
 
 export function convertToUsd(

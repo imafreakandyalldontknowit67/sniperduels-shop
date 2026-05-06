@@ -635,6 +635,9 @@ function GemsContent() {
                   <span className="text-white text-xs sm:text-sm uppercase font-bold">Total</span>
                   <span className="text-lg sm:text-xl font-bold text-white">{formatPrice(discountedPrice)}</span>
                 </div>
+                {!isUsd && (
+                  <p className="text-[10px] text-gray-500 mt-1 text-right">≈ ${discountedPrice.toFixed(2)} USD · price shown in {currency}</p>
+                )}
               </div>
             </div>
 
