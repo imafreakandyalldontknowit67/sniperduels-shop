@@ -361,9 +361,14 @@ export interface OAuthStateMeta {
 }
 
 /**
- * Atomically retrieve and DELETE the OAuth state row, returning the verifier
- * plus any payload (`reason`, `intentId`) that was stored with it via
- * `storeOAuthState`. Returns null if the state is missing or already consumed.
+ * Retrieve the OAuth state row's payload (verifier + any `reason`/`intentId`
+ * stored by `storeOAuthState`). Replay protection lives on `consumed=true`
+ * (set atomically by `validateOAuthState`) — we deliberately do NOT delete
+ * the row here. Deleting on first read causes duplicate callbacks (browser
+ * prefetch, bfcache, retry) to see "row missing" instead of "row consumed",
+ * which sends them down the `invalid` branch and shows users `?error=invalid_state`
+ * even though the original callback succeeded. The cleanup sweep in
+ * `storeOAuthState` evicts rows older than 15 min.
  */
 export async function retrieveCodeVerifier(
   provider: 'roblox' | 'discord',
@@ -375,8 +380,6 @@ export async function retrieveCodeVerifier(
     const dbState = await prisma.oAuthState.findUnique({ where: { state } })
     if (!dbState || dbState.provider !== provider) return null
 
-    // Delete to prevent replay
-    await prisma.oAuthState.delete({ where: { state } }).catch(() => {})
     return {
       codeVerifier: dbState.codeVerifier,
       reason: dbState.reason,
