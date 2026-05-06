@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import { getBotLastHeartbeat, setBotHeartbeat, BOT_OFFLINE_THRESHOLD_MS } from '@/lib/bot-heartbeat'
-import { cancelAllPendingOrders } from '@/lib/order-expiry'
+import { settlePendingOrders } from '@/lib/order-expiry'
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -36,13 +36,17 @@ export async function POST(request: NextRequest) {
 
   setBotHeartbeat(gemBalance)
 
-  // Bot came back online — cancel all stale pending orders and refund
+  // Bot came back online — cancel ONLY orders past the auto-expiry threshold and
+  // credit them to wallet. Younger orders stay in `pending` so the next bot poll
+  // picks them up via normal flow (don't throw away fulfillable demand).
   if (wasOffline) {
-    cancelAllPendingOrders('Bot went offline — order auto-cancelled and refunded')
-      .then(count => {
-        if (count > 0) console.log(`[Heartbeat] Bot back online, cancelled ${count} stale orders`)
+    settlePendingOrders('Bot was offline past the 30-minute window — order cancelled, USD credited to your wallet')
+      .then(({ cancelled, left }) => {
+        if (cancelled > 0 || left > 0) {
+          console.log(`[Heartbeat] Bot back online — cancelled ${cancelled} stale orders, left ${left} fresh orders for fulfillment`)
+        }
       })
-      .catch(err => console.error('[Heartbeat] Failed to cancel stale orders:', err))
+      .catch(err => console.error('[Heartbeat] Failed to settle pending orders:', err))
   }
 
   return NextResponse.json({ ok: true })

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import posthog from 'posthog-js'
 import { Minus, Plus, X, Wallet, ChevronDown } from 'lucide-react'
@@ -26,6 +26,8 @@ interface UserInfo {
   walletBalance: number
   loyaltyDiscount: number
   canUseDiscordDiscount: boolean
+  discordLinked: boolean
+  notifyOnBotRecovery: boolean
 }
 
 export default function GemsPage() {
@@ -52,14 +54,44 @@ function GemsContent() {
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [botOnline, setBotOnline] = useState(true)
+  const [offlineSinceMs, setOfflineSinceMs] = useState<number | null>(null)
   const [prefilled, setPrefilled] = useState(false)
   const fromBot = searchParams?.get('fromBot') === '1'
+  const fromRecovery = searchParams?.get('from') === 'recovery'
+  const fromOutageNotify = searchParams?.get('from') === 'outage_notify'
+  const resumeBuyId = searchParams?.get('resumeBuy') ?? null
+  // Track previous bot status across renders to fire `bot_status_changed` only
+  // on actual transitions (not on initial mount).
+  const prevBotOnlineRef = useRef<boolean | null>(null)
+  const [amountChangedSinceMount, setAmountChangedSinceMount] = useState(false)
+  const resumeBuyHandledRef = useRef(false)
+  const outageNotifyHandledRef = useRef(false)
 
   useEffect(() => {
     fetchUser()
     fetchListings()
     fetchBotStatus()
+    // Re-poll every 30s so transitions (offline→online or vice versa) flip the
+    // banner without needing a full page refresh.
+    const id = setInterval(fetchBotStatus, 30_000)
+    return () => clearInterval(id)
   }, [])
+
+  // Fire `bot_status_changed` only on actual transitions.
+  useEffect(() => {
+    if (prevBotOnlineRef.current === null) {
+      prevBotOnlineRef.current = botOnline
+      return
+    }
+    if (prevBotOnlineRef.current !== botOnline) {
+      posthog.capture('bot_status_changed', {
+        online: botOnline,
+        prev_online: prevBotOnlineRef.current,
+        offline_since_ms: offlineSinceMs,
+      })
+      prevBotOnlineRef.current = botOnline
+    }
+  }, [botOnline, offlineSinceMs])
 
   async function fetchBotStatus() {
     try {
@@ -67,6 +99,7 @@ function GemsContent() {
       if (res.ok) {
         const data = await res.json()
         setBotOnline(data.online)
+        setOfflineSinceMs(data.offlineSinceMs ?? null)
       }
     } catch { /* assume online */ }
   }
@@ -89,10 +122,65 @@ function GemsContent() {
             walletBalance: data.walletBalance || 0,
             loyaltyDiscount: data.loyaltyDiscount || 0,
             canUseDiscordDiscount: data.canUseDiscordDiscount || false,
+            discordLinked: !!data.discordLinked,
+            notifyOnBotRecovery: !!data.notifyOnBotRecovery,
           })
         }
       }
     } catch { /* Not logged in */ }
+  }
+
+  // Track when the offline banner is shown so we can fire `outage_banner_shown`
+  // exactly once per outage view (not on every render).
+  const bannerImpressionFiredRef = useRef(false)
+  useEffect(() => {
+    if (botOnline) {
+      bannerImpressionFiredRef.current = false
+      return
+    }
+    if (!bannerImpressionFiredRef.current) {
+      bannerImpressionFiredRef.current = true
+      posthog.capture('outage_banner_shown', {
+        offline_since_ms: offlineSinceMs,
+        logged_in: !!userInfo?.user,
+        discord_linked: !!userInfo?.discordLinked,
+        already_subscribed: !!userInfo?.notifyOnBotRecovery,
+      })
+    }
+  }, [botOnline, offlineSinceMs, userInfo?.user, userInfo?.discordLinked, userInfo?.notifyOnBotRecovery])
+
+  // "DM me when bot's back" inline action for users who already have Discord
+  // linked. Sets `notifyOnBotRecovery=true` on the user; the Discord bot's
+  // recovery batch picks it up and DMs them.
+  const [notifySubmitting, setNotifySubmitting] = useState(false)
+  async function handleNotifyMe() {
+    if (notifySubmitting || !userInfo) return
+    posthog.capture('outage_notify_clicked', { discord_linked: userInfo.discordLinked })
+    if (!userInfo.discordLinked) {
+      // Send through Discord OAuth — link AND set the flag in one trip.
+      posthog.capture('outage_discord_link_clicked')
+      window.location.href = '/api/auth/discord?reason=outage_notify'
+      return
+    }
+    setNotifySubmitting(true)
+    try {
+      const res = await fetch('/api/users/me/notify-prefs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notifyOnBotRecovery: true }),
+      })
+      if (res.ok) {
+        setUserInfo(prev => prev ? { ...prev, notifyOnBotRecovery: true } : prev)
+        setToast({ type: 'success', text: "You're subscribed — we'll DM you the moment the bot's back." })
+        posthog.capture('outage_notify_subscribed', { via: 'inline' })
+      } else {
+        setToast({ type: 'error', text: 'Could not subscribe. Try linking Discord again.' })
+      }
+    } catch {
+      setToast({ type: 'error', text: 'Network error. Try again.' })
+    } finally {
+      setNotifySubmitting(false)
+    }
   }
 
   async function fetchListings() {
@@ -109,6 +197,51 @@ function GemsContent() {
       }
     } catch { /* fallback */ }
   }
+
+  // After Roblox auth, if the user came back via ?from=outage_notify, finish
+  // the chain: linked Discord → set notify-prefs flag inline; otherwise → kick
+  // them through Discord OAuth with reason=outage_notify (which links AND
+  // sets the flag). One-shot via ref so re-renders don't re-trigger.
+  useEffect(() => {
+    if (!fromOutageNotify || !userInfo?.user || outageNotifyHandledRef.current) return
+    outageNotifyHandledRef.current = true
+    if (userInfo.discordLinked) {
+      handleNotifyMe()
+    } else {
+      window.location.href = '/api/auth/discord?reason=outage_notify'
+    }
+  }, [fromOutageNotify, userInfo?.user, userInfo?.discordLinked])
+
+  // Resume buy intent: ?resumeBuy=<id> populated after Roblox auth from a
+  // logged-out Buy click. Hydrate the selected listing + amount and auto-open
+  // the confirm modal so the user can complete in one click.
+  useEffect(() => {
+    if (!resumeBuyId || resumeBuyHandledRef.current || listings.length === 0) return
+    if (!userInfo?.user) return // need to be authed first; effect re-runs when user loads
+    resumeBuyHandledRef.current = true
+    ;(async () => {
+      try {
+        const res = await fetch(`/api/buy-intent/${encodeURIComponent(resumeBuyId)}`)
+        if (!res.ok) {
+          if (res.status === 410) {
+            setToast({ type: 'error', text: 'Your buy session expired. Please re-select.' })
+          }
+          return
+        }
+        const data = await res.json()
+        const targetListing = listings.find(l => l.id === data.listingId)
+        if (!targetListing) return
+        const safeAmount = Math.min(Math.max(1, data.amountK), targetListing.stockK || data.amountK)
+        setSelectedListing(targetListing)
+        setAmount(safeAmount)
+        setInputValue(String(safeAmount))
+        // Open confirm modal once amount + listing are settled
+        setAgreedToTerms(false)
+        setShowConfirm(true)
+        posthog.capture('gems_resume_buy_hydrated', { intent_id: resumeBuyId, amount_k: safeAmount })
+      } catch { /* ignore */ }
+    })()
+  }, [resumeBuyId, listings, userInfo?.user])
 
   // Quicklink prefill from Discord bot: ?amount=&listing=&fromBot=1
   useEffect(() => {
@@ -160,7 +293,10 @@ function GemsContent() {
 
   const handleAmountChange = (newAmount: number, source?: 'preset' | 'input') => {
     if (newAmount >= 1 && newAmount <= maxAmount) {
-      if (source) posthog.capture('gems_amount_changed', { amount_k: newAmount, source })
+      if (source) {
+        posthog.capture('gems_amount_changed', { amount_k: newAmount, source })
+        setAmountChangedSinceMount(true)
+      }
       setAmount(newAmount)
       setInputValue(String(newAmount))
       // Auto-switch listing if current one can't fulfill the new amount
@@ -250,7 +386,21 @@ function GemsContent() {
         return
       }
 
-      posthog.capture('gems_purchased', { amount_k: amount, total_price: discountedPrice })
+      posthog.capture('gems_purchased', {
+        amount_k: amount,
+        gems_k: amount,
+        total_price: discountedPrice,
+        amount_usd: discountedPrice,
+        base_price_usd: totalPrice,
+        rate_per_k: currentRate,
+        listing_id: selectedListing.id,
+        listing_type: selectedListing.type,
+        vendor_id: selectedListing.vendorId,
+        discount_pct: combinedDiscount,
+        has_loyalty_discount: (userInfo.loyaltyDiscount || 0) > 0,
+        has_discord_discount: !!userInfo.canUseDiscordDiscount,
+        from: fromRecovery ? 'recovery' : (fromBot ? 'discord_bot' : 'web'),
+      })
       router.push(`/dashboard/orders/${data.order.id}`)
     } catch {
       posthog.capture('gems_purchase_failed', { amount_k: amount, error: 'network_error' })
@@ -285,14 +435,65 @@ function GemsContent() {
         )}
 
         {!botOnline && (
-          <div className="mb-6 p-4 text-center" style={{ background: 'rgba(239,68,68,0.1)', border: '2px solid rgba(239,68,68,0.3)' }}>
-            <p className="text-red-400 text-xs uppercase font-bold mb-1">Trade bot is offline</p>
-            <p className="text-gray-400 text-[10px]">
-              Purchases are unavailable right now.{' '}
-              <a href="https://discord.gg/sniperduels" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
-                Join our Discord
-              </a>{' '}
-              to know when it&apos;s back!
+          <div
+            className="mb-6 p-4 sm:p-5"
+            style={{ background: 'rgba(245,158,11,0.08)', border: '2px solid rgba(245,158,11,0.35)' }}
+          >
+            <p className="text-yellow-400 text-xs sm:text-sm uppercase font-bold mb-2 text-center">
+              Trade bot is temporarily offline
+            </p>
+            <p className="text-gray-300 text-[11px] sm:text-xs leading-relaxed text-center mb-4">
+              Skip the queue when it&apos;s back &mdash; first to spend wallet credit gets first delivery.
+            </p>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2 sm:gap-3 mb-2">
+              <Link
+                href="/dashboard/deposit?source=outage_offer"
+                onClick={() => posthog.capture('outage_deposit_clicked', { logged_in: !!userInfo?.user })}
+                className="relative inline-flex items-center justify-center pixel-btn-press"
+                style={{ textDecoration: 'none' }}
+              >
+                <img src="/images/pixel/pngs/asset-59.png" alt="" className="h-[44px] sm:h-[48px] w-full sm:w-auto sm:min-w-[180px]" />
+                <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-[10px] sm:text-xs uppercase tracking-wider">
+                  Top up wallet
+                </span>
+              </Link>
+
+              {userInfo?.notifyOnBotRecovery ? (
+                <div
+                  className="inline-flex items-center justify-center px-4 py-3 text-[10px] sm:text-xs uppercase font-bold text-green-400"
+                  style={{ background: 'rgba(34,197,94,0.1)', border: '2px solid rgba(34,197,94,0.3)' }}
+                >
+                  &#10003; You&apos;ll be DM&apos;d on recovery
+                </div>
+              ) : !userInfo?.user ? (
+                <button
+                  onClick={() => {
+                    posthog.capture('outage_login_to_notify_clicked')
+                    document.cookie = `return_to=${encodeURIComponent('/gems?from=outage_notify')};path=/;max-age=600;SameSite=Lax`
+                    window.location.href = '/api/auth/roblox'
+                  }}
+                  className="relative inline-flex items-center justify-center pixel-btn-press"
+                >
+                  <img src="/images/pixel/pngs/asset-60.png" alt="" className="h-[44px] sm:h-[48px] w-full sm:w-auto sm:min-w-[180px]" />
+                  <span className="absolute inset-0 flex items-center justify-center font-bold text-white text-[10px] sm:text-xs uppercase tracking-wider">
+                    Sign in to get DM
+                  </span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleNotifyMe}
+                  disabled={notifySubmitting}
+                  className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50"
+                >
+                  <img src="/images/pixel/pngs/asset-60.png" alt="" className="h-[44px] sm:h-[48px] w-full sm:w-auto sm:min-w-[180px]" />
+                  <span className="absolute inset-0 flex items-center justify-center font-bold text-white text-[10px] sm:text-xs uppercase tracking-wider">
+                    {notifySubmitting ? 'Subscribing...' : 'DM me when back'}
+                  </span>
+                </button>
+              )}
+            </div>
+            <p className="text-gray-500 text-[9px] sm:text-[10px] text-center mt-2">
+              Wallet deposits are non-refundable but always credit to your platform wallet &mdash; spend on anything, anytime.
             </p>
           </div>
         )}
@@ -437,13 +638,49 @@ function GemsContent() {
               </div>
             </div>
 
+            {/* Soft login prompt (B3) — only shows for logged-out users who
+                have engaged with the amount picker (signal of buying intent).
+                Front-loads the auth round-trip so they don't hit the wall on
+                Buy click. */}
+            {!userInfo?.user && amountChangedSinceMount && selectedListing && (
+              <div
+                className="mb-4 p-3 text-center"
+                style={{ background: 'rgba(225,173,45,0.08)', border: '2px solid rgba(225,173,45,0.3)' }}
+              >
+                <p className="text-yellow-400 text-[10px] sm:text-xs uppercase font-bold mb-1">
+                  Sign in to lock in {amount}k @ {formatPricePerK(currentRate)}
+                </p>
+                <p className="text-gray-400 text-[10px] leading-relaxed">
+                  Roblox login takes ~5 seconds &mdash; you&apos;ll come back here ready to buy.
+                </p>
+              </div>
+            )}
+
             {/* Purchase Button */}
             <div className="flex justify-center">
               {!userInfo?.user ? (
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     posthog.capture('gems_buy_blocked', { reason: 'not_logged_in', amount_k: amount })
-                    document.cookie = `return_to=${encodeURIComponent(`/dashboard/deposit?amount=${discountedPrice}`)};path=/;max-age=600;SameSite=Lax`
+                    if (!selectedListing) {
+                      // Defensive: shouldn't happen since button is gated on stock
+                      window.location.href = '/api/auth/roblox'
+                      return
+                    }
+                    // Create a buy intent so we can resume after OAuth.
+                    let resumeUrl = '/gems'
+                    try {
+                      const res = await fetch('/api/buy-intent', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ listingId: selectedListing.id, amountK: amount }),
+                      })
+                      if (res.ok) {
+                        const data = await res.json()
+                        resumeUrl = `/gems?resumeBuy=${encodeURIComponent(data.id)}`
+                      }
+                    } catch { /* fall back to bare /gems */ }
+                    document.cookie = `return_to=${encodeURIComponent(resumeUrl)};path=/;max-age=600;SameSite=Lax`
                     window.location.href = '/api/auth/roblox'
                   }}
                   className="relative inline-flex items-center justify-center pixel-btn-press"
@@ -678,16 +915,37 @@ function GemsContent() {
             {userInfo.walletBalance < discountedPrice ? (
               <div className="space-y-3">
                 <p className="text-red-400 text-xs text-center uppercase">Insufficient balance</p>
-                <Link
-                  href={`/dashboard/deposit?amount=${Math.ceil((discountedPrice - userInfo.walletBalance) * 100) / 100}`}
+                <button
+                  onClick={async () => {
+                    const needed = Math.ceil((discountedPrice - userInfo.walletBalance) * 100) / 100
+                    posthog.capture('gems_buy_blocked', { reason: 'insufficient_balance_modal_add_funds', amount_k: amount, balance: userInfo.walletBalance, required: discountedPrice })
+                    // Create / reuse a buy intent so we can resume the gem purchase after deposit lands.
+                    let intentId: string | null = resumeBuyId
+                    if (!intentId && selectedListing) {
+                      try {
+                        const res = await fetch('/api/buy-intent', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ listingId: selectedListing.id, amountK: amount }),
+                        })
+                        if (res.ok) {
+                          const data = await res.json()
+                          intentId = data.id
+                        }
+                      } catch { /* fall back without intent */ }
+                    }
+                    const url = intentId
+                      ? `/dashboard/deposit?amount=${needed}&intentId=${encodeURIComponent(intentId)}`
+                      : `/dashboard/deposit?amount=${needed}`
+                    window.location.href = url
+                  }}
                   className="relative inline-flex items-center justify-center pixel-btn-press w-full"
-                  style={{ textDecoration: 'none' }}
                 >
                   <img src="/images/pixel/pngs/asset-59.png" alt="" className="h-[48px] sm:h-[52px] w-auto" />
                   <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-[10px] sm:text-xs uppercase tracking-wider">
                     Add Funds
                   </span>
-                </Link>
+                </button>
               </div>
             ) : (
               <div className="flex gap-3">

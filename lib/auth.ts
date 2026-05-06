@@ -291,7 +291,19 @@ function generateState(): string {
   return randomUUID()
 }
 
-export async function storeOAuthState(provider: 'roblox' | 'discord'): Promise<{ state: string; codeChallenge: string }> {
+// Whitelisted OAuth state `reason` values. Validate at the entry point so
+// arbitrary values can't be injected into the state row.
+const ALLOWED_OAUTH_REASONS = ['outage_notify'] as const
+export type OAuthReason = typeof ALLOWED_OAUTH_REASONS[number]
+
+export function isAllowedOAuthReason(value: string | null | undefined): value is OAuthReason {
+  return typeof value === 'string' && (ALLOWED_OAUTH_REASONS as readonly string[]).includes(value)
+}
+
+export async function storeOAuthState(
+  provider: 'roblox' | 'discord',
+  options: { reason?: OAuthReason; intentId?: string } = {},
+): Promise<{ state: string; codeChallenge: string }> {
   const state = generateState()
   const codeVerifier = generateCodeVerifier()
   const codeChallenge = generateCodeChallenge(codeVerifier)
@@ -299,7 +311,13 @@ export async function storeOAuthState(provider: 'roblox' | 'discord'): Promise<{
   // Store in DB — cookies don't survive cross-origin redirect chains
   // (Safari ITP, Chrome cookie partitioning strip them during OAuth flows)
   await prisma.oAuthState.create({
-    data: { state, codeVerifier, provider },
+    data: {
+      state,
+      codeVerifier,
+      provider,
+      reason: options.reason ?? null,
+      intentId: options.intentId ?? null,
+    },
   })
 
   // Clean up old states (>15 min)
@@ -336,16 +354,34 @@ export async function validateOAuthState(provider: 'roblox' | 'discord', state: 
   }
 }
 
-export async function retrieveCodeVerifier(provider: 'roblox' | 'discord', state: string | null): Promise<string | null> {
+export interface OAuthStateMeta {
+  codeVerifier: string
+  reason: string | null
+  intentId: string | null
+}
+
+/**
+ * Atomically retrieve and DELETE the OAuth state row, returning the verifier
+ * plus any payload (`reason`, `intentId`) that was stored with it via
+ * `storeOAuthState`. Returns null if the state is missing or already consumed.
+ */
+export async function retrieveCodeVerifier(
+  provider: 'roblox' | 'discord',
+  state: string | null,
+): Promise<OAuthStateMeta | null> {
   if (!state) return null
 
   try {
     const dbState = await prisma.oAuthState.findUnique({ where: { state } })
-    if (!dbState) return null
+    if (!dbState || dbState.provider !== provider) return null
 
     // Delete to prevent replay
     await prisma.oAuthState.delete({ where: { state } }).catch(() => {})
-    return dbState.codeVerifier
+    return {
+      codeVerifier: dbState.codeVerifier,
+      reason: dbState.reason,
+      intentId: dbState.intentId,
+    }
   } catch (err) {
     console.error('[Auth] Code verifier retrieval failed:', err)
     return null

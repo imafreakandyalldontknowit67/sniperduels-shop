@@ -18,6 +18,8 @@ interface OrderStatus {
   skipDeadline: string | null
   serverLink: string | null
   serverLinkMobile: string | null
+  autoCreditDeadline: string | null
+  botOnline: boolean
 }
 
 function useCountdown(deadline: string | null): string | null {
@@ -73,6 +75,7 @@ export default function OrderTrackingPage() {
 
   const canConfirm = tradesEnabled && inServer
   const skipCountdown = useCountdown(status?.skipDeadline ?? null)
+  const creditCountdown = useCountdown(status?.autoCreditDeadline ?? null)
 
   async function copyServerLink(link: string) {
     try {
@@ -189,7 +192,7 @@ export default function OrderTrackingPage() {
           if (newStatus === 'failed') {
             setToast({
               type: 'error',
-              text: `Order cancelled — ${formatPrice(data.order.totalPrice)} has been refunded to your wallet.`,
+              text: `Order cancelled — ${formatPrice(data.order.totalPrice)} has been credited back to your wallet.`,
             })
           } else if (newStatus === 'completed') {
             setToast({
@@ -487,6 +490,18 @@ export default function OrderTrackingPage() {
             )}
           </div>
 
+          {/* Outage notice — only when bot is offline AND order is pending */}
+          {!status.botOnline && creditCountdown && creditCountdown !== '0:00' && (
+            <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 mb-4 text-left">
+              <p className="text-orange-400 text-sm font-bold mb-1">Trade bot is temporarily offline</p>
+              <p className="text-gray-300 text-xs leading-relaxed">
+                Your order is held. If the bot returns within <span className="font-mono text-orange-300">{creditCountdown}</span>,
+                it will be delivered automatically. Otherwise we&apos;ll credit {formatPrice(order.totalPrice)} back to your wallet — no
+                action needed. You can also cancel now to credit your wallet immediately.
+              </p>
+            </div>
+          )}
+
           <div className="bg-dark-800/50 border border-dark-600 rounded-xl p-5 mb-4">
             <p className="text-gray-400 text-sm mb-4">
               {isVendorDeposit
@@ -687,7 +702,7 @@ export default function OrderTrackingPage() {
               ? 'Something went wrong with the deposit. No gems were deducted.'
               : isVendorWithdrawal
               ? 'Something went wrong with the withdrawal. Your stock has been restored.'
-              : `Something went wrong with the delivery. Your wallet has been refunded (${formatPrice(order.totalPrice)}).`}
+              : `Something went wrong with the delivery. ${formatPrice(order.totalPrice)} has been credited back to your wallet.`}
           </p>
 
           {order.notes && !isVendorOp && (

@@ -1,3 +1,13 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Terms of Service',
+  description: 'Terms of service for Sniper Duels Auto Shop covering eligibility, purchases, payments, prohibited conduct, and dispute resolution.',
+  alternates: {
+    canonical: 'https://sniperduels.shop/terms',
+  },
+}
+
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-dark-900 py-16">
