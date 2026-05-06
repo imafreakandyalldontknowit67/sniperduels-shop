@@ -65,24 +65,20 @@ export async function GET(request: NextRequest) {
   // Validate OAuth state to prevent CSRF
   const stateResult = await validateOAuthState('roblox', state)
 
+  console.log(`[Auth] /redirect stateResult=${stateResult} state=${state?.slice(0, 8)}`)
+
   if (stateResult === 'consumed') {
-    // Duplicate callback (browser prefetch, bfcache, link-preview agent, retry).
-    // The OAuthState row was legitimately processed by the first callback,
-    // which set a session cookie on its response. We can't see that cookie on
-    // THIS request (cookies are read off the headers the browser sent when the
-    // duplicate was made — sleeping doesn't change them). But the user's
-    // browser does have the cookie now, so redirecting them to / will land
-    // them logged in. Don't surface an error — the first call succeeded.
+    console.log(`[Auth] /redirect duplicate-callback redirect→/ state=${state?.slice(0, 8)}`)
     return NextResponse.redirect(new URL('/', baseUrl))
   }
 
   if (stateResult === 'invalid') {
-    // Check if already logged in (e.g. user hit back button after successful login)
     const existingSession = await getSession()
     if (existingSession) {
+      console.log(`[Auth] /redirect invalid-state but session exists redirect→/ state=${state?.slice(0, 8)}`)
       return NextResponse.redirect(new URL('/', baseUrl))
     }
-    console.error('[Auth] Invalid state', { hasState: !!state, state: state?.slice(0, 8) })
+    console.error(`[Auth] FAIL stage=invalid_state state=${state?.slice(0, 8)} hasState=${!!state}`)
     captureServerEvent('anonymous', 'login_failed', { reason: 'invalid_state', user_agent: userAgent })
     return NextResponse.redirect(new URL('/?error=invalid_state', baseUrl))
   }
@@ -121,29 +117,39 @@ export async function GET(request: NextRequest) {
       captureServerEvent(user.id, 'login_failed', { reason: 'account_too_young', user_agent: userAgent })
       return NextResponse.redirect(new URL('/?error=auth_failed', baseUrl))
     }
-    console.log(`[Auth] Login OK | user=${user.id} (${user.name}) state=${state?.slice(0, 8)}`)
+    console.log(`[Auth] /redirect step=user_info_ok user=${user.id} name=${user.name} created=${user.robloxCreatedAt}`)
 
     // Store user in our database
     const userIsAdmin = isAdmin(user.id)
-    await upsertUser({
-      id: user.id,
-      name: user.name,
-      displayName: user.displayName,
-      avatar: user.avatar,
-      robloxCreatedAt: user.robloxCreatedAt,
-      isAdmin: userIsAdmin,
-    })
+    console.log(`[Auth] /redirect step=upsert_user_start user=${user.id} admin=${userIsAdmin}`)
+    try {
+      await upsertUser({
+        id: user.id,
+        name: user.name,
+        displayName: user.displayName,
+        avatar: user.avatar,
+        robloxCreatedAt: user.robloxCreatedAt,
+        isAdmin: userIsAdmin,
+      })
+      console.log(`[Auth] /redirect step=upsert_user_ok user=${user.id}`)
+    } catch (upsertErr) {
+      console.error(`[Auth] /redirect step=upsert_user_fail user=${user.id} err=${String(upsertErr)}`)
+      throw upsertErr
+    }
 
     // Create session (tokens are NOT stored — only needed for the exchange above)
+    console.log(`[Auth] /redirect step=create_session_start user=${user.id} expires_in=${tokens.expires_in}`)
     const sessionToken = await createSession({
       user,
       expiresAt: Date.now() + tokens.expires_in * 1000,
     })
+    console.log(`[Auth] /redirect step=create_session_ok user=${user.id} token_len=${sessionToken?.length}`)
 
     // Auto-apply referral code from cookie (set by /r/[code] link)
     const cookieStore = await cookies()
     const referralCode = cookieStore.get('referral_code')?.value
     if (referralCode) {
+      console.log(`[Auth] /redirect step=referral_apply user=${user.id} code=${referralCode.slice(0, 8)}`)
       applyReferralCode(user.id, referralCode).catch(err =>
         console.error('[Referral] Auto-apply failed:', err)
       )
@@ -167,9 +173,10 @@ export async function GET(request: NextRequest) {
       response.cookies.delete('referral_code')
     }
 
+    console.log(`[Auth] /redirect step=redirect_to_login_success user=${user.id} url=${successUrl.pathname}`)
     return response
   } catch (error) {
-    console.error('Auth callback error:', error)
+    console.error(`[Auth] FAIL stage=exception state=${state?.slice(0, 8)} err=${String(error)} stack=${(error as Error)?.stack?.slice(0, 500)}`)
     captureServerEvent('anonymous', 'login_failed', { reason: 'exception', error: String(error), user_agent: userAgent })
     return NextResponse.redirect(new URL('/?error=auth_failed', baseUrl))
   }

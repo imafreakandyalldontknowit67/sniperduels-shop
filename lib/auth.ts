@@ -65,13 +65,14 @@ const MAX_SESSION_LIFETIME_S = 24 * 60 * 60
 export async function createSession(session: Session): Promise<string> {
   const jti = randomUUID()
   const now = Math.floor(Date.now() / 1000)
+  console.log(`[Auth] createSession | user=${session.user.id} jti=${jti.slice(0, 8)}`)
   const token = await new SignJWT({ ...session, lastActivity: now })
     .setProtectedHeader({ alg: 'HS256' })
     .setJti(jti)
     .setIssuedAt(now)
     .setExpirationTime('7d')
     .sign(SESSION_SECRET)
-
+  console.log(`[Auth] createSession OK | user=${session.user.id} jti=${jti.slice(0, 8)} token_len=${token.length}`)
   return token
 }
 
@@ -208,43 +209,62 @@ export async function exchangeCodeForTokens(code: string, codeVerifier: string, 
   const clientSecret = process.env.ROBLOX_CLIENT_SECRET
   const redirectUri = `${baseUrl || process.env.NEXT_PUBLIC_BASE_URL}/redirect`
 
-  const response = await fetch(ROBLOX_TOKEN_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
-    },
-    body: new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: redirectUri,
-      code_verifier: codeVerifier,
-    }),
-  })
+  console.log(`[Auth] exchangeCodeForTokens start | redirect_uri=${redirectUri} code_len=${code.length} verifier_len=${codeVerifier.length} client_id=${clientId?.slice(0, 8)}`)
 
-  if (!response.ok) {
-    console.error('Token exchange failed:', await response.text())
+  let response
+  try {
+    response = await fetch(ROBLOX_TOKEN_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+      },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: redirectUri,
+        code_verifier: codeVerifier,
+      }),
+    })
+  } catch (err) {
+    console.error(`[Auth] exchangeCodeForTokens NETWORK FAIL: ${String(err)}`)
     return null
   }
 
-  return response.json()
+  if (!response.ok) {
+    const body = await response.text()
+    console.error(`[Auth] exchangeCodeForTokens HTTP ${response.status}: ${body.slice(0, 500)}`)
+    return null
+  }
+
+  const json = await response.json()
+  console.log(`[Auth] exchangeCodeForTokens OK | expires_in=${json.expires_in} access_token_len=${json.access_token?.length}`)
+  return json
 }
 
 export async function getRobloxUserInfo(accessToken: string): Promise<RobloxUser | null> {
-  // Get user ID from OAuth
-  const response = await fetch(ROBLOX_USERINFO_URL, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  })
+  console.log(`[Auth] getRobloxUserInfo start | token_len=${accessToken?.length}`)
+  let response
+  try {
+    response = await fetch(ROBLOX_USERINFO_URL, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+  } catch (err) {
+    console.error(`[Auth] getRobloxUserInfo NETWORK FAIL: ${String(err)}`)
+    return null
+  }
 
   if (!response.ok) {
-    console.error('Failed to get user info:', await response.text())
+    const body = await response.text()
+    console.error(`[Auth] getRobloxUserInfo HTTP ${response.status}: ${body.slice(0, 500)}`)
     return null
   }
 
   const data = await response.json()
   const userId = data.sub
+  console.log(`[Auth] getRobloxUserInfo OK | userId=${userId} sub_len=${String(userId).length}`)
 
   // Fetch full user details from Roblox Users API
   try {
