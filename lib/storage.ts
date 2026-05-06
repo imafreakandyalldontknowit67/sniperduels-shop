@@ -43,8 +43,6 @@ export interface StoredUser {
   lastLogin: string
   isAdmin: boolean
   isVendor: boolean
-  notifyOnBotRecovery: boolean
-  lastRecoveryDmSentAt?: string
 }
 
 function toStoredUser(row: {
@@ -67,8 +65,6 @@ function toStoredUser(row: {
   lastLogin: string
   isAdmin: boolean
   isVendor: boolean
-  notifyOnBotRecovery: boolean
-  lastRecoveryDmSentAt: Date | null
 }): StoredUser {
   return {
     id: row.id,
@@ -88,8 +84,6 @@ function toStoredUser(row: {
     lastLogin: row.lastLogin,
     isAdmin: row.isAdmin,
     isVendor: row.isVendor,
-    notifyOnBotRecovery: row.notifyOnBotRecovery,
-    lastRecoveryDmSentAt: row.lastRecoveryDmSentAt?.toISOString(),
   }
 }
 
@@ -106,7 +100,7 @@ export async function getUser(id: string): Promise<StoredUser | undefined> {
 }
 
 export async function upsertUser(
-  user: Omit<StoredUser, 'createdAt' | 'lastLogin' | 'walletBalance' | 'lifetimeSpend' | 'discordFirstPurchaseUsed' | 'isVendor' | 'notifyOnBotRecovery' | 'lastRecoveryDmSentAt'> & { isAdmin?: boolean }
+  user: Omit<StoredUser, 'createdAt' | 'lastLogin' | 'walletBalance' | 'lifetimeSpend' | 'discordFirstPurchaseUsed' | 'isVendor'> & { isAdmin?: boolean }
 ): Promise<StoredUser> {
   const now = new Date().toISOString()
 

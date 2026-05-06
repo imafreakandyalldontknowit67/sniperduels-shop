@@ -2,11 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { getOrder, getOrders } from '@/lib/storage'
 import type { Order } from '@/lib/storage'
-import { getBotLastHeartbeat, BOT_OFFLINE_THRESHOLD_MS } from '@/lib/bot-heartbeat'
 
 const ESTIMATED_MINUTES_PER_ORDER = 2
 const SKIP_TIMEOUT_MS = 3.5 * 60 * 1000 // 3.5 minutes from reaching #1
-const ORDER_AUTO_CREDIT_MS = 30 * 60 * 1000 // matches ORDER_TIMEOUT_MS in /api/bot/orders
 
 function isVendorOp(order: Order): boolean {
   return !!order.notes?.startsWith('vendor-deposit:') || !!order.notes?.startsWith('vendor-withdrawal:')
@@ -65,13 +63,6 @@ export async function GET(
     let totalInQueue = 0
     let showServerLink = false
     let skipDeadline: string | null = null
-    let autoCreditDeadline: string | null = null
-    let botOnline = true
-
-    // Bot status — used by the UI to decide whether to surface the auto-credit
-    // countdown prominently for outage transparency.
-    const lastHeartbeat = await getBotLastHeartbeat()
-    botOnline = lastHeartbeat > 0 && (Date.now() - lastHeartbeat) < BOT_OFFLINE_THRESHOLD_MS
 
     if (order.status === 'pending') {
       const allOrders = await getOrders()
@@ -95,11 +86,6 @@ export async function GET(
         const deadline = new Date(new Date(frontTime).getTime() + SKIP_TIMEOUT_MS)
         skipDeadline = deadline.toISOString()
       }
-
-      // Auto-credit deadline: order will be cancelled & credited to wallet
-      // 30 minutes after creation if still pending. Surfaced to the UI so users
-      // can see exactly when an outage-stuck order will be settled.
-      autoCreditDeadline = new Date(new Date(order.createdAt).getTime() + ORDER_AUTO_CREDIT_MS).toISOString()
     } else if (order.status === 'processing') {
       queuePosition = 0
       estimatedMinutes = ESTIMATED_MINUTES_PER_ORDER
@@ -119,8 +105,6 @@ export async function GET(
       skipDeadline,
       serverLink,
       serverLinkMobile,
-      autoCreditDeadline,
-      botOnline,
     })
   } catch (error) {
     console.error('Order status error:', error)

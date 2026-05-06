@@ -27,9 +27,6 @@ export async function GET() {
     loyaltyDiscount: loyaltyInfo.discount,
     lifetimeSpend: loyaltyInfo.lifetimeSpend,
     canUseDiscordDiscount: await canUseDiscordFirstPurchaseDiscount(user.id),
-    // Outage recovery DM opt-in (drives the offline-banner UI on /gems and
-    // dashboard/profile)
-    notifyOnBotRecovery: storedUser?.notifyOnBotRecovery ?? false,
   })
   response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate')
   response.headers.set('Pragma', 'no-cache')

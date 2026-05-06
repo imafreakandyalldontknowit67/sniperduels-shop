@@ -58,14 +58,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/?error=invalid_state', baseUrl))
   }
 
-  // Retrieve PKCE code verifier (and any payload set during initiation,
-  // currently unused on Roblox login but reserved for B1 buy-intent resume).
-  const stateMeta = await retrieveCodeVerifier('roblox', state)
-  if (!stateMeta) {
+  // Retrieve PKCE code verifier
+  const codeVerifier = await retrieveCodeVerifier('roblox', state)
+  if (!codeVerifier) {
     captureServerEvent('anonymous', 'login_failed', { reason: 'no_code_verifier', user_agent: userAgent })
     return NextResponse.redirect(new URL('/?error=auth_failed', baseUrl))
   }
-  const { codeVerifier } = stateMeta
 
   try {
     // Exchange code for tokens

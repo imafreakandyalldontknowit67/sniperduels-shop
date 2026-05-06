@@ -39,21 +39,14 @@ model User {
   isAdmin   Boolean @default(false)
   isVendor  Boolean @default(false)
 
-  // Outage recovery DM opt-in (set when user clicks "DM me when bot's back"
-  // either via OAuth ?reason=outage_notify or via /api/users/me/notify-prefs).
-  // Bot fires recovery DM on heartbeat transition offline→online, then clears flag.
-  notifyOnBotRecovery   Boolean   @default(false)
-  lastRecoveryDmSentAt  DateTime?
-
   // Relations
-  orders            Order[]
-  deposits          Deposit[]
-  vendorListings    VendorGemListing[]
-  vendorDeposits    VendorDeposit[]
-  vendorEarnings    VendorEarning[]
-  vendorPayouts     VendorPayout[]
-  creatorProfile    CreatorProfile?
-  pendingBuyIntents PendingBuyIntent[]
+  orders          Order[]
+  deposits        Deposit[]
+  vendorListings  VendorGemListing[]
+  vendorDeposits  VendorDeposit[]
+  vendorEarnings  VendorEarning[]
+  vendorPayouts   VendorPayout[]
+  creatorProfile  CreatorProfile?
 }
 
 // ─── Orders ──────────────────────────────────────────────────────────────────
@@ -315,34 +308,8 @@ model OAuthState {
   provider     String   // 'roblox' | 'discord'
   consumed     Boolean  @default(false)
   createdAt    DateTime @default(now())
-  // Carry intent through OAuth round-trip:
-  //   reason='outage_notify' → set User.notifyOnBotRecovery on Discord callback
-  //   intentId → resume buy flow on Roblox callback (PendingBuyIntent)
-  reason       String?
-  intentId     String?
 
   @@index([createdAt])
-}
-
-// ─── Pending Buy Intent (resume gem purchase across OAuth) ──────────────────
-// Created when a logged-out user clicks Buy on /gems. Carried through Roblox
-// OAuth via OAuthState.intentId. Read on /gems?resumeBuy={id} to hydrate the
-// confirm modal. Optionally consumed by the deposits webhook to auto-execute
-// after a top-up. userId is nullable until OAuth completes; consumer endpoints
-// MUST verify userId matches the authenticated session.
-model PendingBuyIntent {
-  id          String    @id @default(cuid())
-  userId      String?
-  listingId   String
-  amountK     Int
-  createdAt   DateTime  @default(now())
-  expiresAt   DateTime
-  consumedAt  DateTime?
-
-  user User? @relation(fields: [userId], references: [id])
-
-  @@index([userId, consumedAt])
-  @@index([expiresAt])
 }
 
 // ─── Referrals ──────────────────────────────────────────────────────────────

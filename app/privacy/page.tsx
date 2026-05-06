@@ -1,13 +1,3 @@
-import type { Metadata } from 'next'
-
-export const metadata: Metadata = {
-  title: 'Privacy Policy',
-  description: 'How Sniper Duels Auto Shop collects, uses, and protects your information including Roblox account data, Discord linking, and transaction records.',
-  alternates: {
-    canonical: 'https://sniperduels.shop/privacy',
-  },
-}
-
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-dark-900 py-16">

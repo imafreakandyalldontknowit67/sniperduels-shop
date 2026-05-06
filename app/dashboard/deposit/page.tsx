@@ -230,16 +230,6 @@ export default function DepositPage() {
           setCryptoPayment(null)
           setAmount('')
           fetchDeposits()
-          // If the deposit was kicked off from a buy intent (B2), bounce back
-          // to /gems so the resume flow can hydrate state and re-open the
-          // confirm modal with the now-sufficient balance. Short delay so the
-          // user sees the success message before the redirect.
-          const intentId = searchParams.get('intentId')
-          if (intentId) {
-            setTimeout(() => {
-              window.location.href = `/gems?resumeBuy=${encodeURIComponent(intentId)}`
-            }, 1500)
-          }
         } else if (verifyData.status === 'failed' || verifyData.status === 'expired') {
           if (pollRef.current) clearInterval(pollRef.current)
           posthog.capture('deposit_failed', { method: 'crypto', reason: verifyData.status })
@@ -266,13 +256,6 @@ export default function DepositPage() {
         setWalletBalance(data.walletBalance)
         setMessage({ type: 'success', text: data.message })
         fetchDeposits()
-        // B2: bounce back to /gems if a buy intent was attached.
-        const intentId = searchParams.get('intentId')
-        if (intentId) {
-          setTimeout(() => {
-            window.location.href = `/gems?resumeBuy=${encodeURIComponent(intentId)}`
-          }, 1500)
-        }
       } else if (data.error) {
         setMessage({ type: 'error', text: data.error })
       } else {

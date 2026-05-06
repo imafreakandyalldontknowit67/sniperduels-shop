@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser, exchangeDiscordCodeForTokens, getDiscordUserInfo, validateOAuthState, retrieveCodeVerifier, addUserToGuild } from '@/lib/auth'
 import { linkDiscordToUser } from '@/lib/storage'
-import { prisma } from '@/lib/prisma'
 import { logError } from '@/lib/error-log'
 
 export async function GET(request: NextRequest) {
@@ -38,13 +37,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL(`/dashboard/profile?discord=${stateResult === 'consumed' ? 'linked' : 'invalid_state'}`, baseUrl))
   }
 
-  // Retrieve PKCE code verifier (and any payload set during initiation)
-  const stateMeta = await retrieveCodeVerifier('discord', state)
-  if (!stateMeta) {
+  // Retrieve PKCE code verifier
+  const codeVerifier = await retrieveCodeVerifier('discord', state)
+  if (!codeVerifier) {
     await logError({ where: 'discord_callback.missing_code_verifier', userId: user.id, error: 'pkce verifier not found' })
     return NextResponse.redirect(new URL('/dashboard/profile?discord=error', baseUrl))
   }
-  const { codeVerifier, reason } = stateMeta
 
   try {
     // Exchange code for tokens
@@ -80,21 +78,6 @@ export async function GET(request: NextRequest) {
 
     // Auto-join user to Discord server (non-blocking — link succeeds even if this fails)
     await addUserToGuild(tokens.access_token, discordUser.id)
-
-    // Carry through `reason=outage_notify` from /api/auth/discord — set the
-    // recovery DM opt-in flag in the same trip. Best-effort; failure here
-    // shouldn't break the link flow.
-    if (reason === 'outage_notify') {
-      try {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { notifyOnBotRecovery: true },
-        })
-      } catch (err) {
-        await logError({ where: 'discord_callback.set_notify_flag_failed', userId: user.id, error: err })
-      }
-      return NextResponse.redirect(new URL('/dashboard/profile?discord=linked&outage=subscribed', baseUrl))
-    }
 
     return NextResponse.redirect(new URL('/dashboard/profile?discord=linked', baseUrl))
   } catch (error) {
