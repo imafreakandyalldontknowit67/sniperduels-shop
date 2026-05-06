@@ -28,21 +28,15 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Prisma CLI for runtime migrations — Next.js standalone strips dev deps,
-# so we install just the CLI globally. Pinned to match @prisma/client in package.json.
-RUN npm install -g prisma@7.4.1
-
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nextjs:nodejs /app/lib/generated ./lib/generated
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/lib/generated ./lib/generated
 
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Run pending migrations before serving — DATABASE_URL is injected by Coolify
-# at runtime, so it can reach the real DB (unlike the build container).
-CMD ["sh", "-c", "prisma migrate deploy && node server.js"]
+CMD ["node", "server.js"]
