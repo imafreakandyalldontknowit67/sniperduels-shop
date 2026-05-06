@@ -61,8 +61,8 @@ export async function expireOrder(
 }
 
 /**
- * Cancel all pending orders and refund them.
- * Used when bot goes offline and comes back online.
+ * Cancel all pending orders and credit them to wallet.
+ * Used by admin tooling and as a hard reset.
  */
 export async function cancelAllPendingOrders(reason: string): Promise<number> {
   const allOrders = await getOrders()
@@ -73,4 +73,37 @@ export async function cancelAllPendingOrders(reason: string): Promise<number> {
     if (ok) cancelled++
   }
   return cancelled
+}
+
+/**
+ * Called when the bot heartbeat transitions offline → online. Older behavior
+ * was to cancel ALL pending orders, including fresh ones the bot could have
+ * fulfilled in seconds. New behavior: only cancel orders that are already
+ * past the bot-poll auto-expiry threshold (matches ORDER_TIMEOUT_MS in
+ * `app/api/bot/orders/route.ts`). Younger orders are left in `pending` so the
+ * bot's next poll picks them up via normal flow.
+ *
+ * Refunds for cancelled orders go to the user's WALLET (no payment processor
+ * round trip — `expireOrder` already calls `addToWallet`). Deposits remain
+ * non-refundable per platform policy.
+ */
+export async function settlePendingOrders(
+  reason: string,
+  maxAgeMs: number = 30 * 60_000,
+): Promise<{ cancelled: number; left: number }> {
+  const allOrders = await getOrders()
+  const pending = allOrders.filter(o => o.status === 'pending')
+  const now = Date.now()
+  let cancelled = 0
+  let left = 0
+  for (const order of pending) {
+    const age = now - new Date(order.createdAt).getTime()
+    if (age > maxAgeMs) {
+      const ok = await expireOrder(order, reason)
+      if (ok) cancelled++
+    } else {
+      left++
+    }
+  }
+  return { cancelled, left }
 }

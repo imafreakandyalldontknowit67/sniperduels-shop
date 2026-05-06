@@ -1,3 +1,13 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Refund Policy — All Sales Are Final',
+  description: 'Refund policy for Sniper Duels Auto Shop. All sales are final. Undelivered orders are credited back to your platform wallet, never to your original payment method.',
+  alternates: {
+    canonical: 'https://sniperduels.shop/refunds',
+  },
+}
+
 export default function RefundsPage() {
   return (
     <div className="min-h-screen bg-dark-900 py-16">
