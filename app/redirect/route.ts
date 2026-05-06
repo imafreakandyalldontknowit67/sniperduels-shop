@@ -36,15 +36,14 @@ export async function GET(request: NextRequest) {
   const stateResult = await validateOAuthState('roblox', state)
 
   if (stateResult === 'consumed') {
-    // Duplicate callback (browser prefetch/bfcache) — wait briefly for first request to finish
-    await new Promise(r => setTimeout(r, 1500))
-    const existingSession = await getSession()
-    if (existingSession) {
-      return NextResponse.redirect(new URL('/', baseUrl))
-    }
-    console.error('[Auth] State consumed but no session found', { state: state?.slice(0, 8) })
-    captureServerEvent('anonymous', 'login_failed', { reason: 'state_consumed_no_session', user_agent: userAgent })
-    return NextResponse.redirect(new URL('/?error=invalid_state', baseUrl))
+    // Duplicate callback (browser prefetch, bfcache, link-preview agent, retry).
+    // The OAuthState row was legitimately processed by the first callback,
+    // which set a session cookie on its response. We can't see that cookie on
+    // THIS request (cookies are read off the headers the browser sent when the
+    // duplicate was made — sleeping doesn't change them). But the user's
+    // browser does have the cookie now, so redirecting them to / will land
+    // them logged in. Don't surface an error — the first call succeeded.
+    return NextResponse.redirect(new URL('/', baseUrl))
   }
 
   if (stateResult === 'invalid') {
