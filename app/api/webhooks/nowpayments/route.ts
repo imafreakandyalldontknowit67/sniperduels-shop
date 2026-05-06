@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyIpnSignature } from '@/lib/nowpayments'
-import { getDeposit, claimPendingDeposit, claimExpiredDeposit, addToWallet, getUser, createLedgerEntry } from '@/lib/storage'
-import { notifyDeposit } from '@/lib/discord-webhook'
-import { processReferralCommission } from '@/lib/referral'
+import { getDeposit, claimPendingDeposit, claimExpiredDeposit, addToWallet, createLedgerEntry } from '@/lib/storage'
 import { logError } from '@/lib/error-log'
 
 export const dynamic = 'force-dynamic'
@@ -22,8 +20,6 @@ async function creditDeposit(deposit: { id: string; userId: string; amount: numb
     relatedId: deposit.id,
   }).catch(err => console.error('Ledger write failed (crypto deposit):', err))
 
-  const user = await getUser(deposit.userId)
-  await notifyDeposit(user?.name || deposit.userId, deposit.amount)
   console.log(`[NOWPayments IPN] ${source}: ${deposit.id} ($${deposit.amount})`)
 }
 

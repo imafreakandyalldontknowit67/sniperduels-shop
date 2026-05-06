@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyIpnSignature } from '@/lib/nearpayments'
-import { getDeposit, claimPendingDeposit, addToWallet, getUser, createLedgerEntry } from '@/lib/storage'
-import { notifyDeposit } from '@/lib/discord-webhook'
+import { getDeposit, claimPendingDeposit, addToWallet, createLedgerEntry } from '@/lib/storage'
 import { logError } from '@/lib/error-log'
 
 export const dynamic = 'force-dynamic'
@@ -60,8 +59,6 @@ export async function POST(request: NextRequest) {
         relatedId: deposit.id,
       }).catch(err => console.error('Ledger write failed (crypto deposit):', err))
 
-      const user = await getUser(deposit.userId)
-      await notifyDeposit(user?.name || deposit.userId, deposit.amount)
       console.log(`[nearpayments] wallet credit ok user=${deposit.userId} amount=${deposit.amount} dep=${deposit.id}`)
       console.log(`[NearPayments IPN] Completed: ${deposit.id} ($${deposit.amount})`)
     } else if (status === 'failed' || status === 'expired' || status === 'refunded') {

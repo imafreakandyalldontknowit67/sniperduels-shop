@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyWebhookSignature } from '@/lib/pandabase'
 import { getDepositByInvoiceId, getDepositByRefId, claimPendingDeposit, addToWallet, getUser, createLedgerEntry } from '@/lib/storage'
 import type { Deposit } from '@/lib/storage'
-import { notifyDeposit, notifyDispute, notifyRefund } from '@/lib/discord-webhook'
+import { notifyDispute, notifyRefund } from '@/lib/discord-webhook'
 import { flagAndBlacklist } from '@/lib/blacklist'
 import { logError } from '@/lib/error-log'
 
@@ -83,8 +83,6 @@ export async function POST(request: NextRequest) {
           description: `Fiat deposit: $${deposit.amount}`,
           relatedId: deposit.id,
         }).catch(err => console.error('Ledger write failed (fiat deposit):', err))
-        const user = await getUser(deposit.userId)
-        await notifyDeposit(user?.name || deposit.userId, deposit.amount)
         console.log(`[pandabase] wallet credit ok user=${deposit.userId} amount=${deposit.amount} dep=${deposit.id}`)
         console.log(`[Webhook] Deposit completed: ${deposit.id} ($${deposit.amount})`)
         break

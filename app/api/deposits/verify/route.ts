@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
-import { getDeposit, getWalletBalance, claimPendingDeposit, addToWallet, getUser, createLedgerEntry } from '@/lib/storage'
+import { getDeposit, getWalletBalance, claimPendingDeposit, addToWallet, createLedgerEntry } from '@/lib/storage'
 import { getPaymentStatus } from '@/lib/nowpayments'
-import { notifyDeposit } from '@/lib/discord-webhook'
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,8 +39,6 @@ export async function POST(request: NextRequest) {
               description: `Crypto deposit: $${deposit.amount}`,
               relatedId: deposit.id,
             }).catch(err => console.error('Ledger write failed (verify poll):', err))
-            const u = await getUser(deposit.userId)
-            notifyDeposit(u?.name || deposit.userId, deposit.amount).catch(() => {})
             console.log(`[Verify Poll] Recovered deposit via NP status check: ${deposit.id} ($${deposit.amount})`)
             // Refresh deposit to get updated status
             deposit = (await getDeposit(depositId))!

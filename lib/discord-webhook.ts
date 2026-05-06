@@ -46,17 +46,6 @@ async function sendEmbed(embed: Embed): Promise<void> {
   }
 }
 
-export async function notifyDeposit(userName: string, amount: number): Promise<void> {
-  await sendEmbed({
-    title: 'Deposit Received',
-    color: 0x2ecc71, // green
-    fields: [
-      { name: 'User', value: userName, inline: true },
-      { name: 'Amount', value: `$${amount.toFixed(2)}`, inline: true },
-    ],
-  })
-}
-
 export async function notifyRefund(userName: string, amount: number, invoiceId: string): Promise<void> {
   await sendEmbed({
     title: 'Payment Refunded',

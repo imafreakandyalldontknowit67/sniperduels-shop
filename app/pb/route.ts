@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyWebhookSignature } from '@/lib/pandabase'
-import { getDepositByInvoiceId, claimPendingDeposit, addToWallet, getUser } from '@/lib/storage'
-import { notifyDeposit } from '@/lib/discord-webhook'
+import { getDepositByInvoiceId, claimPendingDeposit, addToWallet } from '@/lib/storage'
 
 export async function POST(request: NextRequest) {
   const rawBody = await request.text()
@@ -39,24 +38,18 @@ export async function POST(request: NextRequest) {
   const amount = orderData.amount / 100 // cents to dollars
   console.log(`[Webhook] payment.success for invoice ${invoiceId} — $${amount.toFixed(2)}`)
 
-  // Always send Discord notification
   const deposit = await getDepositByInvoiceId(invoiceId)
   if (deposit) {
     // Atomically claim the deposit — only the first caller (verify or webhook) wins.
     const claimed = await claimPendingDeposit(deposit.id)
-
     if (claimed) {
       await addToWallet(deposit.userId, deposit.amount)
       console.log(`[Webhook] Credited $${deposit.amount.toFixed(2)} to user ${deposit.userId}`)
-
-      const user = await getUser(deposit.userId)
-      await notifyDeposit(user?.name ?? deposit.userId, deposit.amount)
     } else {
       console.log(`[Webhook] Deposit ${deposit.id} already claimed, skipping`)
     }
   } else {
-    // Manual/external payment — just notify Discord
-    await notifyDeposit(orderData.order_number || invoiceId, amount)
+    console.log(`[Webhook] No deposit row matched invoice ${invoiceId} — manual/external payment, no action taken`)
   }
 
   return NextResponse.json({ received: true })
