@@ -634,6 +634,9 @@ export interface Deposit {
   pandabaseRefId?: string
   pandabaseCheckoutUrl: string
   paymentProviderId?: string
+  localAmount?: number
+  localCurrency?: string
+  fxRate?: number
   createdAt: string
   updatedAt: string
   completedAt?: string
@@ -651,6 +654,9 @@ function toDeposit(row: Record<string, unknown>): Deposit {
     pandabaseRefId: (row.pandabaseRefId as string | null) ?? undefined,
     pandabaseCheckoutUrl: row.pandabaseCheckoutUrl as string,
     paymentProviderId: (row.paymentProviderId as string | null) ?? undefined,
+    localAmount: row.localAmount != null ? d(row.localAmount as Decimal) : undefined,
+    localCurrency: (row.localCurrency as string | null) ?? undefined,
+    fxRate: row.fxRate != null ? d(row.fxRate as Decimal) : undefined,
     createdAt: row.createdAt as string,
     updatedAt: row.updatedAt as string,
     completedAt: (row.completedAt as string | null) ?? undefined,
@@ -701,6 +707,9 @@ export async function createDeposit(
       pandabaseInvoiceId: deposit.pandabaseInvoiceId,
       pandabaseRefId: deposit.pandabaseRefId,
       pandabaseCheckoutUrl: deposit.pandabaseCheckoutUrl,
+      localAmount: deposit.localAmount,
+      localCurrency: deposit.localCurrency,
+      fxRate: deposit.fxRate,
       createdAt: now,
       updatedAt: now,
       completedAt: deposit.completedAt,

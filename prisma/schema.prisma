@@ -115,6 +115,12 @@ model Deposit {
   pandabaseRefId        String?
   pandabaseCheckoutUrl  String
   paymentProviderId     String?       // NOWPayments payment_id for crypto deposits
+  // Provenance for non-USD deposits — what the user typed in their currency
+  // and the rate used to convert to the USD `amount` actually credited.
+  // Nullable so legacy USD-only rows don't need a backfill.
+  localAmount           Decimal?      @db.Decimal(12, 2)
+  localCurrency         String?       @db.VarChar(3)
+  fxRate                Decimal?      @db.Decimal(12, 6)
   createdAt             String
   updatedAt             String
   completedAt           String?

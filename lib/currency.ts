@@ -77,6 +77,23 @@ export function detectCurrencyFromLocale(locale: string): CurrencyCode {
   return 'USD'
 }
 
+// ISO country code → preferred currency. Used when geo lookup tells us the
+// user is in CA but `navigator.language` says en-US (common on Canadian
+// Windows installs). Geo wins because it's authoritative.
+const COUNTRY_TO_CURRENCY: Record<string, CurrencyCode> = {
+  US: 'USD', CA: 'CAD', GB: 'GBP', AU: 'AUD', NZ: 'AUD',
+  BR: 'BRL', MX: 'MXN', JP: 'JPY', IN: 'INR', PH: 'PHP',
+  DE: 'EUR', FR: 'EUR', ES: 'EUR', IT: 'EUR', NL: 'EUR',
+  IE: 'EUR', PT: 'EUR', AT: 'EUR', BE: 'EUR', LU: 'EUR',
+  FI: 'EUR', GR: 'EUR', EE: 'EUR', LV: 'EUR', LT: 'EUR',
+  SK: 'EUR', SI: 'EUR', MT: 'EUR', CY: 'EUR',
+}
+
+export function detectCurrencyFromCountry(countryCode: string): CurrencyCode | null {
+  const upper = countryCode.toUpperCase()
+  return COUNTRY_TO_CURRENCY[upper] ?? null
+}
+
 export function formatPrice(
   usdAmount: number,
   currencyCode: CurrencyCode,

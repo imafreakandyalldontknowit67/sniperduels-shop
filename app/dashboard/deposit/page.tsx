@@ -145,6 +145,7 @@ export default function DepositPage() {
 
   // ── Card/CashApp deposit (Pandabase) ──
   async function handleCardDeposit() {
+    const numAmount = parseFloat(amount)
     const usdAmount = getUsdAmount()
     if (!usdAmount || usdAmount < 5) {
       setMessage({ type: 'error', text: `Amount must be at least ${currencySymbol}${Math.ceil(minLocal)}` })
@@ -156,7 +157,8 @@ export default function DepositPage() {
       const res = await fetch('/api/deposits/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: usdAmount, website: hpField }),
+        // Send the user's local-currency input; server converts to USD authoritatively.
+        body: JSON.stringify({ amount: numAmount, localCurrency: currency, website: hpField }),
       })
       const data = await res.json()
       if (!res.ok) { setMessage({ type: 'error', text: data.error || 'Failed to create deposit' }); return }
@@ -193,6 +195,7 @@ export default function DepositPage() {
 
   // ── Crypto deposit (NearPayments) ──
   async function handleCryptoDeposit() {
+    const numAmount = parseFloat(amount)
     const usdAmount = getUsdAmount()
     if (!usdAmount || usdAmount < 5) {
       setMessage({ type: 'error', text: `Amount must be at least ${currencySymbol}${Math.ceil(minLocal)}` })
@@ -205,7 +208,8 @@ export default function DepositPage() {
       const res = await fetch('/api/deposits/create-crypto', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: usdAmount, currency: cryptoCurrency, website: hpField }),
+        // Send the user's local-currency input; server converts to USD authoritatively.
+        body: JSON.stringify({ amount: numAmount, localCurrency: currency, currency: cryptoCurrency, website: hpField }),
       })
       const data = await res.json()
       if (!res.ok) { setMessage({ type: 'error', text: data.error || 'Failed to create crypto deposit' }); return }

@@ -4,6 +4,7 @@ import { getUserDeposits, createDeposit, expireStaleDeposits, getSiteSettings } 
 import { createCheckout } from '@/lib/pandabase'
 import { flagAndBlacklist } from '@/lib/blacklist'
 import { logError } from '@/lib/error-log'
+import { localToUsd, usdToLocal, isSupportedCurrency } from '@/lib/fx'
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
-    const { amount, website } = body
+    const { amount, localCurrency, website } = body
 
     // Honeypot check
     if (website) {
@@ -37,11 +38,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ depositId: `dep_${Date.now()}`, checkoutUrl: '/dashboard/deposit', sessionId: '' })
     }
 
-    if (!amount || typeof amount !== 'number' || amount < 5) {
-      return NextResponse.json({ error: 'Amount must be at least $5' }, { status: 400 })
+    if (!amount || typeof amount !== 'number' || amount <= 0) {
+      return NextResponse.json({ error: 'Amount must be a positive number' }, { status: 400 })
     }
 
-    const roundedAmount = Math.round(amount * 100) / 100
+    // Server-authoritative FX conversion. Treat the inbound `amount` as the
+    // user's local currency. Default to USD when unset (older client builds).
+    const inputCurrency = (typeof localCurrency === 'string' && localCurrency.toUpperCase()) || 'USD'
+    if (!isSupportedCurrency(inputCurrency)) {
+      return NextResponse.json({ error: `Unsupported currency: ${inputCurrency}` }, { status: 400 })
+    }
+    const fx = await localToUsd(amount, inputCurrency)
+    const roundedAmount = fx.usdAmount
+
+    if (roundedAmount < 5) {
+      const minLocal = await usdToLocal(5, inputCurrency)
+      return NextResponse.json(
+        { error: `Minimum is $5 USD${inputCurrency !== 'USD' ? ` (~${minLocal.toFixed(2)} ${inputCurrency})` : ''}` },
+        { status: 400 }
+      )
+    }
 
     // 7% + $0.35 processing fee on card/fiat deposits to cover Pandabase fees
     const PROCESSING_FEE_RATE = 0.07
@@ -74,7 +90,15 @@ export async function POST(request: NextRequest) {
       pandabaseInvoiceId: sessionId,
       pandabaseRefId: refId,
       pandabaseCheckoutUrl: checkoutUrl,
+      localAmount: amount,
+      localCurrency: inputCurrency,
+      fxRate: fx.rate,
     })
+
+    if (fx.source === 'fallback') {
+      console.error(`[deposit.create] FX_FALLBACK_USED user=${user.id} currency=${inputCurrency} rate=${fx.rate} reason=rates_api_down dep=${deposit.id}`)
+    }
+    console.log(`[deposit.card] user=${user.id} local=${amount} ${inputCurrency} rate=${fx.rate} usd=$${roundedAmount} fx=${fx.source} dep=${deposit.id}`)
 
     return NextResponse.json({
       depositId: deposit.id,

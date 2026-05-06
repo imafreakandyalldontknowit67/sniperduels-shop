@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { getUserDeposits, createDeposit, updateDeposit, expireStaleDeposits, getSiteSettings } from '@/lib/storage'
 import { createCryptoPayment } from '@/lib/nowpayments'
 import { flagAndBlacklist } from '@/lib/blacklist'
+import { localToUsd, usdToLocal, isSupportedCurrency } from '@/lib/fx'
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
-    const { amount, currency, website } = body
+    const { amount, currency, localCurrency, website } = body
 
     // Honeypot
     if (website) {
@@ -36,15 +37,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ depositId: `dep_${Date.now()}`, payAddress: '0x0000', payAmount: 0 })
     }
 
-    if (!amount || typeof amount !== 'number' || amount < 5) {
-      return NextResponse.json({ error: 'Amount must be at least $5' }, { status: 400 })
+    if (!amount || typeof amount !== 'number' || amount <= 0) {
+      return NextResponse.json({ error: 'Amount must be a positive number' }, { status: 400 })
     }
 
     if (!currency || typeof currency !== 'string' || currency.length > 20) {
       return NextResponse.json({ error: 'Invalid cryptocurrency' }, { status: 400 })
     }
 
-    const roundedAmount = Math.round(amount * 100) / 100
+    // Server-authoritative FX conversion. Treat the inbound `amount` as
+    // the user's local currency. Default to USD when the client doesn't
+    // send `localCurrency` (older client builds + server-to-server callers).
+    const inputCurrency = (typeof localCurrency === 'string' && localCurrency.toUpperCase()) || 'USD'
+    if (!isSupportedCurrency(inputCurrency)) {
+      return NextResponse.json({ error: `Unsupported currency: ${inputCurrency}` }, { status: 400 })
+    }
+    const fx = await localToUsd(amount, inputCurrency)
+    const roundedAmount = fx.usdAmount
+
+    if (roundedAmount < 5) {
+      const minLocal = await usdToLocal(5, inputCurrency)
+      return NextResponse.json(
+        { error: `Minimum is $5 USD${inputCurrency !== 'USD' ? ` (~${minLocal.toFixed(2)} ${inputCurrency})` : ''}` },
+        { status: 400 }
+      )
+    }
 
     await expireStaleDeposits()
 
@@ -67,7 +84,15 @@ export async function POST(request: NextRequest) {
       pandabaseInvoiceId: `crypto_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       pandabaseCheckoutUrl: '',
       pandabaseRefId: currency,
+      localAmount: amount,
+      localCurrency: inputCurrency,
+      fxRate: fx.rate,
     })
+
+    if (fx.source === 'fallback') {
+      console.error(`[deposit.create] FX_FALLBACK_USED user=${user.id} currency=${inputCurrency} rate=${fx.rate} reason=rates_api_down dep=${deposit.id}`)
+    }
+    console.log(`[deposit.crypto] user=${user.id} local=${amount} ${inputCurrency} rate=${fx.rate} usd=$${roundedAmount} fx=${fx.source} crypto=${currency} dep=${deposit.id}`)
 
     // Create NOWPayments payment
     let paymentResult
