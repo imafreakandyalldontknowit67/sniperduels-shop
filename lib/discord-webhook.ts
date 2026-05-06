@@ -1,5 +1,10 @@
 const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || ''
 
+// Once Discord returns "Unknown Webhook" (10015) we stop trying — the URL points
+// at a webhook the user deleted. Without this flag we retry on every payment,
+// log a 404 each time, and add ~200ms to each request for nothing.
+let webhookKilled = false
+
 interface Embed {
   title: string
   color: number
@@ -8,6 +13,7 @@ interface Embed {
 }
 
 async function sendEmbed(embed: Embed): Promise<void> {
+  if (!WEBHOOK_URL || webhookKilled) return
   try {
     const res = await fetch(WEBHOOK_URL, {
       method: 'POST',
@@ -17,6 +23,13 @@ async function sendEmbed(embed: Embed): Promise<void> {
     if (!res.ok) {
       const body = await res.text()
       console.error(`[Discord Webhook] HTTP ${res.status}: ${body}`)
+      // Discord returns 404 with JSON `{"code":10015,"message":"Unknown Webhook"}`
+      // when the webhook was deleted. Latch the kill switch so we don't keep
+      // hammering on every order/deposit.
+      if (res.status === 404 && body.includes('"code": 10015')) {
+        webhookKilled = true
+        console.error('[Discord Webhook] Webhook deleted on Discord side — disabling until restart. Update DISCORD_WEBHOOK_URL env to re-enable.')
+      }
     }
   } catch (error) {
     console.error('[Discord Webhook] Failed to send:', error)
