@@ -5,22 +5,37 @@ import { logError } from '@/lib/error-log'
 
 export const dynamic = 'force-dynamic'
 
-async function creditDeposit(deposit: { id: string; userId: string; amount: number }, source: string) {
-  const credited = await addToWallet(deposit.userId, deposit.amount)
+async function creditDeposit(
+  deposit: { id: string; userId: string; amount: number },
+  source: string,
+  override?: { creditUsd: number; description: string },
+) {
+  const amount = override ? override.creditUsd : deposit.amount
+  const credited = await addToWallet(deposit.userId, amount)
   if (!credited) {
-    console.error(`[NOWPayments IPN] CRITICAL: addToWallet returned null for deposit ${deposit.id} ($${deposit.amount}) — wallet may be at max`)
-    await logError({ where: 'deposit.credit_wallet_failed', userId: deposit.userId, error: 'addToWallet returned null', context: { depositId: deposit.id, amount: deposit.amount } })
+    console.error(`[NOWPayments IPN] CRITICAL: addToWallet returned null for deposit ${deposit.id} ($${amount}) — wallet may be at max`)
+    await logError({ where: 'deposit.credit_wallet_failed', userId: deposit.userId, error: 'addToWallet returned null', context: { depositId: deposit.id, amount } })
     return
   }
   createLedgerEntry({
     type: 'deposit',
     userId: deposit.userId,
-    amount: deposit.amount,
-    description: `Crypto deposit: $${deposit.amount}`,
+    amount,
+    description: override ? override.description : `Crypto deposit: $${amount}`,
     relatedId: deposit.id,
   }).catch(err => console.error('Ledger write failed (crypto deposit):', err))
 
-  console.log(`[NOWPayments IPN] ${source}: ${deposit.id} ($${deposit.amount})`)
+  // Sync the deposit row's `amount` field to what was actually credited so the
+  // dashboard doesn't show $47.52 when only $35.22 hit the wallet.
+  if (override && override.creditUsd !== deposit.amount) {
+    const { prisma } = await import('@/lib/prisma')
+    await prisma.deposit.update({
+      where: { id: deposit.id },
+      data: { amount: override.creditUsd, updatedAt: new Date().toISOString() },
+    }).catch(err => console.error('[NOWPayments IPN] Failed to sync deposit amount:', err))
+  }
+
+  console.log(`[NOWPayments IPN] ${source}: ${deposit.id} ($${amount})`)
 }
 
 async function tryClaimDeposit(deposit: { id: string; status: string }): Promise<boolean> {
@@ -77,19 +92,49 @@ export async function POST(request: NextRequest) {
       await creditDeposit(deposit, 'Completed')
 
     } else if (status === 'partially_paid') {
-      // Network fees can cause tiny shortfalls (e.g. $0.12 on a $27 deposit).
-      // If the user paid ≥98% of the expected crypto amount, credit them fully.
+      // Auto-credit ANY partial payment proportionally so funds never get
+      // stranded. Works for every NowPayments-accepted currency (BTC/ETH/SOL/
+      // USDC/USDT/etc) because the math is on the ratio, not the crypto.
+      //
+      // Special case ≥98%: credit the FULL intended amount (covers network-fee
+      // dust where user paid ~99% — they shouldn't lose 1% to gas).
+      // Below 98%: credit proportional USD = price_amount * (actually_paid / pay_amount).
+      // Below dust threshold ($0.50): skip — not worth the wallet noise.
       const actuallyPaid = Number(payload.actually_paid || 0)
       const expectedPay = Number(payload.pay_amount || 0)
+      const priceAmount = Number(payload.price_amount || deposit.amount)
+      const payCurrency = String(payload.pay_currency || '?')
 
-      if (expectedPay > 0 && actuallyPaid >= expectedPay * 0.98) {
-        console.log(`[NOWPayments IPN] Partially paid but within 98% threshold (${actuallyPaid}/${expectedPay}): ${deposit.id}`)
-        const claimed = await tryClaimDeposit(deposit)
-        if (claimed) {
-          await creditDeposit(deposit, 'Completed (partial ≥98%)')
-        }
+      if (expectedPay <= 0 || actuallyPaid <= 0) {
+        console.log(`[NOWPayments IPN] Partial with zero amounts (paid=${actuallyPaid} expected=${expectedPay}): ${deposit.id} — skipping`)
       } else {
-        console.log(`[NOWPayments IPN] Partially paid below threshold (${actuallyPaid}/${expectedPay}): ${deposit.id} — waiting`)
+        const ratio = actuallyPaid / expectedPay
+        const ratioPct = (ratio * 100).toFixed(2)
+
+        if (ratio >= 0.98) {
+          // Network-fee dust — credit the full intended amount.
+          console.log(`[nowpayments] partial near-full credit ok user=${deposit.userId} expected=$${priceAmount} paid=$${priceAmount} ratio=${ratioPct}% crypto=${payCurrency} dep=${deposit.id}`)
+          const claimed = await tryClaimDeposit(deposit)
+          if (claimed) {
+            await creditDeposit(deposit, `Completed (partial ${ratioPct}% — within fee tolerance)`)
+          }
+        } else {
+          // Proportional credit. Round to 2 decimals.
+          const creditUsd = Math.round(priceAmount * ratio * 100) / 100
+
+          if (creditUsd < 0.50) {
+            console.log(`[nowpayments] partial below dust threshold ($${creditUsd}, ratio=${ratioPct}%, crypto=${payCurrency}): ${deposit.id} — not crediting`)
+          } else {
+            console.log(`[nowpayments] partial credit ok user=${deposit.userId} expected=$${priceAmount} paid=$${creditUsd} ratio=${ratioPct}% crypto=${payCurrency} dep=${deposit.id}`)
+            const claimed = await tryClaimDeposit(deposit)
+            if (claimed) {
+              await creditDeposit(deposit, `Completed (partial ${ratioPct}%)`, {
+                creditUsd,
+                description: `Crypto deposit (partial ${ratioPct}%): $${creditUsd} of $${priceAmount} (paid ${actuallyPaid} ${payCurrency} of ${expectedPay} expected)`,
+              })
+            }
+          }
+        }
       }
 
     } else if (status === 'failed' || status === 'expired' || status === 'refunded') {
