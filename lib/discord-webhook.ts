@@ -14,25 +14,35 @@ interface Embed {
 
 async function sendEmbed(embed: Embed): Promise<void> {
   if (!WEBHOOK_URL || webhookKilled) return
+  const startedAt = Date.now()
+  const type = embed.title || 'unknown'
   try {
     const res = await fetch(WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ embeds: [{ ...embed, timestamp: new Date().toISOString() }] }),
+      signal: AbortSignal.timeout(5000),
     })
+    const dur = Date.now() - startedAt
     if (!res.ok) {
       const body = await res.text()
-      console.error(`[Discord Webhook] HTTP ${res.status}: ${body}`)
+      console.error(`[Discord Webhook] sent type="${type}" status=${res.status} dur=${dur}ms err=${body.slice(0, 200)}`)
       // Discord returns 404 with JSON `{"code":10015,"message":"Unknown Webhook"}`
-      // when the webhook was deleted. Latch the kill switch so we don't keep
-      // hammering on every order/deposit.
+      // when the webhook was deleted. Latch the kill switch.
       if (res.status === 404 && body.includes('"code": 10015')) {
         webhookKilled = true
         console.error('[Discord Webhook] Webhook deleted on Discord side — disabling until restart. Update DISCORD_WEBHOOK_URL env to re-enable.')
       }
+      return
     }
+    console.log(`[Discord Webhook] sent type="${type}" status=${res.status} dur=${dur}ms`)
   } catch (error) {
-    console.error('[Discord Webhook] Failed to send:', error)
+    const dur = Date.now() - startedAt
+    if (error instanceof Error && error.name === 'TimeoutError') {
+      console.error(`[Discord Webhook] timeout type="${type}" dur=${dur}ms`)
+    } else {
+      console.error(`[Discord Webhook] network error type="${type}" dur=${dur}ms err=${error instanceof Error ? error.message : String(error)}`)
+    }
   }
 }
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyIpnSignature } from '@/lib/nearpayments'
 import { getDeposit, claimPendingDeposit, addToWallet, getUser, createLedgerEntry } from '@/lib/storage'
 import { notifyDeposit } from '@/lib/discord-webhook'
+import { logError } from '@/lib/error-log'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,7 +45,13 @@ export async function POST(request: NextRequest) {
       }
 
       // Credit wallet 1:1
-      await addToWallet(deposit.userId, deposit.amount)
+      const credited = await addToWallet(deposit.userId, deposit.amount)
+      if (!credited) {
+        console.error(`[nearpayments] WALLET_CREDIT_FAILED user=${deposit.userId} amount=${deposit.amount} dep=${deposit.id}`)
+        await logError({ where: 'deposit.crypto_credit_wallet_failed', userId: deposit.userId, error: 'addToWallet returned null', context: { depositId: deposit.id, amount: deposit.amount } })
+        // Return 5xx so NowPayments retries the IPN.
+        return NextResponse.json({ error: 'wallet credit failed' }, { status: 500 })
+      }
       createLedgerEntry({
         type: 'deposit',
         userId: deposit.userId,
@@ -55,6 +62,7 @@ export async function POST(request: NextRequest) {
 
       const user = await getUser(deposit.userId)
       await notifyDeposit(user?.name || deposit.userId, deposit.amount)
+      console.log(`[nearpayments] wallet credit ok user=${deposit.userId} amount=${deposit.amount} dep=${deposit.id}`)
       console.log(`[NearPayments IPN] Completed: ${deposit.id} ($${deposit.amount})`)
     } else if (status === 'failed' || status === 'expired' || status === 'refunded') {
       const { prisma } = await import('@/lib/prisma')
@@ -67,7 +75,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true })
   } catch (error) {
-    console.error('[NearPayments IPN] Error:', error)
-    return NextResponse.json({ received: true })
+    console.error('[nearpayments] UNHANDLED_EXCEPTION', error instanceof Error ? error.message : String(error))
+    await logError({ where: 'webhook.nearpayments.exception', error })
+    // Return 5xx so NowPayments retries the IPN.
+    return NextResponse.json({ error: 'internal' }, { status: 500 })
   }
 }

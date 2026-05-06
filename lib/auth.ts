@@ -225,6 +225,7 @@ export async function exchangeCodeForTokens(code: string, codeVerifier: string, 
         redirect_uri: redirectUri,
         code_verifier: codeVerifier,
       }),
+      signal: AbortSignal.timeout(8000),
     })
   } catch (err) {
     console.error(`[Auth] exchangeCodeForTokens NETWORK FAIL: ${String(err)}`)
@@ -250,6 +251,7 @@ export async function getRobloxUserInfo(accessToken: string): Promise<RobloxUser
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
+      signal: AbortSignal.timeout(8000),
     })
   } catch (err) {
     console.error(`[Auth] getRobloxUserInfo NETWORK FAIL: ${String(err)}`)
@@ -268,7 +270,9 @@ export async function getRobloxUserInfo(accessToken: string): Promise<RobloxUser
 
   // Fetch full user details from Roblox Users API
   try {
-    const userResponse = await fetch(`https://users.roblox.com/v1/users/${userId}`)
+    const userResponse = await fetch(`https://users.roblox.com/v1/users/${userId}`, {
+      signal: AbortSignal.timeout(8000),
+    })
     if (userResponse.ok) {
       const userData = await userResponse.json()
 
@@ -276,7 +280,8 @@ export async function getRobloxUserInfo(accessToken: string): Promise<RobloxUser
       let avatar: string | undefined
       try {
         const avatarResponse = await fetch(
-          `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=150x150&format=Png&isCircular=false`
+          `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=150x150&format=Png&isCircular=false`,
+          { signal: AbortSignal.timeout(8000) }
         )
         if (avatarResponse.ok) {
           const avatarData = await avatarResponse.json()
@@ -451,23 +456,31 @@ export async function exchangeDiscordCodeForTokens(code: string, codeVerifier: s
   const clientSecret = process.env.DISCORD_CLIENT_SECRET
   const redirectUri = `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/discord/callback`
 
-  const response = await fetch(DISCORD_TOKEN_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      client_id: clientId || '',
-      client_secret: clientSecret || '',
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: redirectUri,
-      code_verifier: codeVerifier,
-    }),
-  })
+  let response: Response
+  try {
+    response = await fetch(DISCORD_TOKEN_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        client_id: clientId || '',
+        client_secret: clientSecret || '',
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: redirectUri,
+        code_verifier: codeVerifier,
+      }),
+      signal: AbortSignal.timeout(8000),
+    })
+  } catch (err) {
+    console.error(`[Auth] exchangeDiscordCodeForTokens NETWORK FAIL: ${String(err)}`)
+    return null
+  }
 
   if (!response.ok) {
-    console.error('Discord token exchange failed:', await response.text())
+    const body = await response.text()
+    console.error(`[Auth] exchangeDiscordCodeForTokens HTTP ${response.status}: ${body.slice(0, 500)}`)
     return null
   }
 
@@ -475,14 +488,22 @@ export async function exchangeDiscordCodeForTokens(code: string, codeVerifier: s
 }
 
 export async function getDiscordUserInfo(accessToken: string): Promise<DiscordUser | null> {
-  const response = await fetch(DISCORD_USER_URL, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  })
+  let response: Response
+  try {
+    response = await fetch(DISCORD_USER_URL, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      signal: AbortSignal.timeout(8000),
+    })
+  } catch (err) {
+    console.error(`[Auth] getDiscordUserInfo NETWORK FAIL: ${String(err)}`)
+    return null
+  }
 
   if (!response.ok) {
-    console.error('Failed to get Discord user info:', await response.text())
+    const body = await response.text()
+    console.error(`[Auth] getDiscordUserInfo HTTP ${response.status}: ${body.slice(0, 500)}`)
     return null
   }
 
@@ -514,6 +535,7 @@ export async function addUserToGuild(accessToken: string, discordUserId: string)
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ access_token: accessToken }),
+      signal: AbortSignal.timeout(8000),
     })
 
     if (response.status === 201) {

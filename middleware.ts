@@ -50,7 +50,11 @@ function sendHoneypotAlert(ip: string, path: string, ua: string, reason: string)
         timestamp: new Date().toISOString(),
       }],
     }),
-  }).catch(() => {})
+    signal: AbortSignal.timeout(3000),
+  }).catch(err => {
+    // Edge runtime — minimal error surface, just log
+    console.warn('[honeypot-alert] webhook failed:', err instanceof Error ? err.message : String(err))
+  })
 }
 
 function trackApiProbe(ip: string, pathname: string): boolean {

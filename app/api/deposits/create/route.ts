@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { getUserDeposits, createDeposit, expireStaleDeposits, getSiteSettings } from '@/lib/storage'
 import { createCheckout } from '@/lib/pandabase'
 import { flagAndBlacklist } from '@/lib/blacklist'
+import { logError } from '@/lib/error-log'
 
 export async function POST(request: NextRequest) {
   try {
@@ -83,7 +84,8 @@ export async function POST(request: NextRequest) {
       chargeAmount,
     })
   } catch (error) {
-    console.error('Deposit creation error:', error)
+    console.error('[deposits/create] exception:', error instanceof Error ? error.message : String(error))
+    await logError({ where: 'deposits.create.exception', error })
     return NextResponse.json({ error: 'Failed to create deposit' }, { status: 500 })
   }
 }

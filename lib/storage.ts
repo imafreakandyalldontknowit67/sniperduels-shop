@@ -175,7 +175,8 @@ export async function linkDiscordToUser(
       },
     })
     return toStoredUser(row)
-  } catch {
+  } catch (err) {
+    console.error('[storage] linkDiscordToUser failed:', err instanceof Error ? err.message : String(err))
     return null
   }
 }
@@ -192,7 +193,8 @@ export async function unlinkDiscordFromUser(userId: string): Promise<StoredUser 
       },
     })
     return toStoredUser(row)
-  } catch {
+  } catch (err) {
+    console.error('[storage] unlinkDiscordFromUser failed:', err instanceof Error ? err.message : String(err))
     return null
   }
 }

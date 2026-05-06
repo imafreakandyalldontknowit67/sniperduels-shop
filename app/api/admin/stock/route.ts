@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser, isAdmin } from '@/lib/auth'
 import { getStock, createStockItem, RARITIES, FX_EFFECTS, FRAGTRAK_TYPES } from '@/lib/storage'
+import { logError } from '@/lib/error-log'
 
 const VALID_TYPES = ['sniper', 'knife', 'crate'] as const
 
@@ -72,6 +73,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(item)
   } catch (error) {
+    console.error('[admin/stock] create exception:', error instanceof Error ? error.message : String(error))
+    await logError({ where: 'admin.stock.create_exception', userId: user.id, error })
     return NextResponse.json({ error: 'Failed to create item' }, { status: 500 })
   }
 }

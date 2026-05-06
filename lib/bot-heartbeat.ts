@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { setGemStock } from '@/lib/storage'
+import { logError } from '@/lib/error-log'
 
 export const BOT_OFFLINE_THRESHOLD_MS = 120_000
 
@@ -46,12 +47,15 @@ export function setBotHeartbeat(gemBalance?: number): void {
     }
   }
 
-  // Fire-and-forget DB write
+  // Fire-and-forget DB write — but log when it fails so we notice cache going stale.
   prisma.botState.upsert({
     where: { key: 'lastHeartbeat' },
     update: { value: String(lastHeartbeat) },
     create: { key: 'lastHeartbeat', value: String(lastHeartbeat) },
-  }).catch(() => {})
+  }).catch(err => {
+    console.error('[bot-heartbeat] cache write failed:', err instanceof Error ? err.message : String(err))
+    logError({ where: 'bot_heartbeat.cache_write_failed', error: err }).catch(() => {})
+  })
 }
 
 async function syncPlatformStock(botBalanceRaw: number) {

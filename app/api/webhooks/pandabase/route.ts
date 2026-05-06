@@ -71,9 +71,10 @@ export async function POST(request: NextRequest) {
         }
         const credited = await addToWallet(deposit.userId, deposit.amount)
         if (!credited) {
-          console.error(`[Webhook] CRITICAL: addToWallet returned null for deposit ${deposit.id} ($${deposit.amount}) — wallet may be at max`)
+          console.error(`[pandabase] WALLET_CREDIT_FAILED user=${deposit.userId} amount=${deposit.amount} dep=${deposit.id}`)
           await logError({ where: 'deposit.credit_wallet_failed', userId: deposit.userId, error: 'addToWallet returned null', context: { depositId: deposit.id, amount: deposit.amount } })
-          break
+          // Return 5xx so Pandabase retries — silent 200 here means orphaned payment.
+          return NextResponse.json({ error: 'wallet credit failed' }, { status: 500 })
         }
         createLedgerEntry({
           type: 'deposit',
@@ -84,6 +85,7 @@ export async function POST(request: NextRequest) {
         }).catch(err => console.error('Ledger write failed (fiat deposit):', err))
         const user = await getUser(deposit.userId)
         await notifyDeposit(user?.name || deposit.userId, deposit.amount)
+        console.log(`[pandabase] wallet credit ok user=${deposit.userId} amount=${deposit.amount} dep=${deposit.id}`)
         console.log(`[Webhook] Deposit completed: ${deposit.id} ($${deposit.amount})`)
         break
       }
@@ -137,8 +139,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true })
   } catch (error) {
-    console.error('[Webhook] Error:', error)
+    console.error('[pandabase] UNHANDLED_EXCEPTION', error instanceof Error ? error.message : String(error))
     await logError({ where: 'webhook.pandabase.exception', error })
-    return NextResponse.json({ received: true })
+    // Return 5xx so Pandabase retries instead of accepting a silent failure.
+    return NextResponse.json({ error: 'internal' }, { status: 500 })
   }
 }

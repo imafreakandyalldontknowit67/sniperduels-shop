@@ -70,33 +70,38 @@ export async function flagAndBlacklist(opts: {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
     await fetch(`${baseUrl}/api/internal/blacklist-sync?ip=${encodeURIComponent(ip)}`, {
       headers: { 'x-internal-secret': process.env.SESSION_SECRET || '' },
+      signal: AbortSignal.timeout(3000),
     })
-  } catch {
-    // Non-critical
+  } catch (err) {
+    console.warn('[blacklist] middleware sync failed:', err instanceof Error ? err.message : String(err))
   }
 
   // Send Discord alert
-  try {
-    await fetch(HONEYPOT_WEBHOOK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        embeds: [{
-          title: 'Honeypot Triggered',
-          color: 0xff0000,
-          fields: [
-            { name: 'IP', value: ip || 'unknown', inline: true },
-            { name: 'User ID', value: userId || 'unauthenticated', inline: true },
-            { name: 'Endpoint', value: endpoint, inline: false },
-            { name: 'Reason', value: reason, inline: false },
-            { name: 'User-Agent', value: (userAgent || 'none').slice(0, 200), inline: false },
-          ],
-          timestamp: new Date().toISOString(),
-        }],
-      }),
-    })
-  } catch {
-    // Non-critical
+  if (HONEYPOT_WEBHOOK) {
+    try {
+      const res = await fetch(HONEYPOT_WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          embeds: [{
+            title: 'Honeypot Triggered',
+            color: 0xff0000,
+            fields: [
+              { name: 'IP', value: ip || 'unknown', inline: true },
+              { name: 'User ID', value: userId || 'unauthenticated', inline: true },
+              { name: 'Endpoint', value: endpoint, inline: false },
+              { name: 'Reason', value: reason, inline: false },
+              { name: 'User-Agent', value: (userAgent || 'none').slice(0, 200), inline: false },
+            ],
+            timestamp: new Date().toISOString(),
+          }],
+        }),
+        signal: AbortSignal.timeout(5000),
+      })
+      console.log(`[blacklist] honeypot alert sent ip=${ip} status=${res.status}`)
+    } catch (err) {
+      console.warn('[blacklist] honeypot alert failed:', err instanceof Error ? err.message : String(err))
+    }
   }
 }
 
