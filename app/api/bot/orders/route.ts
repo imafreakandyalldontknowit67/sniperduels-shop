@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import { getOrders, getUser, updateOrder } from '@/lib/storage'
 import type { Order } from '@/lib/storage'
-import { expireOrder } from '@/lib/order-expiry'
+import { expireOrder, settlePendingOrders } from '@/lib/order-expiry'
+import { setBotOrdersPollSeen, getBotLastOrdersPoll, BOT_POLL_THRESHOLD_MS } from '@/lib/bot-heartbeat'
 
 // Orders older than this are auto-expired (in milliseconds)
 const ORDER_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
@@ -57,6 +58,24 @@ function sortOrders(orders: Order[]): Order[] {
 export async function GET(request: NextRequest) {
   if (!authenticateBot(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Record this as a work-loop liveness signal. The bot's heartbeat thread is
+  // separate from its work loop, so an authenticated GET here is the strongest
+  // proof the bot is actually alive AND processing — used by /api/bot/status.
+  // Detect a transition from "work-loop dead" → "alive" so we can settle any
+  // stuck orders the same way the heartbeat route does on a hard offline→online.
+  const prevPoll = await getBotLastOrdersPoll()
+  const workLoopWasStuck = prevPoll > 0 && (Date.now() - prevPoll) > BOT_POLL_THRESHOLD_MS
+  setBotOrdersPollSeen()
+  if (workLoopWasStuck) {
+    settlePendingOrders('Bot work loop was stuck past the 30-minute window — order cancelled, USD credited to your wallet')
+      .then(({ cancelled, left }) => {
+        if (cancelled > 0 || left > 0) {
+          console.log(`[BotPoll] Work loop resumed — cancelled ${cancelled} stale orders, left ${left} fresh orders for fulfillment`)
+        }
+      })
+      .catch(err => console.error('[BotPoll] Failed to settle pending orders:', err))
   }
 
   const { searchParams } = new URL(request.url)

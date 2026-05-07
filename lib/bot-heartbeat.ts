@@ -3,11 +3,17 @@ import { setGemStock } from '@/lib/storage'
 import { logError } from '@/lib/error-log'
 
 export const BOT_OFFLINE_THRESHOLD_MS = 120_000
+// Order-poll signal threshold. The bot polls /api/bot/orders on its work
+// loop; if it stops, the work loop is stuck even when the heartbeat thread
+// is still alive. 180s = 3x typical poll cadence.
+export const BOT_POLL_THRESHOLD_MS = 180_000
 
 // In-memory cache (fast reads, hydrated from DB on first access after deploy)
 let lastHeartbeat: number = 0
+let lastOrdersPoll: number = 0
 let botGemBalance: number | null = null
 let hydrated = false
+let pollHydrated = false
 let lastSyncTime = 0
 const SYNC_INTERVAL = 5 * 60_000 // Sync stock every 5 minutes max
 
@@ -27,6 +33,62 @@ export async function getBotLastHeartbeat(): Promise<number> {
     }
   }
   return lastHeartbeat
+}
+
+export async function getBotLastOrdersPoll(): Promise<number> {
+  if (lastOrdersPoll > 0) return lastOrdersPoll
+
+  if (!pollHydrated) {
+    pollHydrated = true
+    try {
+      const row = await prisma.botState.findUnique({ where: { key: 'lastOrdersPoll' } })
+      if (row) {
+        lastOrdersPoll = parseInt(row.value, 10) || 0
+      }
+    } catch {
+      // DB read failed — stay at 0, will recover on next poll
+    }
+  }
+  return lastOrdersPoll
+}
+
+export function setBotOrdersPollSeen(): void {
+  lastOrdersPoll = Date.now()
+  // Fire-and-forget DB write (cheap upsert; no logError needed — high frequency).
+  prisma.botState.upsert({
+    where: { key: 'lastOrdersPoll' },
+    update: { value: String(lastOrdersPoll) },
+    create: { key: 'lastOrdersPoll', value: String(lastOrdersPoll) },
+  }).catch(err => {
+    console.error('[bot-heartbeat] poll write failed:', err instanceof Error ? err.message : String(err))
+  })
+}
+
+// True liveness: heartbeat thread alive AND work loop polling the queue.
+// Heartbeat alone is not enough because the trade bot's heartbeat thread is
+// independent of its work loop; if the work loop crashes/hangs, heartbeats
+// keep firing and the website would falsely report "online".
+export async function isBotEffectivelyOnline(): Promise<{
+  online: boolean
+  heartbeatAgeMs: number | null
+  pollAgeMs: number | null
+  reason: 'ok' | 'no_signals' | 'stale_heartbeat' | 'stale_poll'
+}> {
+  const [hb, poll] = await Promise.all([getBotLastHeartbeat(), getBotLastOrdersPoll()])
+  const now = Date.now()
+  const heartbeatAgeMs = hb > 0 ? now - hb : null
+  const pollAgeMs = poll > 0 ? now - poll : null
+
+  if (hb === 0 && poll === 0) {
+    return { online: false, heartbeatAgeMs, pollAgeMs, reason: 'no_signals' }
+  }
+  if (heartbeatAgeMs === null || heartbeatAgeMs > BOT_OFFLINE_THRESHOLD_MS) {
+    return { online: false, heartbeatAgeMs, pollAgeMs, reason: 'stale_heartbeat' }
+  }
+  if (pollAgeMs === null || pollAgeMs > BOT_POLL_THRESHOLD_MS) {
+    return { online: false, heartbeatAgeMs, pollAgeMs, reason: 'stale_poll' }
+  }
+  return { online: true, heartbeatAgeMs, pollAgeMs, reason: 'ok' }
 }
 
 export function getBotGemBalance(): number | null {
