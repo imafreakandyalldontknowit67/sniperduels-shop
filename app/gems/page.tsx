@@ -146,9 +146,20 @@ function GemsContent() {
             discordLinked: !!data.discordLinked,
             notifyOnBotRecovery: !!data.notifyOnBotRecovery,
           })
+          return
         }
       }
-    } catch { /* Not logged in */ }
+    } catch { /* Not logged in — fall through to set logged-out sentinel */ }
+    // Logged-out path: set a resolved-but-no-user sentinel so consumers that
+    // gate on `userInfo === null` (e.g. the pre-auth banner) can proceed.
+    setUserInfo({
+      user: null,
+      walletBalance: 0,
+      loyaltyDiscount: 0,
+      canUseDiscordDiscount: false,
+      discordLinked: false,
+      notifyOnBotRecovery: false,
+    })
   }
 
   // Track when the offline banner is shown so we can fire `outage_banner_shown`
