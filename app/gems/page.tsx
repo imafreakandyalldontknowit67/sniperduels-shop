@@ -38,6 +38,19 @@ export default function GemsPage() {
   )
 }
 
+// Mounted at module-scope so all click handlers can compute time-since-load
+// without re-creating the value on every render.
+const PAGE_LOAD_MS = typeof window !== 'undefined' ? Date.now() : 0
+
+function detectDeviceType(): 'Desktop' | 'Mobile' | 'Tablet' {
+  if (typeof window === 'undefined') return 'Desktop'
+  try {
+    if (window.matchMedia('(max-width: 640px)').matches) return 'Mobile'
+    if (window.matchMedia('(max-width: 1024px)').matches) return 'Tablet'
+  } catch { /* fall through */ }
+  return 'Desktop'
+}
+
 function GemsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -436,6 +449,54 @@ function GemsContent() {
     ? Math.min(...listings.filter(l => l.stockK > 0).map(l => l.pricePerK))
     : 2.90
 
+  // Generic per-element click instrumentation. Listens at the page wrapper
+  // level, walks up to the closest data-ph-id, and fires `gems_element_clicked`
+  // (always) plus `gems_disabled_button_clicked` (when target is disabled).
+  // This is the rage-click investigation hook.
+  function handleInstrumentedClick(e: React.MouseEvent<HTMLDivElement>) {
+    const target = e.target as Element | null
+    if (!target) return
+    const tagged = target.closest('[data-ph-id]') as HTMLElement | null
+    if (!tagged) return
+
+    const elementId = tagged.getAttribute('data-ph-id') || 'unknown'
+    const ariaDisabled = tagged.getAttribute('aria-disabled') === 'true'
+    const nativeDisabled =
+      (tagged as HTMLButtonElement).disabled === true ||
+      tagged.hasAttribute('disabled')
+    const classDisabled =
+      tagged.classList.contains('disabled') ||
+      tagged.classList.contains('opacity-50') // visually-disabled style used on /gems
+    const isDisabled = ariaDisabled || nativeDisabled || classDisabled
+
+    // If the clicked element carries its own listing id (e.g. listing card),
+    // surface it on the event so we can disambiguate which card was clicked
+    // even though all listing cards share the same element_id.
+    const clickedListingId =
+      tagged.getAttribute('data-ph-listing-id') ||
+      selectedListing?.id ||
+      null
+    const clickedListingType = tagged.getAttribute('data-ph-listing-type') || null
+
+    const payload = {
+      element_id: elementId,
+      auth_state: userInfo?.user ? 'logged_in' : 'logged_out',
+      is_disabled: isDisabled,
+      current_amount: discountedPrice,
+      current_gems_qty: amount,
+      current_listing_id: clickedListingId,
+      current_listing_type: clickedListingType,
+      device_type: detectDeviceType(),
+      viewport_width: typeof window !== 'undefined' ? window.innerWidth : null,
+      time_since_page_load_ms: PAGE_LOAD_MS ? Date.now() - PAGE_LOAD_MS : null,
+    }
+
+    posthog.capture('gems_element_clicked', payload)
+    if (isDisabled) {
+      posthog.capture('gems_disabled_button_clicked', payload)
+    }
+  }
+
   function handlePurchaseClick() {
     const authState = userInfo?.user ? 'logged_in' : 'logged_out'
     const balanceUsd = userInfo?.walletBalance ?? null
@@ -608,7 +669,7 @@ function GemsContent() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-900">
+    <div className="min-h-screen bg-dark-900" onClick={handleInstrumentedClick}>
       {/* Pre-auth banner (B-fix): logged-out visitors landing on /gems get a
           sticky top banner pointing them to login. Banner sits ABOVE the
           listings; dismiss persists in sessionStorage so it doesn't nag this
@@ -678,7 +739,11 @@ function GemsContent() {
           >
             <div className="flex items-start gap-3">
               <p className="text-xs flex-1 uppercase">{toast.text}</p>
-              <button onClick={() => setToast(null)} className="text-current opacity-60 hover:opacity-100">
+              <button
+                data-ph-id="gems-toast-close"
+                onClick={() => setToast(null)}
+                className="text-current opacity-60 hover:opacity-100"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -698,6 +763,7 @@ function GemsContent() {
             </p>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2 sm:gap-3 mb-2">
               <Link
+                data-ph-id="gems-outage-topup-wallet"
                 href="/dashboard/deposit?source=outage_offer"
                 onClick={() => posthog.capture('outage_deposit_clicked', { logged_in: !!userInfo?.user })}
                 className="relative inline-flex items-center justify-center pixel-btn-press"
@@ -718,6 +784,7 @@ function GemsContent() {
                 </div>
               ) : !userInfo?.user ? (
                 <button
+                  data-ph-id="gems-outage-signin-for-dm"
                   onClick={() => {
                     posthog.capture('outage_login_to_notify_clicked')
                     document.cookie = `return_to=${encodeURIComponent('/gems?from=outage_notify')};path=/;max-age=600;SameSite=Lax`
@@ -732,6 +799,7 @@ function GemsContent() {
                 </button>
               ) : (
                 <button
+                  data-ph-id="gems-outage-notify-me"
                   onClick={handleNotifyMe}
                   disabled={notifySubmitting}
                   className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50"
@@ -803,6 +871,7 @@ function GemsContent() {
                 {PRESET_AMOUNTS.map((preset) => (
                   <button
                     key={preset}
+                    data-ph-id={`gems-amount-preset-${preset}`}
                     onClick={() => handleAmountChange(preset, 'preset')}
                     className={`relative inline-flex items-center justify-center pixel-btn-press ${amount !== preset ? 'opacity-50' : ''}`}
                   >
@@ -825,6 +894,7 @@ function GemsContent() {
               <label className="block text-[10px] sm:text-xs text-white mb-2 sm:mb-3 uppercase font-bold">Custom Amount (in thousands)</label>
               <div className="flex items-center gap-2 sm:gap-3">
                 <button
+                  data-ph-id="gems-amount-stepper-down"
                   onClick={() => handleAmountChange(amount - 1, '-')}
                   disabled={amount <= 1}
                   className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
@@ -834,6 +904,7 @@ function GemsContent() {
                 </button>
                 <div className="flex-1 relative">
                   <input
+                    data-ph-id="gems-amount-input"
                     type="text"
                     inputMode="numeric"
                     value={inputValue}
@@ -845,6 +916,7 @@ function GemsContent() {
                   <span className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm sm:text-base uppercase">k</span>
                 </div>
                 <button
+                  data-ph-id="gems-amount-stepper-up"
                   onClick={() => handleAmountChange(amount + 1, '+')}
                   disabled={amount >= maxAmount}
                   className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
@@ -914,6 +986,7 @@ function GemsContent() {
             <div className="flex justify-center">
               {!userInfo?.user ? (
                 <button
+                  data-ph-id="gems-login-cta"
                   onClick={async () => {
                     posthog.capture('gems_buy_blocked', {
                       reason: 'not_logged_in',
@@ -948,8 +1021,10 @@ function GemsContent() {
                 </button>
               ) : (
                 <button
+                  data-ph-id="gems-buy-button"
                   onClick={handlePurchaseClick}
                   disabled={selectedStockK < amount}
+                  aria-disabled={selectedStockK < amount}
                   className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ minHeight: 52, minWidth: 180 }}
                 >
@@ -994,8 +1069,17 @@ function GemsContent() {
                     : listing.pricePerK
 
                   return (
-                    <div key={listing.id} className={!hasStock || !inRange ? 'opacity-40' : ''}>
+                    <div
+                      key={listing.id}
+                      data-ph-id="gems-listing-card"
+                      data-ph-listing-id={listing.id}
+                      data-ph-listing-type={listing.type}
+                      className={!hasStock || !inRange ? 'opacity-40' : ''}
+                    >
                       <button
+                        data-ph-id="gems-listing-card-cta"
+                        data-ph-listing-id={listing.id}
+                        data-ph-listing-type={listing.type}
                         onClick={() => {
                           if (hasStock && inRange) {
                             const priceUsd = Math.round(amount * rate * 100) / 100
@@ -1020,6 +1104,7 @@ function GemsContent() {
                           }
                         }}
                         disabled={!hasStock || !inRange}
+                        aria-disabled={!hasStock || !inRange}
                         className={`w-full flex justify-between items-center px-4 sm:px-5 py-3 sm:py-4 text-left transition-colors`}
                         style={{
                           border: `2px solid ${isSelected ? '#e1ad2d' : '#2a2a2e'}`,
@@ -1104,6 +1189,7 @@ function GemsContent() {
                   <span className="text-white font-semibold text-xs sm:text-sm">{formatPrice(userInfo.walletBalance)}</span>
                 </div>
                 <Link
+                  data-ph-id="gems-wallet-add-funds"
                   href="/dashboard/deposit"
                   className="relative inline-flex items-center justify-center pixel-btn-press"
                   style={{ textDecoration: 'none' }}
@@ -1174,7 +1260,12 @@ function GemsContent() {
           <div className="w-full sm:max-w-md p-4 sm:p-6" style={{ background: '#1a1a1e', border: '3px solid #e1ad2d', boxShadow: '4px 4px 0px #000' }}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-accent uppercase">Confirm Gems Purchase</h3>
-              <button onClick={() => { posthog.capture('gems_confirm_modal_closed', { amount_k: amount, total_price: discountedPrice, reason: 'dismissed', amount: discountedPrice, gems_qty: amount * 1000, listing_id: selectedListing?.id ?? null, closed_via: 'x_button' }); setShowConfirm(false) }} className="text-gray-400 hover:text-white">
+              <button
+                data-ph-id="gems-confirm-modal-close"
+                onClick={() => { posthog.capture('gems_confirm_modal_closed', { amount_k: amount, total_price: discountedPrice, reason: 'dismissed', amount: discountedPrice, gems_qty: amount * 1000, listing_id: selectedListing?.id ?? null, closed_via: 'x_button' }); setShowConfirm(false) }}
+                className="text-gray-400 hover:text-white"
+              >
+
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1222,6 +1313,7 @@ function GemsContent() {
 
             <label className="flex items-start gap-2 mb-4 cursor-pointer select-none">
               <input
+                data-ph-id="gems-confirm-modal-terms-checkbox"
                 type="checkbox"
                 checked={agreedToTerms}
                 onChange={(e) => { setAgreedToTerms(e.target.checked); if (e.target.checked) posthog.capture('terms_agreed', { page: 'gems' }) }}
@@ -1229,9 +1321,9 @@ function GemsContent() {
               />
               <span className="text-[10px] text-gray-400 leading-tight">
                 I agree that{' '}
-                <Link href="/terms" className="text-accent hover:underline" target="_blank">all sales are final</Link>
+                <Link data-ph-id="gems-terms-link" href="/terms" className="text-accent hover:underline" target="_blank">all sales are final</Link>
                 {' '}and non-refundable once delivered. Filing a dispute or chargeback will result in a permanent ban. Issues?{' '}
-                <a href="https://discord.gg/sniperduels" className="text-accent hover:underline" target="_blank" rel="noopener noreferrer">Open a ticket in our Discord</a>.
+                <a data-ph-id="gems-help-link" href="https://discord.gg/sniperduels" className="text-accent hover:underline" target="_blank" rel="noopener noreferrer">Open a ticket in our Discord</a>.
               </span>
             </label>
 
@@ -1239,6 +1331,7 @@ function GemsContent() {
               <div className="space-y-3">
                 <p className="text-red-400 text-xs text-center uppercase">Insufficient balance</p>
                 <button
+                  data-ph-id="gems-confirm-modal-add-funds"
                   onClick={async () => {
                     const needed = Math.ceil((discountedPrice - userInfo.walletBalance) * 100) / 100
                     posthog.capture('gems_buy_blocked', {
@@ -1284,6 +1377,7 @@ function GemsContent() {
             ) : (
               <div className="flex gap-3">
                 <button
+                  data-ph-id="gems-confirm-modal-cancel"
                   onClick={() => { posthog.capture('gems_confirm_modal_closed', { amount_k: amount, total_price: discountedPrice, reason: 'cancelled', amount: discountedPrice, gems_qty: amount * 1000, listing_id: selectedListing?.id ?? null, closed_via: 'cancel_button' }); setShowConfirm(false) }}
                   className="flex-1 relative h-[42px] bg-no-repeat bg-center bg-contain border-0 cursor-pointer active:scale-95 transition-transform"
                   style={{ backgroundImage: 'url(/images/pixel/pngs/asset-60.png)', backgroundSize: '100% 100%' }}
@@ -1293,8 +1387,10 @@ function GemsContent() {
                   </span>
                 </button>
                 <button
+                  data-ph-id="gems-confirm-modal-confirm"
                   onClick={handleConfirmPurchase}
                   disabled={purchasing || !agreedToTerms}
+                  aria-disabled={purchasing || !agreedToTerms}
                   className="flex-1 relative h-[42px] bg-no-repeat bg-center bg-contain border-0 cursor-pointer active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ backgroundImage: 'url(/images/pixel/pngs/asset-59.png)', backgroundSize: '100% 100%' }}
                 >
