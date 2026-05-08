@@ -66,6 +66,14 @@ function GemsContent() {
   const [amountChangedSinceMount, setAmountChangedSinceMount] = useState(false)
   const resumeBuyHandledRef = useRef(false)
   const outageNotifyHandledRef = useRef(false)
+  // Pre-auth banner (Scope 2): show sticky top banner to logged-out visitors
+  // who land on /gems. Dismiss persisted in localStorage but resurfaces on
+  // each new sessionStorage session.
+  const [preauthBannerVisible, setPreauthBannerVisible] = useState(false)
+  const preauthImpressionFiredRef = useRef(false)
+  // Mobile sticky CTA (Scope 1): track impression once per (listing, amount)
+  // change so we don't spam events as the user adjusts the amount.
+  const stickyCtaImpressionKeyRef = useRef<string | null>(null)
 
   useEffect(() => {
     fetchUser()
@@ -297,6 +305,54 @@ function GemsContent() {
     setPrefilled(true)
   }, [listings])
 
+  // Pre-auth banner visibility: show to logged-out users unless they
+  // dismissed in this browser session. localStorage stores dismiss across
+  // sessions BUT we use sessionStorage as a per-session "shown already" flag
+  // so the banner reappears next session even if dismissed last time.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (userInfo === null) return // wait for fetchUser to settle
+    if (userInfo.user) { setPreauthBannerVisible(false); return }
+    let dismissedThisSession = false
+    try {
+      dismissedThisSession = sessionStorage.getItem('sd_preauth_banner_dismissed_session') === '1'
+    } catch { /* ignore */ }
+    if (dismissedThisSession) return
+    setPreauthBannerVisible(true)
+  }, [userInfo])
+
+  // Fire impression event once per session when banner becomes visible.
+  useEffect(() => {
+    if (!preauthBannerVisible || preauthImpressionFiredRef.current) return
+    preauthImpressionFiredRef.current = true
+    posthog.capture('gems_preauth_banner_visible', {
+      amount_k: amount,
+      listing_id: selectedListing?.id ?? null,
+    })
+  }, [preauthBannerVisible, amount, selectedListing?.id])
+
+  // Shared "login with current selection persisted as buy intent" — used by
+  // both the main Buy button (logged-out path) and the pre-auth banner CTA.
+  async function loginWithBuyIntent(source: 'buy_button' | 'preauth_banner') {
+    let resumeUrl = '/gems'
+    if (selectedListing) {
+      try {
+        const res = await fetch('/api/buy-intent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ listingId: selectedListing.id, amountK: amount }),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          resumeUrl = `/gems?resumeBuy=${encodeURIComponent(data.id)}`
+        }
+      } catch { /* fall back to bare /gems */ }
+    }
+    document.cookie = `return_to=${encodeURIComponent(resumeUrl)};path=/;max-age=600;SameSite=Lax`
+    posthog.capture('login_initiated', { source, page: 'gems' })
+    window.location.href = '/api/auth/roblox'
+  }
+
   function getEffectiveRate(listing: GemListing, amountK: number): number {
     if (listing.bulkTiers && listing.bulkTiers.length > 0) {
       const sorted = [...listing.bulkTiers].sort((a, b) => b.minK - a.minK)
@@ -522,9 +578,93 @@ function GemsContent() {
     }
   }
 
+  // Sticky CTA visibility: only after a listing is selected, on mobile, for
+  // EITHER auth state (clicking it kicks off login-with-intent if needed).
+  const stickyCtaShouldShow = !!selectedListing && totalStockK > 0
+  const stickyCtaKey = stickyCtaShouldShow ? `${selectedListing!.id}:${amount}` : null
+  useEffect(() => {
+    if (!stickyCtaShouldShow || !stickyCtaKey) return
+    if (stickyCtaImpressionKeyRef.current === stickyCtaKey) return
+    stickyCtaImpressionKeyRef.current = stickyCtaKey
+    posthog.capture('mobile_sticky_buy_cta_visible', {
+      listing_id: selectedListing!.id,
+      amount_k: amount,
+      total_price: discountedPrice,
+    })
+  }, [stickyCtaKey, stickyCtaShouldShow])
+
+  async function handleStickyCtaClick() {
+    posthog.capture('mobile_sticky_buy_cta_clicked', {
+      listing_id: selectedListing?.id ?? null,
+      amount_k: amount,
+      total_price: discountedPrice,
+      auth_state: userInfo?.user ? 'logged_in' : 'logged_out',
+    })
+    if (!userInfo?.user) {
+      await loginWithBuyIntent('buy_button')
+      return
+    }
+    handlePurchaseClick()
+  }
+
   return (
     <div className="min-h-screen bg-dark-900">
-      <div className="max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-16">
+      {/* Pre-auth banner (B-fix): logged-out visitors landing on /gems get a
+          sticky top banner pointing them to login. Banner sits ABOVE the
+          listings; dismiss persists in sessionStorage so it doesn't nag this
+          session, but resurfaces on next session. */}
+      {preauthBannerVisible && (
+        <div
+          className="sticky top-[56px] sm:top-[64px] md:top-[72px] z-30 px-3 sm:px-6 py-3"
+          style={{
+            background: 'rgba(225,173,45,0.12)',
+            borderBottom: '2px solid rgba(225,173,45,0.5)',
+            backdropFilter: 'blur(6px)',
+          }}
+          role="region"
+          aria-label="Sign-in prompt"
+        >
+          <div className="max-w-[1000px] mx-auto flex items-center gap-3">
+            <p className="flex-1 text-yellow-300 text-[11px] sm:text-sm uppercase font-bold leading-tight">
+              Login with Roblox to buy gems
+            </p>
+            <button
+              onClick={async () => {
+                posthog.capture('gems_preauth_banner_clicked', {
+                  amount_k: amount,
+                  listing_id: selectedListing?.id ?? null,
+                })
+                await loginWithBuyIntent('preauth_banner')
+              }}
+              className="relative inline-flex items-center justify-center pixel-btn-press shrink-0"
+              style={{ minHeight: 44, minWidth: 100 }}
+            >
+              <img src="/images/pixel/pngs/asset-59.png" alt="" className="h-[44px] w-auto min-w-[100px]" style={{ imageRendering: 'pixelated' }} />
+              <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-[10px] sm:text-xs uppercase tracking-wider px-3">
+                Login
+              </span>
+            </button>
+            <button
+              onClick={() => {
+                posthog.capture('gems_preauth_banner_dismissed', {
+                  amount_k: amount,
+                  listing_id: selectedListing?.id ?? null,
+                })
+                try { sessionStorage.setItem('sd_preauth_banner_dismissed_session', '1') } catch { /* ignore */ }
+                try { localStorage.setItem('sd_preauth_banner_dismissed_at', String(Date.now())) } catch { /* ignore */ }
+                setPreauthBannerVisible(false)
+              }}
+              className="text-yellow-300/70 hover:text-yellow-300 shrink-0"
+              aria-label="Dismiss banner"
+              style={{ minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-16 pb-32 md:pb-16">
         {/* Toast */}
         {toast && (
           <div
@@ -787,26 +927,14 @@ function GemsContent() {
                     })
                     if (!selectedListing) {
                       // Defensive: shouldn't happen since button is gated on stock
+                      document.cookie = `return_to=${encodeURIComponent('/gems')};path=/;max-age=600;SameSite=Lax`
                       window.location.href = '/api/auth/roblox'
                       return
                     }
-                    // Create a buy intent so we can resume after OAuth.
-                    let resumeUrl = '/gems'
-                    try {
-                      const res = await fetch('/api/buy-intent', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ listingId: selectedListing.id, amountK: amount }),
-                      })
-                      if (res.ok) {
-                        const data = await res.json()
-                        resumeUrl = `/gems?resumeBuy=${encodeURIComponent(data.id)}`
-                      }
-                    } catch { /* fall back to bare /gems */ }
-                    document.cookie = `return_to=${encodeURIComponent(resumeUrl)};path=/;max-age=600;SameSite=Lax`
-                    window.location.href = '/api/auth/roblox'
+                    await loginWithBuyIntent('buy_button')
                   }}
                   className="relative inline-flex items-center justify-center pixel-btn-press"
+                  style={{ minHeight: 52, minWidth: 180 }}
                 >
                   <img
                     src="/images/pixel/pngs/asset-88.png"
@@ -823,6 +951,7 @@ function GemsContent() {
                   onClick={handlePurchaseClick}
                   disabled={selectedStockK < amount}
                   className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ minHeight: 52, minWidth: 180 }}
                 >
                   <img
                     src="/images/pixel/pngs/asset-88.png"
@@ -989,6 +1118,55 @@ function GemsContent() {
           </div>
         </div>
       </div>
+
+      {/* Mobile sticky bottom Buy CTA (Scope 1) — only on mobile, only once a
+          listing is selected. Tapping it follows the same path as the
+          desktop button (login-with-intent if logged-out, else open confirm
+          modal). Hidden when the confirm modal is open to avoid double UI. */}
+      {stickyCtaShouldShow && !showConfirm && (
+        <div
+          className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-3 py-3"
+          style={{
+            background: 'rgba(10,10,11,0.96)',
+            borderTop: '2px solid #e1ad2d',
+            boxShadow: '0 -4px 12px rgba(0,0,0,0.4)',
+            paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
+          }}
+          role="region"
+          aria-label="Quick buy"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] uppercase tracking-wider text-gray-400 leading-tight">
+                {amount.toLocaleString()}k gems
+              </p>
+              <p className="text-base font-bold text-white leading-tight truncate">
+                {formatPrice(discountedPrice)}
+              </p>
+            </div>
+            <button
+              onClick={handleStickyCtaClick}
+              disabled={selectedStockK < amount && !!userInfo?.user}
+              className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              style={{ minHeight: 48, minWidth: 140 }}
+            >
+              <img
+                src="/images/pixel/pngs/asset-88.png"
+                alt=""
+                className="h-[48px] w-auto min-w-[140px]"
+                style={{ imageRendering: 'pixelated' }}
+              />
+              <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-[11px] uppercase tracking-wider px-3">
+                {!userInfo?.user
+                  ? 'Login to Buy'
+                  : selectedStockK < amount
+                    ? `${selectedStockK.toLocaleString()}k max`
+                    : 'Buy'}
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Confirmation Modal */}
       {showConfirm && userInfo && selectedListing && (
