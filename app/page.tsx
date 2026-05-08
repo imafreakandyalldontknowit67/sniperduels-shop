@@ -1,4 +1,4 @@
-import { Hero, HowItWorks, ShopCategories, TrustSection } from '@/components/home'
+import { Hero, HowItWorks, ShopCategories, TrustSection, OAuthErrorBanner } from '@/components/home'
 import { ScrollReveal } from '@/components/ui'
 
 export default function HomePage() {
@@ -21,6 +21,7 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
+      <OAuthErrorBanner />
       <Hero />
       <ScrollReveal animation="pixel-fade-up" threshold={0.02}>
         <HowItWorks />

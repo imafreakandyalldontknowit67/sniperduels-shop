@@ -72,6 +72,43 @@ export default function DepositPage() {
       .catch(() => { /* fall back to manual picker */ })
   }, [])
 
+  // Mobile keyboard / viewport detection (Scope 1) — when the on-screen
+  // keyboard pops up on mobile we want to (a) keep the focused input in
+  // view and (b) emit an analytics event if the keyboard is obscuring it.
+  const amountInputRef = useRef<HTMLInputElement | null>(null)
+  const keyboardObscuredFiredRef = useRef(false)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const vv = (window as Window & { visualViewport?: VisualViewport }).visualViewport
+    if (!vv) return
+    function handleResize() {
+      const active = document.activeElement as HTMLElement | null
+      if (!active) return
+      const tag = active.tagName.toLowerCase()
+      if (tag !== 'input' && tag !== 'textarea') return
+      const rect = active.getBoundingClientRect()
+      const visualBottom = (vv?.height ?? window.innerHeight) + (vv?.offsetTop ?? 0)
+      const obscured = rect.bottom > visualBottom - 8
+      if (obscured) {
+        if (!keyboardObscuredFiredRef.current) {
+          keyboardObscuredFiredRef.current = true
+          posthog.capture('mobile_deposit_keyboard_obscured', {
+            input_name: active.getAttribute('name') || active.id || 'unknown',
+            visual_height: Math.round(vv?.height ?? 0),
+            input_bottom: Math.round(rect.bottom),
+          })
+        }
+        try { active.scrollIntoView({ behavior: 'smooth', block: 'center' }) } catch { /* ignore */ }
+      }
+    }
+    vv.addEventListener('resize', handleResize)
+    vv.addEventListener('scroll', handleResize)
+    return () => {
+      vv.removeEventListener('resize', handleResize)
+      vv.removeEventListener('scroll', handleResize)
+    }
+  }, [])
+
   // Crypto-specific state
   const [allCurrencies, setAllCurrencies] = useState<string[]>([])
   const [cryptoSearch, setCryptoSearch] = useState('')
@@ -311,7 +348,7 @@ export default function DepositPage() {
   const completedDeposits = deposits.filter(d => d.status !== 'pending')
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center min-h-[100dvh] md:min-h-0 px-3 md:px-0 pb-[env(safe-area-inset-bottom)]">
       <div className="w-full max-w-xl mb-8">
         <h1 className="text-2xl font-bold text-white text-center">Add Balance</h1>
         <p className="text-gray-400 mt-1 text-center">
@@ -364,7 +401,11 @@ export default function DepositPage() {
           <div className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">{currencySymbol}</span>
             <input
+              ref={amountInputRef}
               type="number"
+              inputMode="decimal"
+              autoComplete="off"
+              name="deposit-amount"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
