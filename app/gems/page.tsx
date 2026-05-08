@@ -238,7 +238,26 @@ function GemsContent() {
         // Open confirm modal once amount + listing are settled
         setAgreedToTerms(false)
         setShowConfirm(true)
-        posthog.capture('gems_resume_buy_hydrated', { intent_id: resumeBuyId, amount_k: safeAmount })
+        // intent_age_seconds: derived from expiresAt + the API's 10-minute TTL.
+        // The API doesn't expose createdAt directly, so we compute age as
+        // (TTL - timeUntilExpiry).
+        const INTENT_TTL_SECONDS = 10 * 60
+        let intentAgeSeconds: number | null = null
+        try {
+          const expiresAtMs = new Date(data.expiresAt).getTime()
+          const secondsUntilExpiry = Math.max(0, (expiresAtMs - Date.now()) / 1000)
+          intentAgeSeconds = Math.max(0, Math.round(INTENT_TTL_SECONDS - secondsUntilExpiry))
+        } catch {
+          // expiresAt malformed — leave null
+        }
+        posthog.capture('gems_resume_buy_hydrated', {
+          intent_id: resumeBuyId,
+          amount_k: safeAmount,
+          intent_age_seconds: intentAgeSeconds,
+          from_oauth_callback: true, // ?resumeBuy is only ever set by the post-OAuth redirect
+          restored_amount: safeAmount,
+          restored_listing_id: targetListing.id,
+        })
       } catch { /* ignore */ }
     })()
   }, [resumeBuyId, listings, userInfo?.user])
@@ -291,10 +310,20 @@ function GemsContent() {
     ? Math.max(...listings.map(l => l.stockK))
     : 10000
 
-  const handleAmountChange = (newAmount: number, source?: 'preset' | 'input') => {
+  const handleAmountChange = (newAmount: number, source?: 'preset' | 'input' | 'slider' | '+' | '-') => {
     if (newAmount >= 1 && newAmount <= maxAmount) {
       if (source) {
-        posthog.capture('gems_amount_changed', { amount_k: newAmount, source })
+        const rate = selectedListing ? getEffectiveRate(selectedListing, newAmount) : 2.90
+        const usd = Math.round(newAmount * rate * 100) / 100
+        posthog.capture('gems_amount_changed', {
+          amount_k: newAmount,
+          source,
+          amount: usd,
+          gems_qty: newAmount * 1000,
+          price_usd_per_gem: rate / 1000,
+          currency,
+          listing_id: selectedListing?.id ?? null,
+        })
         setAmountChangedSinceMount(true)
       }
       setAmount(newAmount)
@@ -323,7 +352,17 @@ function GemsContent() {
     } else if (parsed > maxAmount) {
       handleAmountChange(maxAmount, 'input')
     } else if (parsed !== amount) {
-      posthog.capture('gems_amount_changed', { amount_k: parsed, source: 'input' })
+      const rate = selectedListing ? getEffectiveRate(selectedListing, parsed) : 2.90
+      const usd = Math.round(parsed * rate * 100) / 100
+      posthog.capture('gems_amount_changed', {
+        amount_k: parsed,
+        source: 'input',
+        amount: usd,
+        gems_qty: parsed * 1000,
+        price_usd_per_gem: rate / 1000,
+        currency,
+        listing_id: selectedListing?.id ?? null,
+      })
     }
   }
 
@@ -342,23 +381,71 @@ function GemsContent() {
     : 2.90
 
   function handlePurchaseClick() {
-    posthog.capture('gems_buy_clicked', { amount_k: amount, total_price: discountedPrice })
+    const authState = userInfo?.user ? 'logged_in' : 'logged_out'
+    const balanceUsd = userInfo?.walletBalance ?? null
+    const hasSufficient = userInfo ? userInfo.walletBalance >= discountedPrice : null
+    posthog.capture('gems_buy_clicked', {
+      amount_k: amount,
+      total_price: discountedPrice,
+      amount: discountedPrice,
+      gems_qty: amount * 1000,
+      listing_id: selectedListing?.id ?? null,
+      auth_state: authState,
+      current_balance_usd: balanceUsd,
+      has_sufficient_balance: hasSufficient,
+    })
     if (!botOnline) {
-      posthog.capture('gems_buy_blocked', { reason: 'bot_offline', amount_k: amount })
+      posthog.capture('gems_buy_blocked', {
+        reason: 'bot_offline',
+        amount_k: amount,
+        amount: discountedPrice,
+        listing_id: selectedListing?.id ?? null,
+        auth_state: authState,
+        current_balance_usd: balanceUsd,
+        required_balance_usd: discountedPrice,
+        gap_usd: balanceUsd != null ? Math.max(0, Math.round((discountedPrice - balanceUsd) * 100) / 100) : null,
+      })
       setToast({ type: 'error', text: 'The trade bot is currently offline. Join our Discord for updates!' })
       return
     }
     if (userInfo && userInfo.walletBalance < discountedPrice) {
-      posthog.capture('gems_buy_blocked', { reason: 'insufficient_balance', amount_k: amount, balance: userInfo.walletBalance, required: discountedPrice })
+      posthog.capture('gems_buy_blocked', {
+        reason: 'insufficient_balance',
+        amount_k: amount,
+        balance: userInfo.walletBalance,
+        required: discountedPrice,
+        amount: discountedPrice,
+        listing_id: selectedListing?.id ?? null,
+        auth_state: authState,
+        current_balance_usd: userInfo.walletBalance,
+        required_balance_usd: discountedPrice,
+        gap_usd: Math.round((discountedPrice - userInfo.walletBalance) * 100) / 100,
+      })
     }
     setAgreedToTerms(false)
     setShowConfirm(true)
-    posthog.capture('gems_confirm_modal_opened', { amount_k: amount, total_price: discountedPrice })
+    posthog.capture('gems_confirm_modal_opened', {
+      amount_k: amount,
+      total_price: discountedPrice,
+      amount: discountedPrice,
+      gems_qty: amount * 1000,
+      listing_id: selectedListing?.id ?? null,
+      vendor_id: selectedListing?.vendorId ?? null,
+    })
   }
 
   async function handleConfirmPurchase() {
     if (!userInfo || !selectedListing) return
 
+    posthog.capture('gems_confirm_modal_closed', {
+      amount_k: amount,
+      total_price: discountedPrice,
+      reason: 'confirmed',
+      amount: discountedPrice,
+      gems_qty: amount * 1000,
+      listing_id: selectedListing.id,
+      closed_via: 'confirmed',
+    })
     setPurchasing(true)
     try {
       const res = await fetch('/api/orders/purchase-gems', {
@@ -386,6 +473,23 @@ function GemsContent() {
         return
       }
 
+      // is_repeat_purchase: client-side check via localStorage timestamp of last
+      // gem purchase. Considered a repeat if a purchase happened within 30 days.
+      // Set null if localStorage is unavailable (rather than blocking the event).
+      let isRepeatPurchase: boolean | null = null
+      try {
+        const lastPurchaseTs = localStorage.getItem('last_gems_purchase_ts')
+        if (lastPurchaseTs) {
+          const ageMs = Date.now() - parseInt(lastPurchaseTs)
+          isRepeatPurchase = ageMs <= 30 * 24 * 60 * 60 * 1000
+        } else {
+          isRepeatPurchase = false
+        }
+        localStorage.setItem('last_gems_purchase_ts', String(Date.now()))
+      } catch {
+        // localStorage unavailable — leave null so event still fires
+      }
+
       posthog.capture('gems_purchased', {
         amount_k: amount,
         gems_k: amount,
@@ -400,6 +504,13 @@ function GemsContent() {
         has_loyalty_discount: (userInfo.loyaltyDiscount || 0) > 0,
         has_discord_discount: !!userInfo.canUseDiscordDiscount,
         from: fromRecovery ? 'recovery' : (fromBot ? 'discord_bot' : 'web'),
+        // Required property additions
+        amount: discountedPrice,
+        gems_qty: amount * 1000,
+        price_usd: discountedPrice,
+        currency,
+        intent_id: resumeBuyId,
+        is_repeat_purchase: isRepeatPurchase,
       })
       router.push(`/dashboard/orders/${data.order.id}`)
     } catch {
@@ -574,7 +685,7 @@ function GemsContent() {
               <label className="block text-[10px] sm:text-xs text-white mb-2 sm:mb-3 uppercase font-bold">Custom Amount (in thousands)</label>
               <div className="flex items-center gap-2 sm:gap-3">
                 <button
-                  onClick={() => handleAmountChange(amount - 1)}
+                  onClick={() => handleAmountChange(amount - 1, '-')}
                   disabled={amount <= 1}
                   className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -594,7 +705,7 @@ function GemsContent() {
                   <span className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm sm:text-base uppercase">k</span>
                 </div>
                 <button
-                  onClick={() => handleAmountChange(amount + 1)}
+                  onClick={() => handleAmountChange(amount + 1, '+')}
                   disabled={amount >= maxAmount}
                   className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -664,7 +775,16 @@ function GemsContent() {
               {!userInfo?.user ? (
                 <button
                   onClick={async () => {
-                    posthog.capture('gems_buy_blocked', { reason: 'not_logged_in', amount_k: amount })
+                    posthog.capture('gems_buy_blocked', {
+                      reason: 'not_logged_in',
+                      amount_k: amount,
+                      amount: discountedPrice,
+                      listing_id: selectedListing?.id ?? null,
+                      auth_state: 'logged_out',
+                      current_balance_usd: null, // not logged in — no wallet
+                      required_balance_usd: discountedPrice,
+                      gap_usd: null, // unknown without a balance
+                    })
                     if (!selectedListing) {
                       // Defensive: shouldn't happen since button is gated on stock
                       window.location.href = '/api/auth/roblox'
@@ -747,7 +867,29 @@ function GemsContent() {
                   return (
                     <div key={listing.id} className={!hasStock || !inRange ? 'opacity-40' : ''}>
                       <button
-                        onClick={() => { if (hasStock && inRange) { posthog.capture('gems_listing_selected', { type: listing.type, rate: rate }); setSelectedListing(listing) } }}
+                        onClick={() => {
+                          if (hasStock && inRange) {
+                            const priceUsd = Math.round(amount * rate * 100) / 100
+                            // discount_pct: bulk-tier discount vs base rate (only set if listing has bulk
+                            // tiers AND the active rate is below the base). vendor_name not knowable —
+                            // /api/gems/listings only exposes vendorId.
+                            const discountPct = hasBulk && rate < listing.pricePerK
+                              ? Math.round((1 - rate / listing.pricePerK) * 1000) / 1000
+                              : null
+                            posthog.capture('gems_listing_selected', {
+                              type: listing.type,
+                              rate,
+                              listing_id: listing.id,
+                              gems_qty: amount * 1000,
+                              price_usd: priceUsd,
+                              currency,
+                              vendor_id: listing.vendorId,
+                              vendor_name: null, // not exposed by /api/gems/listings
+                              discount_pct: discountPct,
+                            })
+                            setSelectedListing(listing)
+                          }
+                        }}
                         disabled={!hasStock || !inRange}
                         className={`w-full flex justify-between items-center px-4 sm:px-5 py-3 sm:py-4 text-left transition-colors`}
                         style={{
@@ -854,7 +996,7 @@ function GemsContent() {
           <div className="w-full sm:max-w-md p-4 sm:p-6" style={{ background: '#1a1a1e', border: '3px solid #e1ad2d', boxShadow: '4px 4px 0px #000' }}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-accent uppercase">Confirm Gems Purchase</h3>
-              <button onClick={() => { posthog.capture('gems_confirm_modal_closed', { amount_k: amount, total_price: discountedPrice, reason: 'dismissed' }); setShowConfirm(false) }} className="text-gray-400 hover:text-white">
+              <button onClick={() => { posthog.capture('gems_confirm_modal_closed', { amount_k: amount, total_price: discountedPrice, reason: 'dismissed', amount: discountedPrice, gems_qty: amount * 1000, listing_id: selectedListing?.id ?? null, closed_via: 'x_button' }); setShowConfirm(false) }} className="text-gray-400 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -921,7 +1063,18 @@ function GemsContent() {
                 <button
                   onClick={async () => {
                     const needed = Math.ceil((discountedPrice - userInfo.walletBalance) * 100) / 100
-                    posthog.capture('gems_buy_blocked', { reason: 'insufficient_balance_modal_add_funds', amount_k: amount, balance: userInfo.walletBalance, required: discountedPrice })
+                    posthog.capture('gems_buy_blocked', {
+                      reason: 'insufficient_balance_modal_add_funds',
+                      amount_k: amount,
+                      balance: userInfo.walletBalance,
+                      required: discountedPrice,
+                      amount: discountedPrice,
+                      listing_id: selectedListing?.id ?? null,
+                      auth_state: 'logged_in',
+                      current_balance_usd: userInfo.walletBalance,
+                      required_balance_usd: discountedPrice,
+                      gap_usd: Math.round((discountedPrice - userInfo.walletBalance) * 100) / 100,
+                    })
                     // Create / reuse a buy intent so we can resume the gem purchase after deposit lands.
                     let intentId: string | null = resumeBuyId
                     if (!intentId && selectedListing) {
@@ -953,7 +1106,7 @@ function GemsContent() {
             ) : (
               <div className="flex gap-3">
                 <button
-                  onClick={() => { posthog.capture('gems_confirm_modal_closed', { amount_k: amount, total_price: discountedPrice, reason: 'cancelled' }); setShowConfirm(false) }}
+                  onClick={() => { posthog.capture('gems_confirm_modal_closed', { amount_k: amount, total_price: discountedPrice, reason: 'cancelled', amount: discountedPrice, gems_qty: amount * 1000, listing_id: selectedListing?.id ?? null, closed_via: 'cancel_button' }); setShowConfirm(false) }}
                   className="flex-1 relative h-[42px] bg-no-repeat bg-center bg-contain border-0 cursor-pointer active:scale-95 transition-transform"
                   style={{ backgroundImage: 'url(/images/pixel/pngs/asset-60.png)', backgroundSize: '100% 100%' }}
                 >
