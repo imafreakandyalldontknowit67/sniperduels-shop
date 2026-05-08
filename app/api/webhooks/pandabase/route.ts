@@ -5,6 +5,7 @@ import type { Deposit } from '@/lib/storage'
 import { notifyDispute, notifyRefund } from '@/lib/discord-webhook'
 import { flagAndBlacklist } from '@/lib/blacklist'
 import { logError } from '@/lib/error-log'
+import { captureServerEvent, extractPandabasePaymentInfo } from '@/lib/posthog-api'
 
 export const dynamic = 'force-dynamic'
 
@@ -85,6 +86,37 @@ export async function POST(request: NextRequest) {
         }).catch(err => console.error('Ledger write failed (fiat deposit):', err))
         console.log(`[pandabase] wallet credit ok user=${deposit.userId} amount=${deposit.amount} dep=${deposit.id}`)
         console.log(`[Webhook] Deposit completed: ${deposit.id} ($${deposit.amount})`)
+
+        // Server-side instrumentation: which method actually completed (card vs apple_pay vs google_pay etc),
+        // brand/country/3DS, and processing time. The event is intentionally captured here (not the client)
+        // so we don't lose it if the user closed their tab before the success callback.
+        try {
+          const info = extractPandabasePaymentInfo(payload)
+          const processing_time_ms = deposit.createdAt ? (Date.now() - new Date(deposit.createdAt).getTime()) : undefined
+          await captureServerEvent(deposit.userId, 'deposit_completed', {
+            provider: 'pandabase',
+            final_method: info.method || 'card',
+            method: info.method || 'card',
+            card_brand: info.card_brand,
+            card_country: info.card_country,
+            card_funding: info.card_funding,
+            is_3ds: info.is_3ds,
+            intent_id: info.intent_id,
+            charge_id: info.charge_id,
+            invoice_id: info.invoice_id || deposit.pandabaseInvoiceId,
+            ref_id: info.ref_id || deposit.pandabaseRefId,
+            deposit_id: deposit.id,
+            amount: deposit.amount,
+            amount_usd: deposit.amount,
+            charge_amount: deposit.chargeAmount,
+            currency: deposit.localCurrency || 'USD',
+            local_amount: deposit.localAmount,
+            fx_rate: deposit.fxRate,
+            processing_time_ms,
+          })
+        } catch (err) {
+          console.error('[posthog] deposit_completed capture failed:', err)
+        }
         break
       }
 
@@ -98,6 +130,35 @@ export async function POST(request: NextRequest) {
             data: { status: 'failed', updatedAt: new Date().toISOString() },
           })
           console.log(`[Webhook] Failed: ${deposit.id}`)
+
+          // Capture *why* it failed — decline_code, brand, country — so we can split
+          // the 22% fail rate by root cause instead of the useless "payment_failed".
+          try {
+            const info = extractPandabasePaymentInfo(payload)
+            await captureServerEvent(deposit.userId, 'deposit_failed', {
+              provider: 'pandabase',
+              payment_method_type: info.method || 'unknown',
+              method: info.method || 'unknown',
+              decline_code: info.decline_code || 'unknown',
+              error_code: info.error_code,
+              error_message: info.error_message,
+              card_brand: info.card_brand,
+              card_country: info.card_country,
+              card_funding: info.card_funding,
+              is_3ds: info.is_3ds,
+              intent_id: info.intent_id,
+              charge_id: info.charge_id,
+              invoice_id: info.invoice_id || deposit.pandabaseInvoiceId,
+              ref_id: info.ref_id || deposit.pandabaseRefId,
+              deposit_id: deposit.id,
+              amount: deposit.amount,
+              amount_usd: deposit.amount,
+              currency: deposit.localCurrency || 'USD',
+              source: 'webhook',
+            })
+          } catch (err) {
+            console.error('[posthog] deposit_failed capture failed:', err)
+          }
         }
         break
       }

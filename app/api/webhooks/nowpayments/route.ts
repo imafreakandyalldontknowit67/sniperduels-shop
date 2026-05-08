@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyIpnSignature } from '@/lib/nowpayments'
 import { getDeposit, claimPendingDeposit, claimExpiredDeposit, addToWallet, createLedgerEntry } from '@/lib/storage'
 import { logError } from '@/lib/error-log'
+import { captureServerEvent, extractCryptoPaymentInfo } from '@/lib/posthog-api'
 
 export const dynamic = 'force-dynamic'
 
@@ -82,6 +83,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
+    // Pull instrumentation-safe fields once for use across branches.
+    const cryptoInfo = extractCryptoPaymentInfo(payload)
+    const processing_time_ms = deposit.createdAt ? (Date.now() - new Date(deposit.createdAt).getTime()) : undefined
+
     // Terminal success statuses
     if (status === 'finished' || status === 'confirmed') {
       const claimed = await tryClaimDeposit(deposit)
@@ -90,6 +95,34 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ received: true })
       }
       await creditDeposit(deposit, 'Completed')
+
+      // crypto_payment_received is the granular crypto-only event; deposit_completed
+      // is the unified provider-agnostic event. We fire both so funnels can pivot
+      // either way.
+      try {
+        const baseProps = {
+          provider: 'nowpayments',
+          currency: cryptoInfo.pay_currency,
+          pay_currency: cryptoInfo.pay_currency,
+          final_method: cryptoInfo.final_method,
+          method: 'crypto',
+          payment_status: cryptoInfo.payment_status,
+          amount_received: cryptoInfo.actually_paid,
+          actually_paid: cryptoInfo.actually_paid,
+          outcome_amount: cryptoInfo.outcome_amount,
+          outcome_currency: cryptoInfo.outcome_currency,
+          payment_id: cryptoInfo.payment_id,
+          intent_id: deposit.id,
+          deposit_id: deposit.id,
+          tx_hash: cryptoInfo.tx_hash,
+          amount_usd: deposit.amount,
+          processing_time_ms,
+        }
+        await captureServerEvent(deposit.userId, 'crypto_payment_received', baseProps)
+        await captureServerEvent(deposit.userId, 'deposit_completed', baseProps)
+      } catch (err) {
+        console.error('[posthog] crypto deposit_completed capture failed:', err)
+      }
 
     } else if (status === 'partially_paid') {
       // Auto-credit ANY partial payment proportionally so funds never get
@@ -104,6 +137,30 @@ export async function POST(request: NextRequest) {
       const expectedPay = Number(payload.pay_amount || 0)
       const priceAmount = Number(payload.price_amount || deposit.amount)
       const payCurrency = String(payload.pay_currency || '?')
+
+      // Fire crypto_payment_underpaid for ALL partial events — gives us
+      // visibility on the underpay distribution even when we end up crediting.
+      try {
+        await captureServerEvent(deposit.userId, 'crypto_payment_underpaid', {
+          provider: 'nowpayments',
+          currency: cryptoInfo.pay_currency,
+          pay_currency: cryptoInfo.pay_currency,
+          final_method: cryptoInfo.final_method,
+          method: 'crypto',
+          payment_status: 'partially_paid',
+          actually_paid: cryptoInfo.actually_paid,
+          pay_amount_expected: cryptoInfo.pay_amount,
+          ratio: cryptoInfo.ratio,
+          payment_id: cryptoInfo.payment_id,
+          intent_id: deposit.id,
+          deposit_id: deposit.id,
+          tx_hash: cryptoInfo.tx_hash,
+          price_amount: cryptoInfo.price_amount,
+          amount_usd: deposit.amount,
+        })
+      } catch (err) {
+        console.error('[posthog] crypto_payment_underpaid capture failed:', err)
+      }
 
       if (expectedPay <= 0 || actuallyPaid <= 0) {
         console.log(`[NOWPayments IPN] Partial with zero amounts (paid=${actuallyPaid} expected=${expectedPay}): ${deposit.id} — skipping`)
@@ -144,6 +201,33 @@ export async function POST(request: NextRequest) {
         data: { status: 'failed', updatedAt: new Date().toISOString() },
       })
       console.log(`[NOWPayments IPN] ${status}: ${deposit.id}`)
+
+      // Capture both the granular crypto event (so we can chart expired vs failed)
+      // and the unified deposit_failed event for the cross-provider funnel.
+      try {
+        const granular = status === 'expired' ? 'crypto_payment_expired' : 'crypto_payment_failed'
+        const baseProps = {
+          provider: 'nowpayments',
+          currency: cryptoInfo.pay_currency,
+          pay_currency: cryptoInfo.pay_currency,
+          final_method: cryptoInfo.final_method,
+          method: 'crypto',
+          payment_method_type: 'crypto',
+          payment_status: status,
+          decline_code: status, // expired / failed / refunded
+          actually_paid: cryptoInfo.actually_paid,
+          pay_amount_expected: cryptoInfo.pay_amount,
+          payment_id: cryptoInfo.payment_id,
+          intent_id: deposit.id,
+          deposit_id: deposit.id,
+          amount_usd: deposit.amount,
+          source: 'webhook',
+        }
+        await captureServerEvent(deposit.userId, granular, baseProps)
+        await captureServerEvent(deposit.userId, 'deposit_failed', baseProps)
+      } catch (err) {
+        console.error('[posthog] crypto deposit_failed capture failed:', err)
+      }
 
     } else if (status === 'sending' || status === 'confirming' || status === 'waiting') {
       console.log(`[NOWPayments IPN] In progress (${status}): ${deposit.id}`)

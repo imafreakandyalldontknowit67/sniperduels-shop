@@ -163,7 +163,25 @@ export default function DepositPage() {
       const data = await res.json()
       if (!res.ok) { setMessage({ type: 'error', text: data.error || 'Failed to create deposit' }); return }
 
-      posthog.capture('deposit_initiated', { amount: usdAmount, method: 'card' })
+      // method='pending' because the Pandabase sheet hasn't asked the user to pick yet —
+      // the real method (card / apple_pay / google_pay / cashapp / etc) is captured by
+      // the server webhook on deposit_completed/failed using `final_method`.
+      posthog.capture('deposit_initiated', {
+        provider: 'pandabase',
+        method: 'pending',
+        amount: usdAmount,
+        amount_usd: usdAmount,
+        currency: currency || 'USD',
+        local_amount: numAmount,
+        local_currency: currency,
+        intent_id: data.depositId,
+        deposit_id: data.depositId,
+        invoice_id: data.sessionId,
+        charge_amount: data.chargeAmount,
+        processing_fee: data.processingFee,
+        tax_region: taxRegion || undefined,
+        source: 'client',
+      })
 
       const win = window as unknown as { Pandabase?: { checkout: (opts: Record<string, unknown>) => { open: () => void; destroy: () => void } } }
       if (win.Pandabase && data.sessionId) {
@@ -172,17 +190,69 @@ export default function DepositPage() {
           sessionId: data.sessionId,
           mode: 'modal',
           theme: 'dark',
-          onPaymentSuccess: () => {
+          // Pandabase passes a `detail` object on these callbacks containing the
+          // resolved payment_method_type (apple_pay/google_pay/card). We capture
+          // it here as a hint, but the webhook is authoritative — server fires
+          // deposit_completed/failed with full brand/country/decline_code.
+          onPaymentMethodSelected: (detail: { type?: string; brand?: string } = {}) => {
+            posthog.capture('deposit_method_selected', {
+              provider: 'pandabase',
+              method: detail?.type || 'unknown',
+              card_brand: detail?.brand,
+              amount_usd: usdAmount,
+              intent_id: data.depositId,
+              deposit_id: data.depositId,
+            })
+          },
+          onPaymentMethodChanged: (detail: { from?: string; to?: string } = {}) => {
+            posthog.capture('deposit_method_changed', {
+              provider: 'pandabase',
+              from_method: detail?.from,
+              to_method: detail?.to,
+              amount_usd: usdAmount,
+              intent_id: data.depositId,
+              deposit_id: data.depositId,
+            })
+          },
+          onPaymentSuccess: (detail: { type?: string; brand?: string; country?: string } = {}) => {
+            // Optional client-side hint event — the webhook fires deposit_completed
+            // server-side with full data. This is here so we still see SOMETHING
+            // in the funnel within milliseconds of success (webhook can lag 1-3s).
+            posthog.capture('deposit_completed_client', {
+              provider: 'pandabase',
+              method: detail?.type || 'card',
+              card_brand: detail?.brand,
+              card_country: detail?.country,
+              amount: usdAmount,
+              amount_usd: usdAmount,
+              intent_id: data.depositId,
+              deposit_id: data.depositId,
+            })
             setMessage({ type: 'success', text: `${formatPrice(usdAmount)} payment received! Crediting your wallet...` })
             setAmount('')
             setTimeout(() => { handleVerify(data.depositId); fetchDeposits() }, 2000)
             checkout.destroy()
           },
-          onPaymentFailed: () => { posthog.capture('deposit_failed', { amount: usdAmount, method: 'card', reason: 'payment_failed' }); setMessage({ type: 'error', text: 'Payment failed. Please try again.' }); checkout.destroy() },
-          onClose: () => { posthog.capture('deposit_checkout_closed', { amount: usdAmount, method: 'card' }); fetchDeposits() },
+          onPaymentFailed: (detail: { type?: string; decline_code?: string; code?: string; message?: string } = {}) => {
+            posthog.capture('deposit_failed', {
+              provider: 'pandabase',
+              method: detail?.type || 'unknown',
+              payment_method_type: detail?.type || 'unknown',
+              decline_code: detail?.decline_code || detail?.code || 'payment_failed',
+              error_message: typeof detail?.message === 'string' ? detail.message.slice(0, 200) : undefined,
+              amount: usdAmount,
+              amount_usd: usdAmount,
+              intent_id: data.depositId,
+              deposit_id: data.depositId,
+              source: 'client',
+            })
+            setMessage({ type: 'error', text: 'Payment failed. Please try again.' })
+            checkout.destroy()
+          },
+          onClose: () => { posthog.capture('deposit_checkout_closed', { provider: 'pandabase', amount: usdAmount, intent_id: data.depositId }); fetchDeposits() },
         })
         checkout.open()
-        posthog.capture('checkout_modal_opened', { amount: usdAmount, method: 'card' })
+        posthog.capture('checkout_modal_opened', { provider: 'pandabase', amount_usd: usdAmount, intent_id: data.depositId })
       } else {
         window.open(data.checkoutUrl, '_blank')
         setMessage({ type: 'success', text: 'Checkout opened. Complete payment then verify below.' })
@@ -214,7 +284,34 @@ export default function DepositPage() {
       const data = await res.json()
       if (!res.ok) { setMessage({ type: 'error', text: data.error || 'Failed to create crypto deposit' }); return }
 
-      posthog.capture('deposit_initiated', { amount: usdAmount, method: 'crypto', currency: cryptoCurrency })
+      posthog.capture('deposit_initiated', {
+        provider: 'nowpayments',
+        method: 'crypto',
+        final_method: `crypto_${cryptoCurrency.toLowerCase()}`,
+        currency: cryptoCurrency,
+        local_currency: currency,
+        amount: usdAmount,
+        amount_usd: usdAmount,
+        local_amount: numAmount,
+        intent_id: data.depositId,
+        deposit_id: data.depositId,
+        payment_id: data.paymentId,
+        source: 'client',
+      })
+      // crypto_address_generated is also fired server-side from the create-crypto
+      // route (with full payment_id + expected_amount). The client copy gives us
+      // a faster view into "users who saw the QR" funnel.
+      posthog.capture('crypto_address_generated', {
+        provider: 'nowpayments',
+        currency: data.payCurrency || cryptoCurrency,
+        final_method: `crypto_${(data.payCurrency || cryptoCurrency).toLowerCase()}`,
+        expected_amount: data.payAmount,
+        amount_usd: usdAmount,
+        intent_id: data.depositId,
+        deposit_id: data.depositId,
+        payment_id: data.paymentId,
+        source: 'client',
+      })
       setCryptoPayment(data)
 
       // Poll for completion every 5s
@@ -228,7 +325,20 @@ export default function DepositPage() {
         const verifyData = await verifyRes.json()
         if (verifyData.status === 'completed') {
           if (pollRef.current) clearInterval(pollRef.current)
-          posthog.capture('deposit_completed', { amount: verifyData.amount || 0, method: 'crypto' })
+          // Client-side hint — the webhook fires deposit_completed server-side
+          // with provider/currency/amount_received/tx_hash. Keep this as a
+          // distinct event name so we don't double-count in the funnel.
+          posthog.capture('deposit_completed_client', {
+            provider: 'nowpayments',
+            method: 'crypto',
+            final_method: `crypto_${cryptoCurrency.toLowerCase()}`,
+            currency: cryptoCurrency,
+            amount: verifyData.amount || 0,
+            amount_usd: verifyData.amount || 0,
+            intent_id: data.depositId,
+            deposit_id: data.depositId,
+            source: 'verify_poll',
+          })
           setWalletBalance(verifyData.walletBalance)
           setMessage({ type: 'success', text: verifyData.message })
           setCryptoPayment(null)
@@ -246,7 +356,27 @@ export default function DepositPage() {
           }
         } else if (verifyData.status === 'failed' || verifyData.status === 'expired') {
           if (pollRef.current) clearInterval(pollRef.current)
-          posthog.capture('deposit_failed', { method: 'crypto', reason: verifyData.status })
+          posthog.capture('deposit_failed', {
+            provider: 'nowpayments',
+            method: 'crypto',
+            payment_method_type: 'crypto',
+            currency: cryptoCurrency,
+            decline_code: verifyData.status, // expired | failed
+            reason: verifyData.status,
+            amount_usd: usdAmount,
+            intent_id: data.depositId,
+            deposit_id: data.depositId,
+            source: 'client',
+          })
+          if (verifyData.status === 'expired') {
+            posthog.capture('crypto_payment_expired', {
+              provider: 'nowpayments',
+              currency: cryptoCurrency,
+              amount_usd: usdAmount,
+              intent_id: data.depositId,
+              deposit_id: data.depositId,
+            })
+          }
           setMessage({ type: 'error', text: `Deposit ${verifyData.status}` })
           setCryptoPayment(null)
         }
@@ -266,7 +396,16 @@ export default function DepositPage() {
       })
       const data = await res.json()
       if (data.status === 'completed') {
-        posthog.capture('deposit_completed', { amount: data.amount || 0, method: 'card' })
+        // Client hint — server webhook fires the canonical deposit_completed
+        // with provider/final_method/brand/country/3DS/processing_time_ms.
+        posthog.capture('deposit_completed_client', {
+          provider: 'pandabase',
+          amount: data.amount || 0,
+          amount_usd: data.amount || 0,
+          intent_id: depositId,
+          deposit_id: depositId,
+          source: 'manual_verify',
+        })
         setWalletBalance(data.walletBalance)
         setMessage({ type: 'success', text: data.message })
         fetchDeposits()
