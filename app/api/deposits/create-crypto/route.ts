@@ -4,6 +4,7 @@ import { getUserDeposits, createDeposit, updateDeposit, expireStaleDeposits, get
 import { createCryptoPayment } from '@/lib/nowpayments'
 import { flagAndBlacklist } from '@/lib/blacklist'
 import { localToUsd, usdToLocal, isSupportedCurrency } from '@/lib/fx'
+import { captureServerEvent, cryptoFinalMethod } from '@/lib/posthog-api'
 
 export async function POST(request: NextRequest) {
   try {
@@ -115,6 +116,65 @@ export async function POST(request: NextRequest) {
 
     // Store payment provider ID for status polling and recovery
     await updateDeposit(deposit.id, { paymentProviderId: paymentResult.paymentId })
+
+    // Compute attempt_number / is_retry from the user's recent deposit history.
+    // A "retry" = previous deposit by this user failed/expired in last 30 minutes.
+    const allDeposits = await getUserDeposits(user.id)
+    const thirtyMinAgo = Date.now() - 30 * 60 * 1000
+    const recentFails = allDeposits.filter(d =>
+      (d.status === 'failed' || d.status === 'expired') &&
+      new Date(d.createdAt).getTime() > thirtyMinAgo &&
+      d.id !== deposit.id
+    )
+    const isRetry = recentFails.length > 0
+    const attemptNumber = allDeposits.filter(d => new Date(d.createdAt).getTime() > thirtyMinAgo).length
+
+    // Server-side crypto_address_generated — emitted from the server because
+    // it has the canonical pay_address + payment_id from NowPayments.
+    try {
+      await captureServerEvent(user.id, 'crypto_address_generated', {
+        provider: 'nowpayments',
+        currency: paymentResult.payCurrency,
+        pay_currency: paymentResult.payCurrency,
+        final_method: cryptoFinalMethod(paymentResult.payCurrency),
+        // address is intentionally hashed-not-logged-in-clear: include only last
+        // 6 chars so you can correlate with on-chain refunds without leaking the
+        // full address into PostHog. Full address stays in DB (deposit row).
+        address_suffix: paymentResult.payAddress?.slice(-6),
+        expected_amount: paymentResult.payAmount,
+        amount_usd: roundedAmount,
+        local_amount: amount,
+        local_currency: inputCurrency,
+        fx_rate: fx.rate,
+        intent_id: deposit.id,
+        deposit_id: deposit.id,
+        payment_id: paymentResult.paymentId,
+        attempt_number: attemptNumber,
+        is_retry: isRetry,
+      })
+
+      // Also fire deposit_initiated server-side for crypto so the funnel always
+      // has the row even if the client capture failed (ad-blocker, navigation, etc).
+      await captureServerEvent(user.id, 'deposit_initiated', {
+        provider: 'nowpayments',
+        method: 'crypto',
+        currency: inputCurrency,
+        pay_currency: paymentResult.payCurrency,
+        final_method: cryptoFinalMethod(paymentResult.payCurrency),
+        amount_usd: roundedAmount,
+        local_amount: amount,
+        local_currency: inputCurrency,
+        fx_rate: fx.rate,
+        intent_id: deposit.id,
+        deposit_id: deposit.id,
+        payment_id: paymentResult.paymentId,
+        attempt_number: attemptNumber,
+        is_retry: isRetry,
+        source: 'server',
+      })
+    } catch (err) {
+      console.error('[posthog] crypto_address_generated capture failed:', err)
+    }
 
     return NextResponse.json({
       depositId: deposit.id,

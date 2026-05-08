@@ -5,6 +5,7 @@ import { createCheckout } from '@/lib/pandabase'
 import { flagAndBlacklist } from '@/lib/blacklist'
 import { logError } from '@/lib/error-log'
 import { localToUsd, usdToLocal, isSupportedCurrency } from '@/lib/fx'
+import { captureServerEvent } from '@/lib/posthog-api'
 
 export async function POST(request: NextRequest) {
   try {
@@ -99,6 +100,44 @@ export async function POST(request: NextRequest) {
       console.error(`[deposit.create] FX_FALLBACK_USED user=${user.id} currency=${inputCurrency} rate=${fx.rate} reason=rates_api_down dep=${deposit.id}`)
     }
     console.log(`[deposit.card] user=${user.id} local=${amount} ${inputCurrency} rate=${fx.rate} usd=$${roundedAmount} fx=${fx.source} dep=${deposit.id}`)
+
+    // Compute attempt_number / is_retry from recent deposit history (last 30min).
+    const allDeposits = await getUserDeposits(user.id)
+    const thirtyMinAgo = Date.now() - 30 * 60 * 1000
+    const recentFails = allDeposits.filter(d =>
+      (d.status === 'failed' || d.status === 'expired') &&
+      new Date(d.createdAt).getTime() > thirtyMinAgo &&
+      d.id !== deposit.id
+    )
+    const isRetry = recentFails.length > 0
+    const attemptNumber = allDeposits.filter(d => new Date(d.createdAt).getTime() > thirtyMinAgo).length
+
+    // Server-side deposit_initiated — fires even if client-side capture is blocked
+    // (ad-blocker, navigation, etc). NOTE: method=pending here because the user
+    // hasn't picked Apple Pay / Google Pay / Card on the Pandabase sheet yet —
+    // the actual `final_method` only lands on deposit_completed/failed via webhook.
+    try {
+      await captureServerEvent(user.id, 'deposit_initiated', {
+        provider: 'pandabase',
+        method: 'pending', // resolved on completion/failure
+        currency: inputCurrency,
+        amount_usd: roundedAmount,
+        local_amount: amount,
+        local_currency: inputCurrency,
+        fx_rate: fx.rate,
+        processing_fee: processingFee,
+        charge_amount: chargeAmount,
+        intent_id: deposit.id,
+        deposit_id: deposit.id,
+        invoice_id: sessionId,
+        ref_id: refId,
+        attempt_number: attemptNumber,
+        is_retry: isRetry,
+        source: 'server',
+      })
+    } catch (err) {
+      console.error('[posthog] deposit_initiated capture failed:', err)
+    }
 
     return NextResponse.json({
       depositId: deposit.id,
