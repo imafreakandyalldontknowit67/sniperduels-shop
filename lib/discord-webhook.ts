@@ -70,6 +70,58 @@ export async function notifyDispute(userName: string, amount: number, invoiceId:
   })
 }
 
+export async function notifyAdminPayout(opts: {
+  adminName: string
+  vendorName: string
+  vendorId: string
+  amount: number
+  paymentMethod: string
+  reference?: string
+  beforeBalance: number
+  afterBalance: number
+  notes?: string
+}): Promise<void> {
+  const { adminName, vendorName, vendorId, amount, paymentMethod, reference, beforeBalance, afterBalance, notes } = opts
+  await sendEmbed({
+    title: 'Admin Vendor Payout',
+    color: 0x9b59b6, // purple
+    fields: [
+      { name: 'Vendor', value: `${vendorName} (${vendorId})`, inline: true },
+      { name: 'Amount', value: `$${amount.toFixed(2)}`, inline: true },
+      { name: 'Method', value: paymentMethod, inline: true },
+      { name: 'Balance', value: `$${beforeBalance.toFixed(2)} → $${afterBalance.toFixed(2)}`, inline: true },
+      { name: 'Admin', value: adminName, inline: true },
+      ...(reference ? [{ name: 'Reference', value: reference, inline: true }] : []),
+      ...(notes ? [{ name: 'Notes', value: notes.slice(0, 500), inline: false }] : []),
+    ],
+  })
+}
+
+export async function notifyAdminBalanceAdjust(opts: {
+  adminName: string
+  userName: string
+  userId: string
+  action: 'add' | 'remove' | 'set'
+  amount: number
+  beforeBalance: number
+  afterBalance: number
+  reason?: string
+}): Promise<void> {
+  const { adminName, userName, userId, action, amount, beforeBalance, afterBalance, reason } = opts
+  const color = action === 'add' ? 0x2ecc71 : action === 'remove' ? 0xe67e22 : 0x95a5a6
+  await sendEmbed({
+    title: `Admin Balance ${action.toUpperCase()}`,
+    color,
+    fields: [
+      { name: 'User', value: `${userName} (${userId})`, inline: true },
+      { name: 'Amount', value: `$${amount.toFixed(2)}`, inline: true },
+      { name: 'Balance', value: `$${beforeBalance.toFixed(2)} → $${afterBalance.toFixed(2)}`, inline: true },
+      { name: 'Admin', value: adminName, inline: true },
+      ...(reason ? [{ name: 'Reason', value: reason.slice(0, 500), inline: false }] : []),
+    ],
+  })
+}
+
 export async function notifyPurchase(userName: string, itemName: string, quantity: number, totalPrice: number): Promise<void> {
   await sendEmbed({
     title: 'Order Placed',

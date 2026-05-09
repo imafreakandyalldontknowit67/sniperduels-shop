@@ -1261,7 +1261,7 @@ export async function getOrderStats() {
 
 // ─── Transaction Ledger ──────────────────────────────────────────────────────
 
-export type LedgerType = 'deposit' | 'purchase' | 'vendor_earning' | 'vendor_payout' | 'refund' | 'referral_commission'
+export type LedgerType = 'deposit' | 'purchase' | 'vendor_earning' | 'vendor_payout' | 'refund' | 'referral_commission' | 'admin_adjust'
 
 export interface LedgerEntry {
   id: string
@@ -1467,6 +1467,103 @@ export async function createVendorPayout(
       createdAt: payout.createdAt,
       updatedAt: payout.updatedAt,
       completedAt: payout.completedAt ?? undefined,
+    }
+  })
+}
+
+export interface AdminInitiatedPayoutInput {
+  vendorId: string
+  adminId: string
+  adminName: string
+  amount: number
+  paymentMethod: string
+  reference: string
+  notes: string
+}
+
+export interface AdminInitiatedPayoutResult {
+  payout: VendorPayout
+  previousBalance: number
+  newBalance: number
+}
+
+export async function createAdminInitiatedPayout(
+  input: AdminInitiatedPayoutInput
+): Promise<AdminInitiatedPayoutResult | { error: 'insufficient'; currentBalance: number } | null> {
+  const { vendorId, adminId, adminName, amount, paymentMethod, reference, notes } = input
+  const now = new Date().toISOString()
+  const rounded = Math.round(amount * 100) / 100
+
+  return prisma.$transaction(async (tx) => {
+    const rows = await tx.$queryRawUnsafe<{ walletBalance: Decimal }[]>(
+      'SELECT "walletBalance" FROM "User" WHERE id = $1 FOR UPDATE',
+      vendorId
+    )
+    if (!rows.length) return null
+
+    const previousBalance = Math.round(d(rows[0].walletBalance) * 100) / 100
+    if (previousBalance < rounded) {
+      return { error: 'insufficient' as const, currentBalance: previousBalance }
+    }
+
+    const newBalance = Math.round((previousBalance - rounded) * 100) / 100
+
+    await tx.user.update({
+      where: { id: vendorId },
+      data: { walletBalance: newBalance },
+    })
+
+    const adminNotes = `${reference ? `ref=${reference} | ` : ''}${notes} | by admin ${adminName}(${adminId})`.slice(0, 500)
+
+    const payout = await tx.vendorPayout.create({
+      data: {
+        vendorId,
+        amount: rounded,
+        paymentMethod,
+        status: 'completed',
+        adminNotes,
+        createdAt: now,
+        updatedAt: now,
+        completedAt: now,
+      },
+    })
+
+    await tx.transactionLedger.create({
+      data: {
+        type: 'vendor_payout',
+        userId: vendorId,
+        amount: rounded,
+        description: `Admin payout: ${paymentMethod}${reference ? ` (${reference})` : ''} by ${adminName}`,
+        relatedId: payout.id,
+        createdAt: now,
+      },
+    })
+
+    await tx.transactionLedger.create({
+      data: {
+        type: 'admin_adjust',
+        userId: vendorId,
+        amount: -rounded,
+        description: `admin=${adminName}(${adminId}) action=payout amount=$${rounded.toFixed(2)} ${previousBalance.toFixed(2)}→${newBalance.toFixed(2)} method=${paymentMethod}${reference ? ` ref=${reference}` : ''}${notes ? ` notes=${notes.slice(0, 200)}` : ''}`,
+        relatedId: payout.id,
+        createdAt: now,
+      },
+    })
+
+    return {
+      payout: {
+        id: payout.id,
+        vendorId: payout.vendorId,
+        amount: d(payout.amount),
+        paymentMethod: payout.paymentMethod,
+        status: 'completed',
+        adminNotes: payout.adminNotes ?? undefined,
+        createdAt: payout.createdAt,
+        updatedAt: payout.updatedAt,
+        completedAt: payout.completedAt ?? undefined,
+      },
+      previousBalance,
+      newBalance,
     }
   })
 }

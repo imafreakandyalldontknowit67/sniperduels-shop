@@ -20,6 +20,7 @@ import {
   Store,
   Wallet,
   Share2,
+  Banknote,
 } from 'lucide-react'
 
 const navItems = [
@@ -30,6 +31,7 @@ const navItems = [
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/vendors', label: 'Vendors', icon: Store },
   { href: '/admin/finance', label: 'Finance', icon: Wallet },
+  { href: '/admin/withdraw', label: 'Pay Out Vendor', icon: Banknote },
   { href: '/admin/referrals', label: 'Referrals', icon: Share2 },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]

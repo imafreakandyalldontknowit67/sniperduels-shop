@@ -266,6 +266,7 @@ enum TransactionType {
   vendor_payout
   refund
   referral_commission
+  admin_adjust
 }
 
 model TransactionLedger {
