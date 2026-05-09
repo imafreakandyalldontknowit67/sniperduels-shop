@@ -21,6 +21,7 @@ import {
   Wallet,
   Share2,
   Banknote,
+  Scale,
 } from 'lucide-react'
 
 const navItems = [
@@ -32,6 +33,7 @@ const navItems = [
   { href: '/admin/vendors', label: 'Vendors', icon: Store },
   { href: '/admin/finance', label: 'Finance', icon: Wallet },
   { href: '/admin/withdraw', label: 'Pay Out Vendor', icon: Banknote },
+  { href: '/admin/reconcile', label: 'Reconcile', icon: Scale },
   { href: '/admin/referrals', label: 'Referrals', icon: Share2 },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
