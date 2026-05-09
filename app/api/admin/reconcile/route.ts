@@ -15,6 +15,7 @@ interface Row {
   deposits: number
   refunds: number
   referralCommissions: number
+  adminAdjust: number
   purchases: number
   completedPayouts: number
   pendingPayouts: number
@@ -67,11 +68,12 @@ async function compute(): Promise<Row[]> {
     const deposits = ledger.get('deposit') ?? 0
     const refunds = ledger.get('refund') ?? 0
     const referralCommissions = ledger.get('referral_commission') ?? 0
+    const adminAdjust = ledger.get('admin_adjust') ?? 0 // signed (+ add, - remove)
     const purchases = ledger.get('purchase') ?? 0
     const completedPayouts = payouts.get('completed') ?? 0
     const pendingPayouts = payouts.get('pending') ?? 0
 
-    const expected = round(netEarnings + deposits + refunds + referralCommissions - purchases - completedPayouts - pendingPayouts)
+    const expected = round(netEarnings + deposits + refunds + referralCommissions + adminAdjust - purchases - completedPayouts - pendingPayouts)
     const actual = round(wallet)
     const delta = round(actual - expected)
 
@@ -87,6 +89,7 @@ async function compute(): Promise<Row[]> {
       deposits,
       refunds,
       referralCommissions,
+      adminAdjust,
       purchases,
       completedPayouts,
       pendingPayouts,

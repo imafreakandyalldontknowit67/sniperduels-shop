@@ -35,6 +35,7 @@ type Row = {
   deposits: number
   refunds: number
   referralCommissions: number
+  adminAdjust: number
   purchases: number
   completedPayouts: number
   pendingPayouts: number
@@ -100,11 +101,12 @@ async function main() {
     const deposits = ledger.get('deposit') ?? 0
     const refunds = ledger.get('refund') ?? 0
     const referralCommissions = ledger.get('referral_commission') ?? 0
+    const adminAdjust = ledger.get('admin_adjust') ?? 0 // signed (+ add, - remove)
     const purchases = ledger.get('purchase') ?? 0
     const completedPayouts = payouts.get('completed') ?? 0
     const pendingPayouts = payouts.get('pending') ?? 0
 
-    const expected = round(netEarnings + deposits + refunds + referralCommissions - purchases - completedPayouts - pendingPayouts)
+    const expected = round(netEarnings + deposits + refunds + referralCommissions + adminAdjust - purchases - completedPayouts - pendingPayouts)
     const actual = round(wallet)
     const delta = round(actual - expected)
 
@@ -121,6 +123,7 @@ async function main() {
       deposits,
       refunds,
       referralCommissions,
+      adminAdjust,
       purchases,
       completedPayouts,
       pendingPayouts,
@@ -138,10 +141,10 @@ async function main() {
   const totalDelta = round(rows.reduce((s, r) => s + r.delta, 0))
 
   // CSV
-  const csvHeader = 'userId,name,isVendor,wallet,netEarnings,deposits,refunds,referralCommissions,purchases,completedPayouts,pendingPayouts,expected,actual,delta,vendorEarningCount,lastActivityAt\n'
+  const csvHeader = 'userId,name,isVendor,wallet,netEarnings,deposits,refunds,referralCommissions,adminAdjust,purchases,completedPayouts,pendingPayouts,expected,actual,delta,vendorEarningCount,lastActivityAt\n'
   const csvBody = rows.map(r => [
     r.userId, esc(r.name), r.isVendor, r.walletBalance, r.netEarnings, r.deposits, r.refunds,
-    r.referralCommissions, r.purchases, r.completedPayouts, r.pendingPayouts,
+    r.referralCommissions, r.adminAdjust, r.purchases, r.completedPayouts, r.pendingPayouts,
     r.expected, r.actual, r.delta, r.vendorEarningCount, r.lastActivityAt ?? ''
   ].join(',')).join('\n')
   fs.mkdirSync(path.dirname(csvPath), { recursive: true })

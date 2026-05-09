@@ -20,6 +20,7 @@ interface Row {
   deposits: number
   refunds: number
   referralCommissions: number
+  adminAdjust: number
   purchases: number
   completedPayouts: number
   pendingPayouts: number

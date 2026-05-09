@@ -238,13 +238,16 @@ export async function updateWalletBalance(
     const previous = Math.round(d(locked[0].walletBalance) * 100) / 100
     const next = Math.round(amount * 100) / 100
 
-    // Ledger convention (existing data): always-positive magnitude, direction encoded
-    // in type+description. For admin set: description carries "set X→Y" so delta is recoverable.
+    // Convention: most types carry a positive magnitude (direction encoded in
+    // the type itself — purchase=debit, refund=credit, etc). admin_adjust is the
+    // exception: it can go either way, so we store the SIGNED delta so the
+    // reconciliation can sum it directly without inferring direction.
+    const signed = Math.round((next - previous) * 100) / 100
     await tx.transactionLedger.create({
       data: {
         type: ledgerEntry.type,
         userId,
-        amount: Math.abs(Math.round((next - previous) * 100) / 100),
+        amount: ledgerEntry.type === 'admin_adjust' ? signed : Math.abs(signed),
         description: ledgerEntry.description,
         relatedId: ledgerEntry.relatedId,
         createdAt: new Date().toISOString(),
@@ -312,11 +315,12 @@ export async function deductFromWallet(
     const rounded = Math.round(amount * 100) / 100
     if (currentBalance < rounded) return null
 
+    // admin_adjust stores signed delta; other debit types store magnitude (type implies direction).
     await tx.transactionLedger.create({
       data: {
         type: ledgerEntry.type,
         userId,
-        amount: rounded,
+        amount: ledgerEntry.type === 'admin_adjust' ? -rounded : rounded,
         description: ledgerEntry.description,
         relatedId: ledgerEntry.relatedId,
         createdAt: new Date().toISOString(),
