@@ -208,34 +208,85 @@ export async function getWalletBalance(userId: string): Promise<number> {
   return user ? d(user.walletBalance) : 0
 }
 
-export async function updateWalletBalance(userId: string, amount: number): Promise<StoredUser | null> {
-  if (!Number.isFinite(amount) || amount < 0 || amount > MAX_WALLET_BALANCE) return null
-
-  try {
-    const row = await prisma.user.update({
-      where: { id: userId },
-      data: { walletBalance: amount },
-    })
-    return toStoredUser(row)
-  } catch {
-    return null
-  }
+// Wallet writes are gated by the Postgres trigger `enforce_wallet_ledger_trg`,
+// which requires the session var app.allow_wallet_change='true' inside the same
+// transaction as the wallet UPDATE. The token is set after the matching
+// TransactionLedger row is inserted, so a wallet change can never reach COMMIT
+// without an audit row.
+export type WalletLedgerInput = {
+  type: LedgerType
+  description: string
+  relatedId?: string
 }
 
-export async function addToWallet(userId: string, amount: number): Promise<StoredUser | null> {
+async function allowWalletChange(tx: Prisma.TransactionClient): Promise<void> {
+  await tx.$executeRawUnsafe(`SET LOCAL app.allow_wallet_change = 'true'`)
+}
+
+export async function updateWalletBalance(
+  userId: string,
+  amount: number,
+  ledgerEntry: WalletLedgerInput
+): Promise<StoredUser | null> {
+  if (!Number.isFinite(amount) || amount < 0 || amount > MAX_WALLET_BALANCE) return null
+
+  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const locked: Array<{ walletBalance: number }> = await tx.$queryRawUnsafe(
+      'SELECT "walletBalance" FROM "User" WHERE id = $1 FOR UPDATE', userId
+    )
+    if (!locked.length) return null
+    const previous = Math.round(d(locked[0].walletBalance) * 100) / 100
+    const next = Math.round(amount * 100) / 100
+
+    // Ledger convention (existing data): always-positive magnitude, direction encoded
+    // in type+description. For admin set: description carries "set X→Y" so delta is recoverable.
+    await tx.transactionLedger.create({
+      data: {
+        type: ledgerEntry.type,
+        userId,
+        amount: Math.abs(Math.round((next - previous) * 100) / 100),
+        description: ledgerEntry.description,
+        relatedId: ledgerEntry.relatedId,
+        createdAt: new Date().toISOString(),
+      },
+    })
+    await allowWalletChange(tx)
+    const row = await tx.user.update({
+      where: { id: userId },
+      data: { walletBalance: next },
+    })
+    return toStoredUser(row)
+  })
+}
+
+export async function addToWallet(
+  userId: string,
+  amount: number,
+  ledgerEntry: WalletLedgerInput
+): Promise<StoredUser | null> {
   if (!Number.isFinite(amount) || amount < 0) return null
 
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    // Lock the user row to prevent concurrent balance reads (race condition fix)
     const locked: Array<{ walletBalance: number }> = await tx.$queryRawUnsafe(
       'SELECT "walletBalance" FROM "User" WHERE id = $1 FOR UPDATE', userId
     )
     if (!locked.length) return null
 
     const currentBalance = Number(locked[0].walletBalance)
-    const newBalance = currentBalance + amount
+    const newBalance = Math.round((currentBalance + amount) * 100) / 100
     if (newBalance > MAX_WALLET_BALANCE) return null
 
+    await tx.transactionLedger.create({
+      data: {
+        type: ledgerEntry.type,
+        userId,
+        amount: Math.round(amount * 100) / 100,
+        description: ledgerEntry.description,
+        relatedId: ledgerEntry.relatedId,
+        createdAt: new Date().toISOString(),
+      },
+    })
+    await allowWalletChange(tx)
     const row = await tx.user.update({
       where: { id: userId },
       data: { walletBalance: newBalance },
@@ -244,22 +295,37 @@ export async function addToWallet(userId: string, amount: number): Promise<Store
   })
 }
 
-export async function deductFromWallet(userId: string, amount: number): Promise<StoredUser | null> {
+export async function deductFromWallet(
+  userId: string,
+  amount: number,
+  ledgerEntry: WalletLedgerInput
+): Promise<StoredUser | null> {
   if (!Number.isFinite(amount) || amount < 0) return null
 
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    // Lock the user row to prevent concurrent balance reads (race condition fix)
     const locked: Array<{ walletBalance: number }> = await tx.$queryRawUnsafe(
       'SELECT "walletBalance" FROM "User" WHERE id = $1 FOR UPDATE', userId
     )
     if (!locked.length) return null
 
     const currentBalance = Math.round(d(locked[0].walletBalance) * 100) / 100
-    if (currentBalance < Math.round(amount * 100) / 100) return null
+    const rounded = Math.round(amount * 100) / 100
+    if (currentBalance < rounded) return null
 
+    await tx.transactionLedger.create({
+      data: {
+        type: ledgerEntry.type,
+        userId,
+        amount: rounded,
+        description: ledgerEntry.description,
+        relatedId: ledgerEntry.relatedId,
+        createdAt: new Date().toISOString(),
+      },
+    })
+    await allowWalletChange(tx)
     const row = await tx.user.update({
       where: { id: userId },
-      data: { walletBalance: Math.round((currentBalance - amount) * 100) / 100 },
+      data: { walletBalance: Math.round((currentBalance - rounded) * 100) / 100 },
     })
     return toStoredUser(row)
   })
@@ -1198,8 +1264,12 @@ export async function createVendorEarning(
   const row = await prisma.vendorEarning.create({
     data: { vendorId, orderId, saleAmount, platformFee, netAmount, createdAt: now },
   })
-  // Credit vendor wallet
-  const credited = await addToWallet(vendorId, netAmount)
+  // Credit vendor wallet (also writes vendor_earning ledger row inside the same TX)
+  const credited = await addToWallet(vendorId, netAmount, {
+    type: 'vendor_earning',
+    description: `Vendor sale: net $${netAmount.toFixed(2)} (gross $${saleAmount.toFixed(2)} - $${platformFee.toFixed(2)} fee)`,
+    relatedId: orderId,
+  })
   if (!credited) {
     console.error(`CRITICAL: Vendor wallet credit failed for ${vendorId}, amount $${netAmount}. Wallet at max.`)
   }
@@ -1428,12 +1498,6 @@ export async function createVendorPayout(
     const balance = d(rows[0].walletBalance)
     if (balance < amount) return null
 
-    // Deduct wallet immediately
-    await tx.user.update({
-      where: { id: vendorId },
-      data: { walletBalance: Math.round((balance - amount) * 100) / 100 },
-    })
-
     const payout = await tx.vendorPayout.create({
       data: {
         vendorId,
@@ -1445,7 +1509,7 @@ export async function createVendorPayout(
       },
     })
 
-    // Ledger entry
+    // Ledger entry FIRST so the audit row is in place
     await tx.transactionLedger.create({
       data: {
         type: 'vendor_payout',
@@ -1455,6 +1519,12 @@ export async function createVendorPayout(
         relatedId: payout.id,
         createdAt: now,
       },
+    })
+    // Then permission token + actual wallet UPDATE
+    await allowWalletChange(tx)
+    await tx.user.update({
+      where: { id: vendorId },
+      data: { walletBalance: Math.round((balance - amount) * 100) / 100 },
     })
 
     return {
@@ -1507,12 +1577,6 @@ export async function createAdminInitiatedPayout(
     }
 
     const newBalance = Math.round((previousBalance - rounded) * 100) / 100
-
-    await tx.user.update({
-      where: { id: vendorId },
-      data: { walletBalance: newBalance },
-    })
-
     const adminNotes = `${reference ? `ref=${reference} | ` : ''}${notes} | by admin ${adminName}(${adminId})`.slice(0, 500)
 
     const payout = await tx.vendorPayout.create({
@@ -1528,6 +1592,7 @@ export async function createAdminInitiatedPayout(
       },
     })
 
+    // Ledger BEFORE wallet update so the audit row exists when the trigger fires
     await tx.transactionLedger.create({
       data: {
         type: 'vendor_payout',
@@ -1538,16 +1603,10 @@ export async function createAdminInitiatedPayout(
         createdAt: now,
       },
     })
-
-    await tx.transactionLedger.create({
-      data: {
-        type: 'admin_adjust',
-        userId: vendorId,
-        amount: -rounded,
-        description: `admin=${adminName}(${adminId}) action=payout amount=$${rounded.toFixed(2)} ${previousBalance.toFixed(2)}→${newBalance.toFixed(2)} method=${paymentMethod}${reference ? ` ref=${reference}` : ''}${notes ? ` notes=${notes.slice(0, 200)}` : ''}`,
-        relatedId: payout.id,
-        createdAt: now,
-      },
+    await allowWalletChange(tx)
+    await tx.user.update({
+      where: { id: vendorId },
+      data: { walletBalance: newBalance },
     })
 
     return {
@@ -1638,24 +1697,24 @@ export async function rejectVendorPayout(id: string, adminNotes?: string): Promi
       payout.vendorId
     )
     if (rows.length) {
+      // Ledger BEFORE wallet update (trigger order)
+      await tx.transactionLedger.create({
+        data: {
+          type: 'refund',
+          userId: payout.vendorId,
+          amount: d(payout.amount),
+          description: `Payout rejected${adminNotes ? ': ' + adminNotes : ''}`,
+          relatedId: id,
+          createdAt: now,
+        },
+      })
+      await allowWalletChange(tx)
       const newBalance = d(rows[0].walletBalance) + d(payout.amount)
       await tx.user.update({
         where: { id: payout.vendorId },
         data: { walletBalance: Math.round(newBalance * 100) / 100 },
       })
     }
-
-    // Ledger entry for refund
-    await tx.transactionLedger.create({
-      data: {
-        type: 'refund',
-        userId: payout.vendorId,
-        amount: d(payout.amount),
-        description: `Payout rejected${adminNotes ? ': ' + adminNotes : ''}`,
-        relatedId: id,
-        createdAt: now,
-      },
-    })
 
     return true
   })

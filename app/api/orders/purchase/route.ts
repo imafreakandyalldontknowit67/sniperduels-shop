@@ -92,7 +92,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Deduct balance
-    const deductResult = await deductFromWallet(user.id, totalPrice)
+    const deductResult = await deductFromWallet(user.id, totalPrice, {
+      type: 'purchase',
+      description: `Pending purchase: ${quantity}x ${item.name}`,
+    })
     if (!deductResult) {
       return NextResponse.json({ error: 'Failed to deduct wallet balance' }, { status: 500 })
     }
@@ -100,7 +103,10 @@ export async function POST(request: NextRequest) {
     // Atomically decrement stock with row-level lock
     const deducted = await deductItemStock(item.id, quantity)
     if (!deducted) {
-      const refunded = await addToWallet(user.id, totalPrice)
+      const refunded = await addToWallet(user.id, totalPrice, {
+        type: 'refund',
+        description: `Refund: item ${item.id} stock out before order created`,
+      })
       if (!refunded) {
         console.error(`CRITICAL: Refund failed for user ${user.id}, amount $${totalPrice}. Wallet at max.`)
         await logError({ where: 'purchase_item.refund_failed', userId: user.id, error: 'wallet at max during refund', context: { amount: totalPrice, itemId } })

@@ -43,7 +43,11 @@ export async function POST(request: NextRequest) {
     // Atomically claim the deposit — only the first caller (verify or webhook) wins.
     const claimed = await claimPendingDeposit(deposit.id)
     if (claimed) {
-      await addToWallet(deposit.userId, deposit.amount)
+      await addToWallet(deposit.userId, deposit.amount, {
+        type: 'deposit',
+        description: `Fiat deposit (pb webhook): $${deposit.amount}`,
+        relatedId: deposit.id,
+      })
       console.log(`[Webhook] Credited $${deposit.amount.toFixed(2)} to user ${deposit.userId}`)
     } else {
       console.log(`[Webhook] Deposit ${deposit.id} already claimed, skipping`)

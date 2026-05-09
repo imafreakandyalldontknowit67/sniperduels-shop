@@ -73,7 +73,11 @@ export async function POST(
   }
 
   // Regular order: refund wallet, subtract lifetime spend, restore stock
-  await addToWallet(order.userId, order.totalPrice)
+  await addToWallet(order.userId, order.totalPrice, {
+    type: 'refund',
+    description: `Refund: order ${order.id} cancelled by user`,
+    relatedId: order.id,
+  })
   await addToLifetimeSpend(order.userId, -order.totalPrice)
 
   if (order.type === 'gems') {

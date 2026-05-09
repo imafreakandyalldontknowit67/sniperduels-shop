@@ -126,30 +126,22 @@ export async function processReferralCommission(orderId: string, userId: string)
   })
 
   // Credit referrer
-  const referrerCredited = await addToWallet(user.referredBy, REFERRAL_COMMISSION_REFERRER)
-  if (referrerCredited) {
-    await createLedgerEntry({
-      type: 'referral_commission',
-      userId: user.referredBy,
-      amount: REFERRAL_COMMISSION_REFERRER,
-      description: 'Referral commission: referred user completed first order',
-      relatedId: orderId,
-    })
-  } else {
+  const referrerCredited = await addToWallet(user.referredBy, REFERRAL_COMMISSION_REFERRER, {
+    type: 'referral_commission',
+    description: 'Referral commission: referred user completed first order',
+    relatedId: orderId,
+  })
+  if (!referrerCredited) {
     console.error(`[Referral] Failed to credit referrer ${user.referredBy} $${REFERRAL_COMMISSION_REFERRER} (wallet at max?)`)
   }
 
   // Credit referred user
-  const referredCredited = await addToWallet(userId, REFERRAL_COMMISSION_REFERRED)
-  if (referredCredited) {
-    await createLedgerEntry({
-      type: 'referral_commission',
-      userId,
-      amount: REFERRAL_COMMISSION_REFERRED,
-      description: 'Referral bonus: first order completed',
-      relatedId: orderId,
-    })
-  } else {
+  const referredCredited = await addToWallet(userId, REFERRAL_COMMISSION_REFERRED, {
+    type: 'referral_commission',
+    description: 'Referral bonus: first order completed',
+    relatedId: orderId,
+  })
+  if (!referredCredited) {
     console.error(`[Referral] Failed to credit referred user ${userId} $${REFERRAL_COMMISSION_REFERRED} (wallet at max?)`)
   }
 

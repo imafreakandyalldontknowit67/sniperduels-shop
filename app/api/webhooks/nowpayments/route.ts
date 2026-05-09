@@ -12,19 +12,16 @@ async function creditDeposit(
   override?: { creditUsd: number; description: string },
 ) {
   const amount = override ? override.creditUsd : deposit.amount
-  const credited = await addToWallet(deposit.userId, amount)
+  const credited = await addToWallet(deposit.userId, amount, {
+    type: 'deposit',
+    description: override ? override.description : `Crypto deposit: $${amount}`,
+    relatedId: deposit.id,
+  })
   if (!credited) {
     console.error(`[NOWPayments IPN] CRITICAL: addToWallet returned null for deposit ${deposit.id} ($${amount}) — wallet may be at max`)
     await logError({ where: 'deposit.credit_wallet_failed', userId: deposit.userId, error: 'addToWallet returned null', context: { depositId: deposit.id, amount } })
     return
   }
-  createLedgerEntry({
-    type: 'deposit',
-    userId: deposit.userId,
-    amount,
-    description: override ? override.description : `Crypto deposit: $${amount}`,
-    relatedId: deposit.id,
-  }).catch(err => console.error('Ledger write failed (crypto deposit):', err))
 
   // Sync the deposit row's `amount` field to what was actually credited so the
   // dashboard doesn't show $47.52 when only $35.22 hit the wallet.

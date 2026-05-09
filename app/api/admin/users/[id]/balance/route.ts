@@ -6,7 +6,6 @@ import {
   addToWallet,
   deductFromWallet,
   updateWalletBalance,
-  createLedgerEntry,
 } from '@/lib/storage'
 import { notifyAdminBalanceAdjust } from '@/lib/discord-webhook'
 
@@ -34,17 +33,18 @@ export async function POST(
   }
 
   const before = await getWalletBalance(id)
+  const description = `admin=${currentUser.name}(${currentUser.id}) action=${action} amount=$${amount.toFixed(2)}${reason ? ` reason=${String(reason).slice(0, 200)}` : ''}`
   let updated: { walletBalance: number } | null = null
   let delta = 0
 
   if (action === 'add') {
-    updated = await addToWallet(id, amount)
+    updated = await addToWallet(id, amount, { type: 'admin_adjust', description })
     if (!updated) {
       return NextResponse.json({ error: 'Add failed (wallet cap reached or db error).' }, { status: 400 })
     }
     delta = amount
   } else if (action === 'remove') {
-    updated = await deductFromWallet(id, amount)
+    updated = await deductFromWallet(id, amount, { type: 'admin_adjust', description })
     if (!updated) {
       return NextResponse.json({
         error: `Insufficient balance. User has $${before.toFixed(2)}, cannot remove $${amount.toFixed(2)}.`,
@@ -54,19 +54,12 @@ export async function POST(
     delta = -amount
   } else {
     // set
-    updated = await updateWalletBalance(id, amount)
+    updated = await updateWalletBalance(id, amount, { type: 'admin_adjust', description: `${description} set ${before.toFixed(2)}→${amount.toFixed(2)}` })
     if (!updated) {
       return NextResponse.json({ error: 'Set failed (amount out of range or db error).' }, { status: 400 })
     }
     delta = amount - before
   }
-
-  await createLedgerEntry({
-    type: 'admin_adjust',
-    userId: id,
-    amount: delta,
-    description: `admin=${currentUser.name}(${currentUser.id}) action=${action} amount=$${amount.toFixed(2)} ${before.toFixed(2)}→${updated.walletBalance.toFixed(2)}${reason ? ` reason=${String(reason).slice(0, 200)}` : ''}`,
-  })
 
   console.log(`[AUDIT] Admin ${currentUser.name} (${currentUser.id}) ${action} $${amount} on user ${user.name} (${id}): $${before} → $${updated.walletBalance}`)
 

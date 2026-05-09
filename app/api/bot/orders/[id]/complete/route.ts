@@ -46,7 +46,11 @@ export async function POST(
       // Re-deduct wallet (undo refund)
       const isRegular = order.type === 'gems' && !order.notes.includes('platform-deposit') && !order.notes.includes('vendor-deposit') && !order.notes.includes('vendor-withdrawal') && !order.notes.includes('platform-withdraw')
       if (isRegular) {
-        await deductFromWallet(order.userId, Number(order.totalPrice))
+        await deductFromWallet(order.userId, Number(order.totalPrice), {
+          type: 'purchase',
+          description: `Re-deduct: bot confirmed delivery after order ${order.id} was failed/refunded`,
+          relatedId: order.id,
+        })
         await addToLifetimeSpend(order.userId, -Number(order.totalPrice))
 
         // Re-deduct stock (undo restoration)
@@ -64,16 +68,8 @@ export async function POST(
         notes: `${order.notes} | REVERSED: Bot confirmed delivery after failure`,
       })
 
-      // Create vendor earning + ledger entries (same as normal completion path)
+      // Vendor earning is created (purchase ledger row was already written by deductFromWallet above)
       if (isRegular) {
-        createLedgerEntry({
-          type: 'purchase',
-          userId: order.userId,
-          amount: order.totalPrice,
-          description: `Purchased ${order.quantity}k gems at $${order.pricePerUnit}/k (reversed from failed)`,
-          relatedId: order.id,
-        }).catch(err => console.error('Ledger write failed (reversed purchase):', err))
-
         if (order.vendorListingId && order.vendorListingId !== 'platform') {
           try {
             await createVendorEarning(order.vendorListingId, order.id, Number(order.totalPrice))
@@ -123,33 +119,16 @@ export async function POST(
     // Nothing extra to do — completion is handled by the updateOrder above
   }
 
-  // Log completed purchase to ledger + create vendor earning (only on successful delivery)
+  // Vendor earning created on successful delivery (purchase ledger row was written
+  // at debit time by deductFromWallet; vendor_earning ledger row is written by addToWallet inside createVendorEarning).
   const isRegularPurchase = order.type === 'gems' && order.notes !== 'platform-deposit' && !order.notes?.startsWith('vendor-deposit:') && !order.notes?.startsWith('vendor-withdrawal:') && order.notes !== 'platform-withdraw'
   if (isRegularPurchase) {
-    createLedgerEntry({
-      type: 'purchase',
-      userId: order.userId,
-      amount: order.totalPrice,
-      description: `Purchased ${order.quantity}k gems at $${order.pricePerUnit}/k`,
-      relatedId: order.id,
-    }).catch(err => console.error('Ledger write failed (purchase complete):', err))
-
-    // Create vendor earning NOW (on delivery), not at purchase time
-    // This ensures vendors only get paid for orders that actually complete
     if (order.vendorListingId && order.vendorListingId !== 'platform') {
       try {
         await createVendorEarning(order.vendorListingId, order.id, order.totalPrice)
       } catch (err) {
         console.error(`CRITICAL: Vendor earning creation failed for order ${order.id}:`, err)
       }
-
-      createLedgerEntry({
-        type: 'vendor_earning',
-        userId: order.vendorListingId,
-        amount: order.totalPrice,
-        description: `Vendor sale: ${order.quantity}k gems`,
-        relatedId: order.id,
-      }).catch(err => console.error('Ledger write failed (vendor_earning complete):', err))
     }
   }
 

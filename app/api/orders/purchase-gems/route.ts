@@ -135,7 +135,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Deduct balance
-    const deductResult = await deductFromWallet(user.id, totalPrice)
+    const deductResult = await deductFromWallet(user.id, totalPrice, {
+      type: 'purchase',
+      description: `Pending purchase: ${roundedAmount}k gems @ $${rate}/k${isVendorPurchase ? ` from vendor ${vendorId}` : ''}`,
+    })
     if (!deductResult) {
       return NextResponse.json({ error: 'Failed to deduct wallet balance' }, { status: 500 })
     }
@@ -144,7 +147,10 @@ export async function POST(request: NextRequest) {
     if (isVendorPurchase && vendorId) {
       const deducted = await deductVendorStock(vendorId, roundedAmount)
       if (!deducted) {
-        const refunded = await addToWallet(user.id, totalPrice)
+        const refunded = await addToWallet(user.id, totalPrice, {
+          type: 'refund',
+          description: `Refund: vendor ${vendorId} stock out before order created`,
+        })
         if (!refunded) {
           console.error(`CRITICAL: Refund failed for user ${user.id}, amount $${totalPrice}. Wallet at max.`)
           await logError({ where: 'purchase_gems.refund_failed', userId: user.id, error: 'wallet at max during refund', context: { amount: totalPrice, vendor: isVendorPurchase, vendorId } })
@@ -161,7 +167,10 @@ export async function POST(request: NextRequest) {
     } else {
       const deducted = await deductGemStock(roundedAmount)
       if (!deducted) {
-        const refunded = await addToWallet(user.id, totalPrice)
+        const refunded = await addToWallet(user.id, totalPrice, {
+          type: 'refund',
+          description: `Refund: platform stock out before order created`,
+        })
         if (!refunded) {
           console.error(`CRITICAL: Refund failed for user ${user.id}, amount $${totalPrice}. Wallet at max.`)
           await logError({ where: 'purchase_gems.refund_failed', userId: user.id, error: 'wallet at max during refund', context: { amount: totalPrice, vendor: isVendorPurchase, vendorId } })
@@ -191,7 +200,10 @@ export async function POST(request: NextRequest) {
         } else {
           await addGemStock(roundedAmount)
         }
-        await addToWallet(user.id, totalPrice)
+        await addToWallet(user.id, totalPrice, {
+          type: 'refund',
+          description: 'Refund: bot low on gems, order rejected',
+        })
         await addToLifetimeSpend(user.id, -totalPrice)
         return NextResponse.json(
           { error: 'The bot is running low on gems. Please try a smaller amount or wait for restocking.' },

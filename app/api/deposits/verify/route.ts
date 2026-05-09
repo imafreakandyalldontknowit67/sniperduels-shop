@@ -31,14 +31,11 @@ export async function POST(request: NextRequest) {
         if (npStatus === 'finished' || npStatus === 'confirmed') {
           const claimed = await claimPendingDeposit(deposit.id)
           if (claimed) {
-            await addToWallet(deposit.userId, deposit.amount)
-            createLedgerEntry({
+            await addToWallet(deposit.userId, deposit.amount, {
               type: 'deposit',
-              userId: deposit.userId,
-              amount: deposit.amount,
               description: `Crypto deposit: $${deposit.amount}`,
               relatedId: deposit.id,
-            }).catch(err => console.error('Ledger write failed (verify poll):', err))
+            })
             console.log(`[Verify Poll] Recovered deposit via NP status check: ${deposit.id} ($${deposit.amount})`)
             // Refresh deposit to get updated status
             deposit = (await getDeposit(depositId))!

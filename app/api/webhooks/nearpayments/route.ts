@@ -48,20 +48,17 @@ export async function POST(request: NextRequest) {
       }
 
       // Credit wallet 1:1
-      const credited = await addToWallet(deposit.userId, deposit.amount)
+      const credited = await addToWallet(deposit.userId, deposit.amount, {
+        type: 'deposit',
+        description: `Crypto deposit: $${deposit.amount}`,
+        relatedId: deposit.id,
+      })
       if (!credited) {
         console.error(`[nearpayments] WALLET_CREDIT_FAILED user=${deposit.userId} amount=${deposit.amount} dep=${deposit.id}`)
         await logError({ where: 'deposit.crypto_credit_wallet_failed', userId: deposit.userId, error: 'addToWallet returned null', context: { depositId: deposit.id, amount: deposit.amount } })
         // Return 5xx so NowPayments retries the IPN.
         return NextResponse.json({ error: 'wallet credit failed' }, { status: 500 })
       }
-      createLedgerEntry({
-        type: 'deposit',
-        userId: deposit.userId,
-        amount: deposit.amount,
-        description: `Crypto deposit: $${deposit.amount}`,
-        relatedId: deposit.id,
-      }).catch(err => console.error('Ledger write failed (crypto deposit):', err))
 
       console.log(`[nearpayments] wallet credit ok user=${deposit.userId} amount=${deposit.amount} dep=${deposit.id}`)
       console.log(`[NearPayments IPN] Completed: ${deposit.id} ($${deposit.amount})`)
@@ -137,23 +134,19 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ received: true })
           }
 
-          const credited = await addToWallet(deposit.userId, creditUsd)
+          const desc = ratio >= 0.98
+            ? `Crypto deposit (partial ${ratioPct}% — within fee tolerance): $${creditUsd}`
+            : `Crypto deposit (partial ${ratioPct}%): $${creditUsd} of $${priceAmount} (paid ${actuallyPaid} ${payCurrency} of ${expectedPay} expected)`
+          const credited = await addToWallet(deposit.userId, creditUsd, {
+            type: 'deposit',
+            description: desc,
+            relatedId: deposit.id,
+          })
           if (!credited) {
             console.error(`[nearpayments] PARTIAL_WALLET_CREDIT_FAILED user=${deposit.userId} amount=${creditUsd} dep=${deposit.id}`)
             await logError({ where: 'deposit.crypto_partial_credit_wallet_failed', userId: deposit.userId, error: 'addToWallet returned null', context: { depositId: deposit.id, creditUsd, priceAmount, ratio } })
             return NextResponse.json({ error: 'wallet credit failed' }, { status: 500 })
           }
-
-          const desc = ratio >= 0.98
-            ? `Crypto deposit (partial ${ratioPct}% — within fee tolerance): $${creditUsd}`
-            : `Crypto deposit (partial ${ratioPct}%): $${creditUsd} of $${priceAmount} (paid ${actuallyPaid} ${payCurrency} of ${expectedPay} expected)`
-          createLedgerEntry({
-            type: 'deposit',
-            userId: deposit.userId,
-            amount: creditUsd,
-            description: desc,
-            relatedId: deposit.id,
-          }).catch(err => console.error('Ledger write failed (crypto partial deposit):', err))
 
           // Sync the deposit row's `amount` field so the dashboard shows what
           // was actually credited, not the original intended amount.

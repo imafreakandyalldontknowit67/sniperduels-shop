@@ -71,7 +71,11 @@ export async function POST(
   }
 
   // Safe to refund — order is locked as failed
-  await addToWallet(order.userId, order.totalPrice)
+  await addToWallet(order.userId, order.totalPrice, {
+    type: 'refund',
+    description: `Refund: order ${order.id} cancelled by admin`,
+    relatedId: order.id,
+  })
   await addToLifetimeSpend(order.userId, -order.totalPrice)
 
   // Restore stock — to the correct pool
