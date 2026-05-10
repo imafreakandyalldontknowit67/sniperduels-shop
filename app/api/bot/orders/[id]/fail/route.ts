@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
-import { getOrder, updateOrder, updateOrderStatus, addToWallet, addToLifetimeSpend, getStock, updateStockItem, addGemStock, updateVendorDepositStatus, addVendorStock } from '@/lib/storage'
+import { getOrder, updateOrder, updateOrderStatus, addToWallet, addToLifetimeSpend, getStock, updateStockItem, addGemStock, updateVendorDepositStatus, addVendorStock, getVendorDeposit } from '@/lib/storage'
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -66,9 +66,19 @@ export async function POST(
     return NextResponse.json({ order: updated })
   }
 
-  // Vendor deposit orders: just mark deposit as failed, no refund needed
+  // Vendor deposit orders: bot reporting fail means gems didn't arrive in-game
+  // (vendor missing from server, etc.). Mark deposit failed. If status was
+  // already 'completed', that's a bug — bot can't both succeed and fail.
   if (order.notes?.startsWith('vendor-deposit:')) {
     const depositId = order.notes.replace('vendor-deposit:', '')
+    const dep = await getVendorDeposit(depositId)
+    if (dep?.status === 'completed') {
+      console.error(`[bot-fail] CRITICAL: bot reported fail on order ${id} but VendorDeposit ${depositId} is completed. Refusing to mark failed.`)
+      return NextResponse.json(
+        { error: 'Deposit already completed — cannot mark failed' },
+        { status: 409 }
+      )
+    }
     await updateVendorDepositStatus(depositId, 'failed')
     return NextResponse.json({ order: updated })
   }

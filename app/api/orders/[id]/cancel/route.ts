@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
-import { getOrder, updateOrder, updateOrderStatus, addToWallet, addToLifetimeSpend, getStock, updateStockItem, addGemStock, updateVendorDepositStatus, addVendorStock } from '@/lib/storage'
+import { getOrder, updateOrder, updateOrderStatus, addToWallet, addToLifetimeSpend, getStock, updateStockItem, addGemStock, updateVendorDepositStatus, addVendorStock, getVendorDeposit } from '@/lib/storage'
 
 export async function POST(
   request: NextRequest,
@@ -59,9 +59,21 @@ export async function POST(
     return NextResponse.json({ order: updated })
   }
 
-  // Vendor deposit: mark deposit as failed, no wallet refund needed
+  // Vendor deposit: refuse cancel if bot may have already received the gems.
+  // Status semantics: pending = bot hasn't picked it up yet (safe to cancel),
+  // queued = bot has claimed it / may be receiving gems (UNSAFE — would orphan
+  // gems and trigger heartbeat sync to promote them to platform stock).
   if (isVendorDeposit) {
     const depositId = order.notes!.split('vendor-deposit:')[1]
+    const dep = await getVendorDeposit(depositId)
+    if (dep && dep.status !== 'pending') {
+      // Re-open the order — user shouldn't have been able to cancel.
+      await updateOrder(id, { status: 'pending', notes: order.notes! })
+      return NextResponse.json(
+        { error: 'Bot may have already received your gems. Contact support to reconcile — do not re-send.' },
+        { status: 409 }
+      )
+    }
     await updateVendorDepositStatus(depositId, 'failed')
     return NextResponse.json({ order: updated })
   }

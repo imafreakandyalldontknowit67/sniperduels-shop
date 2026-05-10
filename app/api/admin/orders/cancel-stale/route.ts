@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser, isAdmin } from '@/lib/auth'
-import { getOrders, updateOrderStatus, addToWallet, addToLifetimeSpend, addGemStock, getStock, updateStockItem, addVendorStock, updateVendorDepositStatus } from '@/lib/storage'
+import { getOrders, updateOrderStatus, updateOrder, addToWallet, addToLifetimeSpend, addGemStock, getStock, updateStockItem, addVendorStock, updateVendorDepositStatus, getVendorDeposit } from '@/lib/storage'
 
 export async function POST() {
   const currentUser = await getCurrentUser()
@@ -39,9 +39,16 @@ export async function POST() {
       cancelled++; continue
     }
 
-    // Vendor deposit: mark deposit as failed
+    // Vendor deposit: skip if bot may already have the gems (queued/completed).
+    // Re-opening to pending lets the bot finish or admin reconcile manually.
     if (order.notes?.startsWith('vendor-deposit:')) {
       const depositId = order.notes.replace('vendor-deposit:', '')
+      const dep = await getVendorDeposit(depositId)
+      if (dep && dep.status !== 'pending') {
+        await updateOrder(order.id, { status: 'pending', notes: order.notes })
+        console.warn(`[cancel-stale] skipped ${order.id} — VendorDeposit ${depositId} is ${dep.status}, bot may have received gems`)
+        continue
+      }
       await updateVendorDepositStatus(depositId, 'failed')
       cancelled++; continue
     }

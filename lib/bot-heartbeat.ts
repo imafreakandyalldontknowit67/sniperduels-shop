@@ -99,14 +99,23 @@ export function setBotHeartbeat(gemBalance?: number): void {
   lastHeartbeat = Date.now()
   if (gemBalance != null) {
     botGemBalance = gemBalance
-    // Sync platform stock counter to bot's real balance
-    const timeSinceSync = Date.now() - lastSyncTime
-    if (timeSinceSync > SYNC_INTERVAL) {
-      console.log(`[Stock Sync] Triggering sync (${Math.round(timeSinceSync / 1000)}s since last, balance=${gemBalance})`)
-      syncPlatformStock(gemBalance).catch(err =>
-        console.error('[Stock Sync] Failed:', err)
-      )
-    }
+    // ── DISABLED 2026-05-10 ──
+    // Auto-sync was promoting orphan gems (e.g. cancelled vendor-deposits whose
+    // gems already arrived in the bot) into OFFICIAL platform stock. The trade
+    // bot's botBalance can include gems that don't legitimately belong to the
+    // platform; the formula `botBalance - vendorTotal - pending` treated those
+    // as platform inventory. Until the cancel-race is fully closed (see the
+    // vendor-deposit cancel handlers), any drift gets reconciled MANUALLY via
+    // /admin/gems. botGemBalance still updates above for /api/bot/status and
+    // for the pre-flight balance guard at purchase-gems/route.ts:190.
+    //
+    // const timeSinceSync = Date.now() - lastSyncTime
+    // if (timeSinceSync > SYNC_INTERVAL) {
+    //   console.log(`[Stock Sync] Triggering sync (${Math.round(timeSinceSync / 1000)}s since last, balance=${gemBalance})`)
+    //   syncPlatformStock(gemBalance).catch(err =>
+    //     console.error('[Stock Sync] Failed:', err)
+    //   )
+    // }
   }
 
   // Fire-and-forget DB write — but log when it fails so we notice cache going stale.
@@ -140,6 +149,31 @@ async function syncPlatformStock(botBalanceRaw: number) {
   const currentK = current?.balanceInK ?? 0
 
   if (Math.abs(platformK - currentK) > 1) {
+    // Tripwire: never auto-promote more than 25k/tick into platform stock. A
+    // big delta usually means orphan gems from a cancelled vendor-deposit race;
+    // alert and leave the counter alone so the owner reconciles manually.
+    const delta = platformK - currentK
+    if (delta > 25_000) {
+      console.error(`[Stock Sync] BLOCKED: would promote ${delta}k to platform (current=${currentK}, target=${platformK}). Suspect orphan gems — manual review.`)
+      const adminWebhook = process.env.ADMIN_WEBHOOK_URL || process.env.DISCORD_WEBHOOK_URL
+      if (adminWebhook) {
+        fetch(adminWebhook, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content: '<@358318461405102080>',
+            embeds: [{
+              title: '⚠️ Stock Sync Tripwire',
+              color: 0xe74c3c,
+              description: `Heartbeat tried to promote **${delta}k** into platform stock.\nCurrent: ${currentK}k → Target: ${platformK}k\nBot: ${botBalanceK}k, Vendor: ${vendorTotalK}k, Pending: ${pendingK}k\n\nLikely orphan gems from a cancelled vendor-deposit. Review /admin/gems.`,
+              timestamp: new Date().toISOString(),
+            }],
+          }),
+        }).catch(() => {})
+      }
+      lastSyncTime = Date.now()
+      return
+    }
     await setGemStock(platformK)
     console.log(`[Stock Sync] ${currentK}k → ${platformK}k (bot: ${botBalanceK}k, vendor: ${vendorTotalK}k, pending: ${pendingK}k)`)
   }
