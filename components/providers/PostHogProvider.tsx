@@ -28,9 +28,14 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       person_profiles: 'identified_only',
       capture_pageview: false,
       capture_pageleave: true,
-      // Enable session recording site-wide; sample rate is gated per-page below.
-      // For /gems we always record (rage-click hot zone). For other pages we
-      // honor the env-driven sample rate.
+      // Don't auto-queue the recorder script during init. Some content blockers
+      // (uBlock Origin, Firefox strict tracking protection) block
+      // posthog-recorder.js outright, and posthog-js v1.360.x can leave the
+      // SDK in a half-initialized state when the lazy recorder load fails —
+      // a state from which downstream `posthog.capture()` calls can throw.
+      // We start recording manually below, deferred + guarded, so a recorder
+      // load failure can never poison the synchronous init path.
+      disable_session_recording: true,
       session_recording: {
         maskAllInputs: true,
         collectFonts: true,
@@ -40,32 +45,40 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       // the rage to a specific instrumented element without parsing CSS
       // selectors after the fact.
       before_send: (event) => {
-        if (!event) return event
-        if (event.event === '$rageclick' || event.event === '$autocapture') {
-          // posthog-js stashes the original DOM event on properties.$event under
-          // some versions; for $rageclick we instead rely on listener-level
-          // enrichment (see global click listener below) writing to a window
-          // ref. Fall back to whatever element_id we may have already set.
-          const lastPhId = (typeof window !== 'undefined')
-            ? (window as unknown as { __ph_last_click_ph_id?: string | null }).__ph_last_click_ph_id
-            : null
-          if (lastPhId && event.properties) {
-            event.properties.target_element_id = lastPhId
+        try {
+          if (!event) return event
+          if (event.event === '$rageclick' || event.event === '$autocapture') {
+            const lastPhId = (typeof window !== 'undefined')
+              ? (window as unknown as { __ph_last_click_ph_id?: string | null }).__ph_last_click_ph_id
+              : null
+            if (lastPhId && event.properties) {
+              // Clone-mutate-replace rather than direct property assignment:
+              // posthog-js v1.360.x can freeze event.properties when its
+              // session-recording integration partially fails (e.g. recorder
+              // script blocked by uBlock). A direct write to a frozen object
+              // throws synchronously inside before_send and propagates to the
+              // React click handler that triggered the capture.
+              event.properties = { ...event.properties, target_element_id: lastPhId }
+            }
           }
-        }
+        } catch { /* non-fatal — never let telemetry sink the click */ }
         return event
       },
       loaded: (ph) => {
         // Decide whether to record this session based on path + sample rate.
         // /gems always records; other pages obey SESSION_RECORDING_SAMPLE_RATE.
+        //
+        // Deferred to setTimeout(0) so any recorder-script onerror (uBlock,
+        // CSP, network) can fire harmlessly before we touch posthog state.
+        // Double try/catch so a recorder load failure can NEVER bubble out
+        // of the provider.
         try {
           const onGems = typeof window !== 'undefined' && window.location.pathname.startsWith('/gems')
           const shouldRecord = onGems || Math.random() < SESSION_RECORDING_SAMPLE_RATE
-          if (shouldRecord) {
-            ph.startSessionRecording()
-          } else {
-            ph.stopSessionRecording()
-          }
+          if (!shouldRecord) return
+          setTimeout(() => {
+            try { ph.startSessionRecording() } catch { /* recorder blocked — fine */ }
+          }, 0)
         } catch { /* non-fatal */ }
       },
     })

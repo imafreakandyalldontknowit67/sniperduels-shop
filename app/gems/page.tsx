@@ -21,6 +21,26 @@ interface GemListing {
 
 const PRESET_AMOUNTS = [10, 25, 50, 100]
 
+// Safe wrapper around posthog.capture. Some content blockers (uBlock,
+// Firefox strict tracking protection) can leave posthog-js in a partially
+// initialized state after blocking posthog-recorder.js, and a subsequent
+// capture() call can throw synchronously into the React tree — which is
+// what was bubbling up to the global-error boundary and showing users a
+// bare "Something went wrong" on /gems. Telemetry is best-effort and must
+// never crash the page.
+function safeCapture(event: string, props?: Record<string, unknown>): void {
+  try {
+    // Direct call into posthog-js. Wrapped in try/catch so a partial-init
+    // SDK state (see banner comment above) can't throw into the React tree.
+    posthog.capture(event, props)
+  } catch (e) {
+    if (typeof window !== 'undefined') {
+      // eslint-disable-next-line no-console
+      console.warn('[posthog] capture failed', event, e)
+    }
+  }
+}
+
 interface UserInfo {
   user: { id: string; name: string } | null
   walletBalance: number
@@ -105,7 +125,7 @@ function GemsContent() {
       return
     }
     if (prevBotOnlineRef.current !== botOnline) {
-      posthog.capture('bot_status_changed', {
+      safeCapture('bot_status_changed', {
         online: botOnline,
         prev_online: prevBotOnlineRef.current,
         offline_since_ms: offlineSinceMs,
@@ -172,7 +192,7 @@ function GemsContent() {
     }
     if (!bannerImpressionFiredRef.current) {
       bannerImpressionFiredRef.current = true
-      posthog.capture('outage_banner_shown', {
+      safeCapture('outage_banner_shown', {
         offline_since_ms: offlineSinceMs,
         logged_in: !!userInfo?.user,
         discord_linked: !!userInfo?.discordLinked,
@@ -187,10 +207,10 @@ function GemsContent() {
   const [notifySubmitting, setNotifySubmitting] = useState(false)
   async function handleNotifyMe() {
     if (notifySubmitting || !userInfo) return
-    posthog.capture('outage_notify_clicked', { discord_linked: userInfo.discordLinked })
+    safeCapture('outage_notify_clicked', { discord_linked: userInfo.discordLinked })
     if (!userInfo.discordLinked) {
       // Send through Discord OAuth — link AND set the flag in one trip.
-      posthog.capture('outage_discord_link_clicked')
+      safeCapture('outage_discord_link_clicked')
       window.location.href = '/api/auth/discord?reason=outage_notify'
       return
     }
@@ -204,7 +224,7 @@ function GemsContent() {
       if (res.ok) {
         setUserInfo(prev => prev ? { ...prev, notifyOnBotRecovery: true } : prev)
         setToast({ type: 'success', text: "You're subscribed — we'll DM you the moment the bot's back." })
-        posthog.capture('outage_notify_subscribed', { via: 'inline' })
+        safeCapture('outage_notify_subscribed', { via: 'inline' })
       } else {
         setToast({ type: 'error', text: 'Could not subscribe. Try linking Discord again.' })
       }
@@ -282,7 +302,7 @@ function GemsContent() {
         } catch {
           // expiresAt malformed — leave null
         }
-        posthog.capture('gems_resume_buy_hydrated', {
+        safeCapture('gems_resume_buy_hydrated', {
           intent_id: resumeBuyId,
           amount_k: safeAmount,
           intent_age_seconds: intentAgeSeconds,
@@ -349,7 +369,7 @@ function GemsContent() {
   useEffect(() => {
     if (!preauthBannerVisible || preauthImpressionFiredRef.current) return
     preauthImpressionFiredRef.current = true
-    posthog.capture('gems_preauth_banner_visible', {
+    safeCapture('gems_preauth_banner_visible', {
       amount_k: amount,
       listing_id: selectedListing?.id ?? null,
     })
@@ -373,7 +393,7 @@ function GemsContent() {
       } catch { /* fall back to bare /gems */ }
     }
     document.cookie = `return_to=${encodeURIComponent(resumeUrl)};path=/;max-age=600;SameSite=Lax`
-    posthog.capture('login_initiated', { source, page: 'gems' })
+    safeCapture('login_initiated', { source, page: 'gems' })
     window.location.href = '/api/auth/roblox'
   }
 
@@ -395,7 +415,7 @@ function GemsContent() {
       if (source) {
         const rate = selectedListing ? getEffectiveRate(selectedListing, newAmount) : 2.90
         const usd = Math.round(newAmount * rate * 100) / 100
-        posthog.capture('gems_amount_changed', {
+        safeCapture('gems_amount_changed', {
           amount_k: newAmount,
           source,
           amount: usd,
@@ -434,7 +454,7 @@ function GemsContent() {
     } else if (parsed !== amount) {
       const rate = selectedListing ? getEffectiveRate(selectedListing, parsed) : 2.90
       const usd = Math.round(parsed * rate * 100) / 100
-      posthog.capture('gems_amount_changed', {
+      safeCapture('gems_amount_changed', {
         amount_k: parsed,
         source: 'input',
         amount: usd,
@@ -502,9 +522,9 @@ function GemsContent() {
       time_since_page_load_ms: PAGE_LOAD_MS ? Date.now() - PAGE_LOAD_MS : null,
     }
 
-    posthog.capture('gems_element_clicked', payload)
+    safeCapture('gems_element_clicked', payload)
     if (isDisabled) {
-      posthog.capture('gems_disabled_button_clicked', payload)
+      safeCapture('gems_disabled_button_clicked', payload)
     }
   }
 
@@ -512,7 +532,7 @@ function GemsContent() {
     const authState = userInfo?.user ? 'logged_in' : 'logged_out'
     const balanceUsd = userInfo?.walletBalance ?? null
     const hasSufficient = userInfo ? userInfo.walletBalance >= discountedPrice : null
-    posthog.capture('gems_buy_clicked', {
+    safeCapture('gems_buy_clicked', {
       amount_k: amount,
       total_price: discountedPrice,
       amount: discountedPrice,
@@ -523,7 +543,7 @@ function GemsContent() {
       has_sufficient_balance: hasSufficient,
     })
     if (!botOnline) {
-      posthog.capture('gems_buy_blocked', {
+      safeCapture('gems_buy_blocked', {
         reason: 'bot_offline',
         amount_k: amount,
         amount: discountedPrice,
@@ -537,7 +557,7 @@ function GemsContent() {
       return
     }
     if (userInfo && userInfo.walletBalance < discountedPrice) {
-      posthog.capture('gems_buy_blocked', {
+      safeCapture('gems_buy_blocked', {
         reason: 'insufficient_balance',
         amount_k: amount,
         balance: userInfo.walletBalance,
@@ -552,7 +572,7 @@ function GemsContent() {
     }
     setAgreedToTerms(false)
     setShowConfirm(true)
-    posthog.capture('gems_confirm_modal_opened', {
+    safeCapture('gems_confirm_modal_opened', {
       amount_k: amount,
       total_price: discountedPrice,
       amount: discountedPrice,
@@ -565,7 +585,7 @@ function GemsContent() {
   async function handleConfirmPurchase() {
     if (!userInfo || !selectedListing) return
 
-    posthog.capture('gems_confirm_modal_closed', {
+    safeCapture('gems_confirm_modal_closed', {
       amount_k: amount,
       total_price: discountedPrice,
       reason: 'confirmed',
@@ -588,7 +608,7 @@ function GemsContent() {
       const data = await res.json()
 
       if (!res.ok) {
-        posthog.capture('gems_purchase_failed', { amount_k: amount, error: data.error })
+        safeCapture('gems_purchase_failed', { amount_k: amount, error: data.error })
         if (data.error === 'Insufficient wallet balance') {
           setToast({ type: 'error', text: `Not enough balance (${formatPrice(data.balance)}). Add funds first!` })
         } else if (data.error?.includes('stock')) {
@@ -618,7 +638,7 @@ function GemsContent() {
         // localStorage unavailable — leave null so event still fires
       }
 
-      posthog.capture('gems_purchased', {
+      safeCapture('gems_purchased', {
         amount_k: amount,
         gems_k: amount,
         total_price: discountedPrice,
@@ -642,7 +662,7 @@ function GemsContent() {
       })
       router.push(`/dashboard/orders/${data.order.id}`)
     } catch {
-      posthog.capture('gems_purchase_failed', { amount_k: amount, error: 'network_error' })
+      safeCapture('gems_purchase_failed', { amount_k: amount, error: 'network_error' })
       setToast({ type: 'error', text: 'Something went wrong' })
       setShowConfirm(false)
     } finally {
@@ -658,7 +678,7 @@ function GemsContent() {
     if (!stickyCtaShouldShow || !stickyCtaKey) return
     if (stickyCtaImpressionKeyRef.current === stickyCtaKey) return
     stickyCtaImpressionKeyRef.current = stickyCtaKey
-    posthog.capture('mobile_sticky_buy_cta_visible', {
+    safeCapture('mobile_sticky_buy_cta_visible', {
       listing_id: selectedListing!.id,
       amount_k: amount,
       total_price: discountedPrice,
@@ -666,7 +686,7 @@ function GemsContent() {
   }, [stickyCtaKey, stickyCtaShouldShow])
 
   async function handleStickyCtaClick() {
-    posthog.capture('mobile_sticky_buy_cta_clicked', {
+    safeCapture('mobile_sticky_buy_cta_clicked', {
       listing_id: selectedListing?.id ?? null,
       amount_k: amount,
       total_price: discountedPrice,
@@ -702,7 +722,7 @@ function GemsContent() {
             </p>
             <button
               onClick={async () => {
-                posthog.capture('gems_preauth_banner_clicked', {
+                safeCapture('gems_preauth_banner_clicked', {
                   amount_k: amount,
                   listing_id: selectedListing?.id ?? null,
                 })
@@ -718,7 +738,7 @@ function GemsContent() {
             </button>
             <button
               onClick={() => {
-                posthog.capture('gems_preauth_banner_dismissed', {
+                safeCapture('gems_preauth_banner_dismissed', {
                   amount_k: amount,
                   listing_id: selectedListing?.id ?? null,
                 })
@@ -776,7 +796,7 @@ function GemsContent() {
               <Link
                 data-ph-id="gems-outage-topup-wallet"
                 href="/dashboard/deposit?source=outage_offer"
-                onClick={() => posthog.capture('outage_deposit_clicked', { logged_in: !!userInfo?.user })}
+                onClick={() => safeCapture('outage_deposit_clicked', { logged_in: !!userInfo?.user })}
                 className="relative inline-flex items-center justify-center pixel-btn-press"
                 style={{ textDecoration: 'none' }}
               >
@@ -797,7 +817,7 @@ function GemsContent() {
                 <button
                   data-ph-id="gems-outage-signin-for-dm"
                   onClick={() => {
-                    posthog.capture('outage_login_to_notify_clicked')
+                    safeCapture('outage_login_to_notify_clicked')
                     document.cookie = `return_to=${encodeURIComponent('/gems?from=outage_notify')};path=/;max-age=600;SameSite=Lax`
                     window.location.href = '/api/auth/roblox'
                   }}
@@ -999,7 +1019,7 @@ function GemsContent() {
                 <button
                   data-ph-id="gems-login-cta"
                   onClick={async () => {
-                    posthog.capture('gems_buy_blocked', {
+                    safeCapture('gems_buy_blocked', {
                       reason: 'not_logged_in',
                       amount_k: amount,
                       amount: discountedPrice,
@@ -1100,7 +1120,7 @@ function GemsContent() {
                             const discountPct = hasBulk && rate < listing.pricePerK
                               ? Math.round((1 - rate / listing.pricePerK) * 1000) / 1000
                               : null
-                            posthog.capture('gems_listing_selected', {
+                            safeCapture('gems_listing_selected', {
                               type: listing.type,
                               rate,
                               listing_id: listing.id,
@@ -1273,7 +1293,7 @@ function GemsContent() {
               <h3 className="text-sm font-semibold text-accent uppercase">Confirm Gems Purchase</h3>
               <button
                 data-ph-id="gems-confirm-modal-close"
-                onClick={() => { posthog.capture('gems_confirm_modal_closed', { amount_k: amount, total_price: discountedPrice, reason: 'dismissed', amount: discountedPrice, gems_qty: amount * 1000, listing_id: selectedListing?.id ?? null, closed_via: 'x_button' }); setShowConfirm(false) }}
+                onClick={() => { safeCapture('gems_confirm_modal_closed', { amount_k: amount, total_price: discountedPrice, reason: 'dismissed', amount: discountedPrice, gems_qty: amount * 1000, listing_id: selectedListing?.id ?? null, closed_via: 'x_button' }); setShowConfirm(false) }}
                 className="text-gray-400 hover:text-white"
               >
 
@@ -1327,7 +1347,7 @@ function GemsContent() {
                 data-ph-id="gems-confirm-modal-terms-checkbox"
                 type="checkbox"
                 checked={agreedToTerms}
-                onChange={(e) => { setAgreedToTerms(e.target.checked); if (e.target.checked) posthog.capture('terms_agreed', { page: 'gems' }) }}
+                onChange={(e) => { setAgreedToTerms(e.target.checked); if (e.target.checked) safeCapture('terms_agreed', { page: 'gems' }) }}
                 className="mt-0.5 w-4 h-4 accent-accent shrink-0"
               />
               <span className="text-[10px] text-gray-400 leading-tight">
@@ -1345,7 +1365,7 @@ function GemsContent() {
                   data-ph-id="gems-confirm-modal-add-funds"
                   onClick={async () => {
                     const needed = Math.ceil((discountedPrice - userInfo.walletBalance) * 100) / 100
-                    posthog.capture('gems_buy_blocked', {
+                    safeCapture('gems_buy_blocked', {
                       reason: 'insufficient_balance_modal_add_funds',
                       amount_k: amount,
                       balance: userInfo.walletBalance,
@@ -1389,7 +1409,7 @@ function GemsContent() {
               <div className="flex gap-3">
                 <button
                   data-ph-id="gems-confirm-modal-cancel"
-                  onClick={() => { posthog.capture('gems_confirm_modal_closed', { amount_k: amount, total_price: discountedPrice, reason: 'cancelled', amount: discountedPrice, gems_qty: amount * 1000, listing_id: selectedListing?.id ?? null, closed_via: 'cancel_button' }); setShowConfirm(false) }}
+                  onClick={() => { safeCapture('gems_confirm_modal_closed', { amount_k: amount, total_price: discountedPrice, reason: 'cancelled', amount: discountedPrice, gems_qty: amount * 1000, listing_id: selectedListing?.id ?? null, closed_via: 'cancel_button' }); setShowConfirm(false) }}
                   className="flex-1 relative h-[42px] bg-no-repeat bg-center bg-contain border-0 cursor-pointer active:scale-95 transition-transform"
                   style={{ backgroundImage: 'url(/images/pixel/pngs/asset-60.png)', backgroundSize: '100% 100%' }}
                 >
