@@ -16,6 +16,11 @@ const nextConfig = {
       { protocol: 'https', hostname: 'thumbnails.roblox.com' },
       { protocol: 'https', hostname: 'cdn.discordapp.com' },
     ],
+    // Default is 60s — too short for Cloudflare to bother caching, so every
+    // /_next/image hit was DYNAMIC and round-tripped to origin. Image URLs
+    // already include `w` and `q` params (and `url` for the source), so any
+    // variant change produces a new cache key. Safe to cache 1y at the edge.
+    minimumCacheTTL: 31536000,
   },
   async redirects() {
     return [
