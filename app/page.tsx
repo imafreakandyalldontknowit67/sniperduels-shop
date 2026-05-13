@@ -1,5 +1,6 @@
 import { Hero, HowItWorks, ShopCategories, TrustSection, OAuthErrorBanner } from '@/components/home'
 import { ScrollReveal } from '@/components/ui'
+import OutageBanner from '@/components/OutageBanner'
 
 export default function HomePage() {
   const breadcrumbSchema = {
@@ -22,6 +23,7 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
       <OAuthErrorBanner />
+      <OutageBanner surface="home" />
       <Hero />
       <ScrollReveal animation="pixel-fade-up" threshold={0.02}>
         <HowItWorks />

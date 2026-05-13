@@ -108,6 +108,12 @@ function GemsContent() {
   // change so we don't spam events as the user adjusts the amount.
   const stickyCtaImpressionKeyRef = useRef<string | null>(null)
 
+  // Stepper debounce: batch rapid +/- clicks into a single state update.
+  const stepperTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const stepperPendingRef = useRef<{ netDelta: number; clicks: number; directions: Set<'up' | 'down'> } | null>(null)
+  const amountRef = useRef(amount)
+  amountRef.current = amount
+
   useEffect(() => {
     fetchUser()
     fetchListings()
@@ -552,6 +558,8 @@ function GemsContent() {
         current_balance_usd: balanceUsd,
         required_balance_usd: discountedPrice,
         gap_usd: balanceUsd != null ? Math.max(0, Math.round((discountedPrice - balanceUsd) * 100) / 100) : null,
+        currency,
+        gems_qty: amount * 1000,
       })
       setToast({ type: 'error', text: 'The trade bot is currently offline. Join our Discord for updates!' })
       return
@@ -568,6 +576,14 @@ function GemsContent() {
         current_balance_usd: userInfo.walletBalance,
         required_balance_usd: discountedPrice,
         gap_usd: Math.round((discountedPrice - userInfo.walletBalance) * 100) / 100,
+        currency,
+        gems_qty: amount * 1000,
+      })
+      safeCapture('gems_insufficient_balance_shown', {
+        deficit_amount: Math.round((discountedPrice - userInfo.walletBalance) * 100) / 100,
+        current_balance: userInfo.walletBalance,
+        attempted_amount: discountedPrice,
+        currency,
       })
     }
     setAgreedToTerms(false)
@@ -899,24 +915,45 @@ function GemsContent() {
             <div className="mb-6 sm:mb-8">
               <label className="block text-[10px] sm:text-xs text-white mb-2 sm:mb-3 uppercase font-bold">Quick Select</label>
               <div className="grid grid-cols-4 gap-2 sm:gap-3">
-                {PRESET_AMOUNTS.map((preset) => (
-                  <button
-                    key={preset}
-                    data-ph-id={`gems-amount-preset-${preset}`}
-                    onClick={() => handleAmountChange(preset, 'preset')}
-                    className={`relative inline-flex items-center justify-center pixel-btn-press ${amount !== preset ? 'opacity-50' : ''}`}
-                  >
-                    <img
-                      src="/images/pixel/pngs/asset-62.png"
-                      alt=""
-                      className="w-full h-[36px] sm:h-[40px]"
-                      style={{ imageRendering: 'pixelated' }}
-                    />
-                    <span className="absolute inset-0 flex items-center justify-center font-bold text-white text-[9px] sm:text-[10px] uppercase tracking-wider">
-                      {preset}k
-                    </span>
-                  </button>
-                ))}
+                {PRESET_AMOUNTS.map((preset) => {
+                  const canFulfill = listings.some(l => l.stockK >= preset && preset >= l.minOrderK)
+                  const exceedsMax = preset > maxAmount
+                  const exceedsBalance = !!(userInfo?.user && userInfo.walletBalance !== undefined && selectedListing && (() => {
+                    const rate = getEffectiveRate(selectedListing, preset)
+                    const price = Math.round(preset * rate * 100) / 100
+                    const disc = isVendorSelected ? 0 : (userInfo.loyaltyDiscount || 0) + (userInfo.canUseDiscordDiscount ? 0.025 : 0)
+                    const final_ = disc > 0 ? Math.round(price * (1 - disc) * 100) / 100 : price
+                    return final_ > userInfo.walletBalance
+                  })())
+                  const isUnfulfillable = exceedsMax || !canFulfill
+                  const isDisabled = isUnfulfillable || exceedsBalance
+                  const disabledReason = isUnfulfillable
+                    ? (exceedsMax ? `Not enough stock for ${preset}k` : `No listing can fulfill ${preset}k`)
+                    : exceedsBalance ? 'Exceeds your wallet balance' : undefined
+
+                  return (
+                    <button
+                      key={preset}
+                      data-ph-id={`gems-amount-preset-${preset}`}
+                      onClick={() => { if (!isDisabled) handleAmountChange(preset, 'preset') }}
+                      className={`relative inline-flex items-center justify-center pixel-btn-press ${amount !== preset ? 'opacity-50' : ''}`}
+                      style={isDisabled ? { pointerEvents: 'none' } : undefined}
+                      aria-disabled={isDisabled || undefined}
+                      aria-label={disabledReason}
+                      title={disabledReason}
+                    >
+                      <img
+                        src="/images/pixel/pngs/asset-62.png"
+                        alt=""
+                        className="w-full h-[36px] sm:h-[40px]"
+                        style={{ imageRendering: 'pixelated' }}
+                      />
+                      <span className="absolute inset-0 flex items-center justify-center font-bold text-white text-[9px] sm:text-[10px] uppercase tracking-wider">
+                        {preset}k
+                      </span>
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
@@ -926,7 +963,32 @@ function GemsContent() {
               <div className="flex items-center gap-2 sm:gap-3">
                 <button
                   data-ph-id="gems-amount-stepper-down"
-                  onClick={() => handleAmountChange(amount - 1, '-')}
+                  onClick={() => {
+                    if (!stepperPendingRef.current) {
+                      stepperPendingRef.current = { netDelta: 0, clicks: 0, directions: new Set() }
+                    }
+                    stepperPendingRef.current.netDelta -= 1
+                    stepperPendingRef.current.clicks += 1
+                    stepperPendingRef.current.directions.add('down')
+                    if (stepperTimeoutRef.current) clearTimeout(stepperTimeoutRef.current)
+                    stepperTimeoutRef.current = setTimeout(() => {
+                      const pending = stepperPendingRef.current
+                      if (!pending) return
+                      const finalAmount = Math.max(1, Math.min(maxAmount, amountRef.current + pending.netDelta))
+                      const dirs = pending.directions
+                      const direction = dirs.has('up') && dirs.has('down') ? 'mixed' : dirs.has('up') ? 'up' : 'down'
+                      handleAmountChange(finalAmount, '-')
+                      safeCapture('gems_stepper_debounced', {
+                        final_amount_k: finalAmount,
+                        clicks_batched: pending.clicks,
+                        direction,
+                        listing_id: selectedListing?.id ?? null,
+                        currency,
+                      })
+                      stepperPendingRef.current = null
+                      stepperTimeoutRef.current = null
+                    }, 200)
+                  }}
                   disabled={amount <= 1}
                   className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -948,7 +1010,32 @@ function GemsContent() {
                 </div>
                 <button
                   data-ph-id="gems-amount-stepper-up"
-                  onClick={() => handleAmountChange(amount + 1, '+')}
+                  onClick={() => {
+                    if (!stepperPendingRef.current) {
+                      stepperPendingRef.current = { netDelta: 0, clicks: 0, directions: new Set() }
+                    }
+                    stepperPendingRef.current.netDelta += 1
+                    stepperPendingRef.current.clicks += 1
+                    stepperPendingRef.current.directions.add('up')
+                    if (stepperTimeoutRef.current) clearTimeout(stepperTimeoutRef.current)
+                    stepperTimeoutRef.current = setTimeout(() => {
+                      const pending = stepperPendingRef.current
+                      if (!pending) return
+                      const finalAmount = Math.max(1, Math.min(maxAmount, amountRef.current + pending.netDelta))
+                      const dirs = pending.directions
+                      const direction = dirs.has('up') && dirs.has('down') ? 'mixed' : dirs.has('up') ? 'up' : 'down'
+                      handleAmountChange(finalAmount, '+')
+                      safeCapture('gems_stepper_debounced', {
+                        final_amount_k: finalAmount,
+                        clicks_batched: pending.clicks,
+                        direction,
+                        listing_id: selectedListing?.id ?? null,
+                        currency,
+                      })
+                      stepperPendingRef.current = null
+                      stepperTimeoutRef.current = null
+                    }, 200)
+                  }}
                   disabled={amount >= maxAmount}
                   className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -1028,6 +1115,8 @@ function GemsContent() {
                       current_balance_usd: null, // not logged in — no wallet
                       required_balance_usd: discountedPrice,
                       gap_usd: null, // unknown without a balance
+                      currency,
+                      gems_qty: amount * 1000,
                     })
                     if (!selectedListing) {
                       // Defensive: shouldn't happen since button is gated on stock
@@ -1360,7 +1449,7 @@ function GemsContent() {
 
             {userInfo.walletBalance < discountedPrice ? (
               <div className="space-y-3">
-                <p className="text-red-400 text-xs text-center uppercase">Insufficient balance</p>
+                <p className="text-red-400 text-xs text-center uppercase">You need {formatPrice(Math.round((discountedPrice - userInfo.walletBalance) * 100) / 100)} more</p>
                 <button
                   data-ph-id="gems-confirm-modal-add-funds"
                   onClick={async () => {
@@ -1376,6 +1465,8 @@ function GemsContent() {
                       current_balance_usd: userInfo.walletBalance,
                       required_balance_usd: discountedPrice,
                       gap_usd: Math.round((discountedPrice - userInfo.walletBalance) * 100) / 100,
+                      currency,
+                      gems_qty: amount * 1000,
                     })
                     // Create / reuse a buy intent so we can resume the gem purchase after deposit lands.
                     let intentId: string | null = resumeBuyId
