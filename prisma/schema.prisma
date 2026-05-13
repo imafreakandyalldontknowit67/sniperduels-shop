@@ -391,3 +391,14 @@ model CreatorProfile {
   @@index([userId])
   @@index([referralCode])
 }
+
+// ─── Outage Events ─────────────────────────────────────────────────────────
+model OutageEvent {
+  id              String    @id @default(cuid())
+  startedAt       DateTime  @default(now())
+  endedAt         DateTime?
+  reason          String    // e.g. 'stale_heartbeat', 'stale_poll', 'no_signals'
+  durationSeconds Int?      // computed on close: (endedAt - startedAt) in seconds
+
+  @@index([startedAt])
+}

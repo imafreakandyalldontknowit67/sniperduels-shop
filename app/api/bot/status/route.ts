@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { isBotEffectivelyOnline } from '@/lib/bot-heartbeat'
+import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,6 +17,19 @@ export async function GET() {
   if (!online) {
     const ages = [heartbeatAgeMs, pollAgeMs].filter((a): a is number => a !== null)
     if (ages.length > 0) offlineSinceMs = Math.min(...ages)
+
+    // Open an OutageEvent if none is currently open
+    prisma.outageEvent.findFirst({ where: { endedAt: null } })
+      .then(existing => {
+        if (!existing) {
+          return prisma.outageEvent.create({
+            data: { reason },
+          }).then(ev => {
+            console.log(`[Status] Opened OutageEvent ${ev.id} — reason: ${reason}`)
+          })
+        }
+      })
+      .catch(err => console.error('[Status] Failed to open OutageEvent:', err))
   }
 
   return NextResponse.json(

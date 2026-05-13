@@ -9,6 +9,7 @@ import { Loader2, X } from 'lucide-react'
 import Link from 'next/link'
 import type { StockItem } from '@/lib/storage'
 import { useCurrency, useAuth } from '@/components/providers'
+import OutageBanner from '@/components/OutageBanner'
 
 const rarityColors: Record<string, string> = {
   Collectible: 'bg-pink-500/20 text-pink-400 border-pink-500/30',
@@ -185,6 +186,7 @@ export default function ShopPage() {
   return (
     <div className="min-h-screen bg-dark-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <OutageBanner surface="shop" />
         {/* Toast */}
         {toast && (
           <div className={`fixed top-20 right-4 z-50 p-4 border-[2px] pixel-shadow max-w-sm ${

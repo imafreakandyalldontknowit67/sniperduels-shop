@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+import { captureServerEvent } from '@/lib/posthog-api'
 import {
   deductFromWallet,
   addToWallet,
@@ -47,8 +49,34 @@ export async function POST(request: NextRequest) {
 
     const lastHeartbeat = await getBotLastHeartbeat()
     if (Date.now() - lastHeartbeat > BOT_OFFLINE_THRESHOLD_MS) {
+      let intentId: string | undefined
+      try {
+        const rawBody = await request.clone().json().catch(() => null)
+        const amountInK = rawBody?.amountInK
+        const vendorListingId = rawBody?.vendorListingId
+        if (amountInK && typeof amountInK === 'number' && Number.isInteger(amountInK) && amountInK >= 1 && amountInK <= 500) {
+          const listingId = vendorListingId || 'platform'
+          const intent = await prisma.pendingBuyIntent.create({
+            data: {
+              userId: user.id,
+              listingId,
+              amountK: amountInK,
+              expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+            },
+          })
+          intentId = intent.id
+          captureServerEvent(user.id, 'outage_buy_intent_captured', {
+            amount: amountInK,
+            listing_id: listingId,
+            currency: 'USD',
+            user_id: user.id,
+          })
+        }
+      } catch {
+        // DB failure should not prevent the 503 from being returned
+      }
       return NextResponse.json(
-        { error: 'The trade bot is currently offline. Please try again later.' },
+        { error: 'The trade bot is currently offline. Please try again later.', intentId },
         { status: 503 }
       )
     }
