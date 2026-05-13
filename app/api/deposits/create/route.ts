@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { getUserDeposits, createDeposit, expireStaleDeposits, getSiteSettings, addToWallet } from '@/lib/storage'
-import prisma from '@/lib/prisma'
+import { prisma } from '@/lib/prisma'
 import { createCheckout } from '@/lib/pandabase'
 import { flagAndBlacklist } from '@/lib/blacklist'
 import { logError } from '@/lib/error-log'

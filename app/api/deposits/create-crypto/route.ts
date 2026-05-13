@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { getUserDeposits, createDeposit, updateDeposit, expireStaleDeposits, getSiteSettings, addToWallet } from '@/lib/storage'
-import prisma from '@/lib/prisma'
+import { prisma } from '@/lib/prisma'
 import { createCryptoPayment } from '@/lib/nowpayments'
 import { flagAndBlacklist } from '@/lib/blacklist'
 import { localToUsd, usdToLocal, isSupportedCurrency } from '@/lib/fx'
