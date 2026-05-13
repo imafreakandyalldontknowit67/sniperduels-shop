@@ -65,9 +65,8 @@ export const HOW_IT_WORKS_STEPS = [
   },
 ] as const
 
-// Trust stats (mock data)
+// Trust stats
 export const TRUST_STATS = {
-  itemsDelivered: 0,
   averageDeliveryTime: 'Under 2 min',
   uptime: '24/7',
 } as const

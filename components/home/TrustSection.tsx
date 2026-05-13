@@ -1,6 +1,32 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import { TRUST_STATS } from '@/lib/constants'
+import { useFlag } from '@/lib/hooks/useFlag'
 
 export function TrustSection() {
+  const [deliveredK, setDeliveredK] = useState<number | null>(null)
+  const showItemsDelivered = useFlag('show_items_delivered', true)
+
+  useEffect(() => {
+    if (!showItemsDelivered) return
+
+    fetch('/api/stats')
+      .then(res => res.json())
+      .then(data => {
+        const count = data.itemsDeliveredK
+        setDeliveredK(count)
+        try {
+          import('posthog-js').then(({ default: posthog }) => {
+            try {
+              posthog.capture('items_delivered_loaded', { count_k: count })
+            } catch { /* posthog blocked */ }
+          }).catch(() => {})
+        } catch { /* posthog blocked */ }
+      })
+      .catch(() => { /* stats fetch failed — show other cards only */ })
+  }, [showItemsDelivered])
+
   return (
     <section id="trust" className="py-24 bg-dark-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -14,10 +40,17 @@ export function TrustSection() {
             value={TRUST_STATS.uptime}
             label="Availability"
           />
-          <StatCard
-            value="Automatic"
-            label="Delivery System"
-          />
+          {showItemsDelivered && deliveredK !== null ? (
+            <StatCard
+              value={`${deliveredK.toLocaleString()}k`}
+              label="Gems Delivered"
+            />
+          ) : (
+            <StatCard
+              value="Automatic"
+              label="Delivery System"
+            />
+          )}
         </div>
 
         {/* Payment Partners */}
