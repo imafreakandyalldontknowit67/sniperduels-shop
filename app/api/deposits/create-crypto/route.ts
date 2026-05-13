@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
-import { getUserDeposits, createDeposit, updateDeposit, expireStaleDeposits, getSiteSettings } from '@/lib/storage'
+import { getUserDeposits, createDeposit, updateDeposit, expireStaleDeposits, getSiteSettings, addToWallet } from '@/lib/storage'
+import prisma from '@/lib/prisma'
 import { createCryptoPayment } from '@/lib/nowpayments'
 import { flagAndBlacklist } from '@/lib/blacklist'
 import { localToUsd, usdToLocal, isSupportedCurrency } from '@/lib/fx'
@@ -72,6 +73,47 @@ export async function POST(request: NextRequest) {
         { error: 'You already have 3 pending deposits. Complete or wait for them to expire.' },
         { status: 429 }
       )
+    }
+
+    // Repeat-victim rebate: 3+ failed orders in 7d → 2% credit capped at $5
+    try {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+      const failedOrders = await prisma.order.count({
+        where: {
+          userId: user.id,
+          status: 'failed',
+          createdAt: { gte: sevenDaysAgo },
+        },
+      })
+      if (failedOrders >= 3) {
+        // Check no prior rebate in last 7d
+        const priorRebate = await prisma.transactionLedger.findFirst({
+          where: {
+            userId: user.id,
+            type: 'admin_adjust',
+            description: { contains: 'rebate' },
+            createdAt: { gte: sevenDaysAgo },
+          },
+        })
+        if (!priorRebate) {
+          const rebateAmount = Math.min(roundedAmount * 0.02, 5)
+          const rebateRounded = Math.round(rebateAmount * 100) / 100
+          if (rebateRounded > 0) {
+            await addToWallet(user.id, rebateRounded, {
+              type: 'admin_adjust',
+              description: 'rebate: 3+ outage failures in 7d',
+            })
+            await captureServerEvent(user.id, 'rebate_credit_granted', {
+              user_id: user.id,
+              rebate_amount: rebateRounded,
+              qualifying_failures_7d: failedOrders,
+            })
+            console.log(`[rebate] user=${user.id} rebate=$${rebateRounded} failures=${failedOrders}`)
+          }
+        }
+      }
+    } catch (err) {
+      console.error('[rebate] failed:', err)
     }
 
     // Create deposit record first so we have the ID for order_id
