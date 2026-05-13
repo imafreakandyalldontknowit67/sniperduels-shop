@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import { getBotLastHeartbeat, setBotHeartbeat, BOT_OFFLINE_THRESHOLD_MS } from '@/lib/bot-heartbeat'
 import { settlePendingOrders } from '@/lib/order-expiry'
+import { prisma } from '@/lib/prisma'
 
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
@@ -47,6 +48,24 @@ export async function POST(request: NextRequest) {
         }
       })
       .catch(err => console.error('[Heartbeat] Failed to settle pending orders:', err))
+
+    // Close any open OutageEvent now that the bot is back online
+    prisma.outageEvent.findFirst({
+      where: { endedAt: null },
+      orderBy: { startedAt: 'desc' },
+    })
+      .then(outage => {
+        if (!outage) return
+        const now = new Date()
+        const durationSeconds = Math.round((now.getTime() - outage.startedAt.getTime()) / 1000)
+        return prisma.outageEvent.update({
+          where: { id: outage.id },
+          data: { endedAt: now, durationSeconds },
+        }).then(() => {
+          console.log(`[Heartbeat] Closed OutageEvent ${outage.id} — duration ${durationSeconds}s`)
+        })
+      })
+      .catch(err => console.error('[Heartbeat] Failed to close OutageEvent:', err))
   }
 
   return NextResponse.json({ ok: true })
