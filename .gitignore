@@ -73,3 +73,6 @@ next-env.d.ts
 tasks.json
 tasks.results.json
 tasks.review.json
+
+# Test artifacts from CVE-2026-44578 upgrade verification
+upgrade-snapshots/

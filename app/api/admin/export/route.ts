@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 
 // Honeypot: looks like a data export endpoint. Uses tarpit streaming.
 export async function GET(request: NextRequest) {
-  const ip = request.headers.get('cf-connecting-ip') || request.ip || request.headers.get('x-real-ip') || '127.0.0.1'
+  const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-real-ip') || '127.0.0.1'
   const user = await getCurrentUser()
   const userAgent = request.headers.get('user-agent') || undefined
 
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const ip = request.headers.get('cf-connecting-ip') || request.ip || request.headers.get('x-real-ip') || '127.0.0.1'
+  const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-real-ip') || '127.0.0.1'
   const user = await getCurrentUser()
   const userAgent = request.headers.get('user-agent') || undefined
 

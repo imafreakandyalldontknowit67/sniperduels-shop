@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     // Honeypot check
     if (website) {
-      const ip = request.headers.get('cf-connecting-ip') || request.ip || request.headers.get('x-real-ip') || '127.0.0.1'
+      const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-real-ip') || '127.0.0.1'
       await flagAndBlacklist({
         ip, userId: user.id,
         reason: 'Filled honeypot field on deposit form',

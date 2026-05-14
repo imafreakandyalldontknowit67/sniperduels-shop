@@ -226,7 +226,6 @@ export async function middleware(request: NextRequest) {
   // x-forwarded-for is only used as a last resort and is NOT trusted for rate limiting
   // in production — deploy behind a trusted proxy that sets cf-connecting-ip.
   const ip = request.headers.get('cf-connecting-ip')
-    || request.ip
     || request.headers.get('x-real-ip')
     || '0.0.0.0'
 

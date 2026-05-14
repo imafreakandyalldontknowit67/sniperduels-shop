@@ -35,14 +35,14 @@ function summarizeEarnings(items: { saleAmount: number; platformFee: number; net
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getCurrentUser()
   if (!user || !isAdmin(user.id)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const vendorId = params.id
+  const { id: vendorId } = await params
   const now = new Date()
   // Use PST for "today" boundary
   const _pst = new Intl.DateTimeFormat('en-US', {

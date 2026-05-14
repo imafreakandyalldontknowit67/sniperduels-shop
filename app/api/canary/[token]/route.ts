@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params
-  const ip = request.headers.get('cf-connecting-ip') || request.ip || request.headers.get('x-real-ip') || '127.0.0.1'
+  const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-real-ip') || '127.0.0.1'
   const userAgent = request.headers.get('user-agent') || undefined
 
   await handleCanaryHit(token, ip, userAgent)
