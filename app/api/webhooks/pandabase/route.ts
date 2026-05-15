@@ -44,9 +44,8 @@ async function findDeposit(payload: Record<string, unknown>): Promise<Deposit | 
 export async function POST(request: NextRequest) {
   try {
     const rawBody = await request.text()
-    const signature = request.headers.get('x-pandabase-signature') || ''
 
-    if (!verifyWebhookSignature(rawBody, signature)) {
+    if (!verifyWebhookSignature(rawBody, request.headers)) {
       console.error('[Webhook] Invalid signature')
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }

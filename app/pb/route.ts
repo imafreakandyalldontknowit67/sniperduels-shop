@@ -4,9 +4,8 @@ import { getDepositByInvoiceId, claimPendingDeposit, addToWallet } from '@/lib/s
 
 export async function POST(request: NextRequest) {
   const rawBody = await request.text()
-  const signature = request.headers.get('x-pandabase-signature')
 
-  if (!signature || !verifyWebhookSignature(rawBody, signature)) {
+  if (!verifyWebhookSignature(rawBody, request.headers)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
