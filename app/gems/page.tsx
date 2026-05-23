@@ -247,10 +247,11 @@ function GemsContent() {
       if (res.ok) {
         const data = await res.json()
         setListings(data.listings)
-        // Auto-select cheapest with enough stock for default amount
+        // Auto-select cheapest with enough stock for default amount.
+        // Bulk tiers make the real cheapest listing depend on the selected amount,
+        // so don't rely on the API's base-price ordering here.
         if (data.listings.length > 0) {
-          const available = data.listings.filter((l: GemListing) => l.stockK >= amount && amount >= l.minOrderK)
-          setSelectedListing(available[0] || data.listings.filter((l: GemListing) => l.stockK > 0)[0] || data.listings[0])
+          setSelectedListing(findBestListingForAmount(data.listings, amount))
         }
       }
     } catch { /* fallback */ }
@@ -329,7 +330,7 @@ function GemsContent() {
     let nextAmount = amount
     if (amountParam) {
       const parsed = parseInt(amountParam)
-      const ceiling = Math.max(...listings.map(l => l.stockK), 1)
+      const ceiling = Math.max(...listings.map(l => Math.min(l.stockK, l.maxOrderK)), 1)
       if (!isNaN(parsed) && parsed >= 1 && parsed <= ceiling) {
         nextAmount = parsed
         setAmount(parsed)
@@ -339,16 +340,16 @@ function GemsContent() {
 
     if (listingParam) {
       const exact = listingParam === 'platform'
-        ? listings.find(l => l.type === 'platform' && l.stockK >= nextAmount && nextAmount >= l.minOrderK)
-        : listings.find(l => l.type === 'vendor' && l.vendorId === listingParam && l.stockK >= nextAmount && nextAmount >= l.minOrderK)
+        ? listings.find(l => l.type === 'platform' && canListingFulfill(l, nextAmount))
+        : listings.find(l => l.type === 'vendor' && l.vendorId === listingParam && canListingFulfill(l, nextAmount))
       if (exact) {
         setSelectedListing(exact)
       } else {
-        const fallback = listings.find(l => l.stockK >= nextAmount && nextAmount >= l.minOrderK)
+        const fallback = findBestListingForAmount(listings, nextAmount)
         if (fallback) setSelectedListing(fallback)
       }
     } else if (amountParam) {
-      const fallback = listings.find(l => l.stockK >= nextAmount && nextAmount >= l.minOrderK)
+      const fallback = findBestListingForAmount(listings, nextAmount)
       if (fallback) setSelectedListing(fallback)
     }
 
@@ -412,9 +413,43 @@ function GemsContent() {
     return listing.pricePerK
   }
 
+  function canListingFulfill(listing: GemListing, amountK: number): boolean {
+    return (
+      listing.stockK >= amountK &&
+      amountK >= listing.minOrderK &&
+      amountK <= listing.maxOrderK
+    )
+  }
+
+  function sortListingsForAmount(source: GemListing[], amountK: number): GemListing[] {
+    return [...source].sort((a, b) => {
+      const aCanFulfill = canListingFulfill(a, amountK)
+      const bCanFulfill = canListingFulfill(b, amountK)
+      if (aCanFulfill !== bCanFulfill) return aCanFulfill ? -1 : 1
+
+      const rateDelta = getEffectiveRate(a, amountK) - getEffectiveRate(b, amountK)
+      if (rateDelta !== 0) return rateDelta
+
+      const baseDelta = a.pricePerK - b.pricePerK
+      if (baseDelta !== 0) return baseDelta
+
+      return b.stockK - a.stockK
+    })
+  }
+
+  function findBestListingForAmount(source: GemListing[], amountK: number): GemListing | null {
+    const sorted = sortListingsForAmount(source, amountK)
+    return sorted.find(l => canListingFulfill(l, amountK))
+      || sorted.find(l => l.stockK > 0)
+      || sorted[0]
+      || null
+  }
+
   const maxAmount = listings.length > 0
-    ? Math.max(...listings.map(l => l.stockK))
+    ? Math.max(...listings.map(l => Math.min(l.stockK, l.maxOrderK)))
     : 10000
+
+  const sortedListings = sortListingsForAmount(listings, amount)
 
   const handleAmountChange = (newAmount: number, source?: 'preset' | 'input' | 'slider' | '+' | '-') => {
     if (newAmount >= 1 && newAmount <= maxAmount) {
@@ -435,8 +470,8 @@ function GemsContent() {
       setAmount(newAmount)
       setInputValue(String(newAmount))
       // Auto-switch listing if current one can't fulfill the new amount
-      if (selectedListing && (selectedListing.stockK < newAmount || newAmount < selectedListing.minOrderK)) {
-        const best = listings.find(l => l.stockK >= newAmount && newAmount >= l.minOrderK)
+      if (selectedListing && !canListingFulfill(selectedListing, newAmount)) {
+        const best = findBestListingForAmount(listings, newAmount)
         if (best) setSelectedListing(best)
       }
     }
@@ -482,6 +517,7 @@ function GemsContent() {
 
   const totalStockK = listings.reduce((sum, l) => sum + l.stockK, 0)
   const selectedStockK = selectedListing?.stockK ?? 0
+  const selectedCanFulfill = selectedListing ? canListingFulfill(selectedListing, amount) : false
   const cheapestRate = listings.length > 0
     ? Math.min(...listings.filter(l => l.stockK > 0).map(l => l.pricePerK))
     : 2.90
@@ -562,6 +598,22 @@ function GemsContent() {
         gems_qty: amount * 1000,
       })
       setToast({ type: 'error', text: 'The trade bot is currently offline. Join our Discord for updates!' })
+      return
+    }
+    if (!selectedListing || !selectedCanFulfill) {
+      safeCapture('gems_buy_blocked', {
+        reason: 'listing_unavailable',
+        amount_k: amount,
+        amount: discountedPrice,
+        listing_id: selectedListing?.id ?? null,
+        auth_state: authState,
+        current_balance_usd: balanceUsd,
+        required_balance_usd: discountedPrice,
+        gap_usd: balanceUsd != null ? Math.max(0, Math.round((discountedPrice - balanceUsd) * 100) / 100) : null,
+        currency,
+        gems_qty: amount * 1000,
+      })
+      setToast({ type: 'error', text: 'That price tier cannot fulfill this amount. Pick another tier or lower the amount.' })
       return
     }
     if (userInfo && userInfo.walletBalance < discountedPrice) {
@@ -916,7 +968,7 @@ function GemsContent() {
               <label className="block text-[10px] sm:text-xs text-white mb-2 sm:mb-3 uppercase font-bold">Quick Select</label>
               <div className="grid grid-cols-4 gap-2 sm:gap-3">
                 {PRESET_AMOUNTS.map((preset) => {
-                  const canFulfill = listings.some(l => l.stockK >= preset && preset >= l.minOrderK)
+                  const canFulfill = listings.some(l => canListingFulfill(l, preset))
                   const exceedsMax = preset > maxAmount
                   const exceedsBalance = !!(userInfo?.user && userInfo.walletBalance !== undefined && selectedListing && (() => {
                     const rate = getEffectiveRate(selectedListing, preset)
@@ -1143,8 +1195,8 @@ function GemsContent() {
                 <button
                   data-ph-id="gems-buy-button"
                   onClick={handlePurchaseClick}
-                  disabled={selectedStockK < amount}
-                  aria-disabled={selectedStockK < amount}
+                  disabled={!selectedCanFulfill}
+                  aria-disabled={!selectedCanFulfill}
                   className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ minHeight: 52, minWidth: 180 }}
                 >
@@ -1159,6 +1211,8 @@ function GemsContent() {
                       ? 'Out of Stock'
                       : selectedStockK < amount
                         ? `Only ${selectedStockK.toLocaleString()}k available`
+                        : !selectedCanFulfill
+                          ? 'Tier Unavailable'
                         : 'Finish Purchase'
                     }
                   </span>
@@ -1174,11 +1228,11 @@ function GemsContent() {
               <h3 className="text-lg sm:text-xl font-bold text-accent mb-2 uppercase text-center">Select Price</h3>
               <p className="text-gray-400 text-[10px] sm:text-xs uppercase text-center mb-4 sm:mb-6">Choose a price tier &mdash; cheapest first</p>
               <div className="space-y-2 sm:space-y-3">
-                {listings.map((listing) => {
+                {sortedListings.map((listing) => {
                   const rate = getEffectiveRate(listing, amount)
                   const isSelected = selectedListing?.id === listing.id
                   const hasStock = listing.stockK >= amount
-                  const inRange = amount >= listing.minOrderK
+                  const inRange = amount >= listing.minOrderK && amount <= listing.maxOrderK
                   const hasBulk = listing.bulkTiers && listing.bulkTiers.length > 0
                   // For display, include base price as a tier so the dropdown shows the full range
                   const allTiers = hasBulk
@@ -1352,7 +1406,7 @@ function GemsContent() {
             </div>
             <button
               onClick={handleStickyCtaClick}
-              disabled={selectedStockK < amount && !!userInfo?.user}
+              disabled={!selectedCanFulfill && !!userInfo?.user}
               className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
               style={{ minHeight: 48, minWidth: 140 }}
             >
@@ -1367,6 +1421,8 @@ function GemsContent() {
                   ? 'Login to Buy'
                   : selectedStockK < amount
                     ? `${selectedStockK.toLocaleString()}k max`
+                    : !selectedCanFulfill
+                      ? 'Unavailable'
                     : 'Buy'}
               </span>
             </button>
