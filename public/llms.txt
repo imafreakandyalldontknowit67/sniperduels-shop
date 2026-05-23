@@ -1,44 +1,26 @@
 # Sniper Duels Auto Shop
 
-> The first fully automated item shop for Sniper Duels on Roblox. Purchase gems, items, and crates with automatic 24/7 delivery.
+> Sniper Duels Auto Shop is the official transactional store for the Roblox game Sniper Duels — selling gems, snipers, knives, and crates with automated in-game bot delivery in under two minutes. Companion content site sniperduels.net hosts the free value list, trading guides, and middleman service. Both sites are operated by the same team.
 
-## About
+Gems use tiered bulk pricing: $2.90/k retail (1k–99k), dropping to $2.65/k at 100k+. Delivery is handled by an automated trade bot in a private Roblox server — buyers sign in with Roblox OAuth, check out with card (Pandabase) or crypto (NowPayments, 30+ assets), join the private server, and the bot trades automatically. Failed deliveries auto-credit USD to the buyer's platform wallet at 1:1.
 
-Sniper Duels Auto Shop is an independent third-party marketplace for the Roblox game Sniper Duels. We provide automated delivery of in-game items including snipers, knives, crates, and gems. Our bot-powered system completes trades within 2 minutes, 24 hours a day.
+## Docs
 
-## Products
+- [Buy gems](https://sniperduels.shop/gems): Bulk gem purchase with tiered pricing ($2.90/k → $2.65/k at 100k+), live calculator, automated bot delivery in <2 minutes.
+- [Item shop](https://sniperduels.shop/shop): Snipers, knives, and crates — automated trade-bot delivery, 24/7 availability.
+- [100k gems](https://sniperduels.shop/gems/100k): Pre-set 100,000-gem purchase at the bulk tier.
+- [500k gems](https://sniperduels.shop/gems/500k): Pre-set 500,000-gem purchase at the bulk tier.
+- [1M gems](https://sniperduels.shop/gems/1m): Pre-set 1,000,000-gem purchase at the bulk tier.
+- [Cheap gems](https://sniperduels.shop/gems/cheap): Cheapest available gem listing across all active vendors.
+- [Buy gems landing](https://sniperduels.shop/gems/buy): Direct gem-purchase entry point with vendor selector.
+- [FAQ](https://sniperduels.shop/faq): Payment methods, delivery process, refund policy, OAuth/safety, bulk pricing, account requirements.
+- [About](https://sniperduels.shop/about): How the auto-shop works, team, operating model.
+- [Refunds policy](https://sniperduels.shop/refunds): Wallet-credit auto-refunds for failed deliveries, repeat-victim rebate program.
+- [Terms of service](https://sniperduels.shop/terms): Purchase terms and account rules.
+- [Privacy policy](https://sniperduels.shop/privacy): Data handling, OAuth scope, payment processor disclosure.
 
-- **Snipers**: Ranged weapons with various rarity tiers (Uncommon, Rare, Legendary, Epic, Secret, Collectible). Some include FX effects and Fragtrak stat tracking.
-- **Knives**: Melee weapons with rarity tiers and optional FX effects.
-- **Crates**: Mystery crates containing random items of varying rarity.
-- **Gems**: In-game currency sold in bulk. Pricing: $2.90/k for 1k-99k, $2.65/k for 100k+.
+## Optional
 
-## How It Works
-
-1. Log in with your Roblox account (OAuth — we never see your password)
-2. Browse and select items or gems
-3. Pay securely through Pandabase (credit/debit cards)
-4. Join our private Roblox server via the provided link
-5. Accept the automated bot trade — items delivered in under 2 minutes
-
-## Pricing
-
-- Items: Priced individually based on rarity and demand
-- Gems: $2.90 per 1,000 (1k-99k orders), $2.65 per 1,000 (100k+ orders)
-- Loyalty discounts: Silver tier (0.5% off after $100 spent), Gold tier (1% off after $250 spent)
-- Discord link bonus: One-time 2.5% discount on first purchase
-
-## Pages
-
-- Homepage: https://sniperduels.shop
-- Item Shop: https://sniperduels.shop/shop
-- Gem Shop: https://sniperduels.shop/gems
-- FAQ: https://sniperduels.shop/faq
-- About: https://sniperduels.shop/about
-- Privacy Policy: https://sniperduels.shop/privacy
-- Terms of Service: https://sniperduels.shop/terms
-- Refund Policy: https://sniperduels.shop/refunds
-
-## Contact
-
-- Discord: https://discord.gg/sniperduels
+- [Value list (companion)](https://sniperduels.net/values): Free live value list for all 218 Sniper Duels weapons — companion content site, no checkout.
+- [Trading guide](https://sniperduels.net/trading-guide): Free trade-up logic and fair-value math from the companion content site.
+- [Discord](https://sniperduels.net/discord): Official Sniper Duels Discord — support, trading, free middleman service.

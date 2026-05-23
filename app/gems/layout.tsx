@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { REVIEWS, getAggregateRating } from '@/lib/seo/reviews'
+import { Testimonials } from '@/components/gems/Testimonials'
 
 export const metadata: Metadata = {
   title: 'Buy Sniper Duels Gems — Bulk Pricing from $2.65/k',
@@ -9,6 +11,58 @@ export const metadata: Metadata = {
 }
 
 export default function GemsLayout({ children }: { children: React.ReactNode }) {
+  const aggregateRating = getAggregateRating()
+  const productSchema: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: 'Sniper Duels Gems',
+    description: 'In-game gems for Sniper Duels on Roblox. Buy in bulk for better rates. Automated delivery within 2 minutes.',
+    image: 'https://sniperduels.shop/gem_icon.png',
+    url: 'https://sniperduels.shop/gems',
+    brand: {
+      '@type': 'Organization',
+      name: 'Sniper Duels Auto Shop',
+    },
+    category: 'Virtual Game Currency',
+    offers: {
+      '@type': 'AggregateOffer',
+      priceCurrency: 'USD',
+      lowPrice: '2.65',
+      highPrice: '2.90',
+      offerCount: '2',
+      url: 'https://sniperduels.shop/gems',
+      seller: {
+        '@type': 'Organization',
+        name: 'Sniper Duels Auto Shop',
+      },
+    },
+  }
+
+  if (aggregateRating) {
+    productSchema.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: aggregateRating.ratingValue,
+      reviewCount: aggregateRating.reviewCount,
+      bestRating: aggregateRating.bestRating,
+      worstRating: aggregateRating.worstRating,
+    }
+  }
+
+  if (REVIEWS.length > 0) {
+    productSchema.review = REVIEWS.map((r) => ({
+      '@type': 'Review',
+      author: { '@type': 'Person', name: r.author },
+      reviewRating: {
+        '@type': 'Rating',
+        ratingValue: r.rating,
+        bestRating: 5,
+        worstRating: 1,
+      },
+      reviewBody: r.body,
+      datePublished: r.datePublished,
+    }))
+  }
+
   const schemas = [
     {
       '@context': 'https://schema.org',
@@ -18,31 +72,7 @@ export default function GemsLayout({ children }: { children: React.ReactNode }) 
         { '@type': 'ListItem', position: 2, name: 'Gems', item: 'https://sniperduels.shop/gems' },
       ],
     },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Product',
-      name: 'Sniper Duels Gems',
-      description: 'In-game gems for Sniper Duels on Roblox. Buy in bulk for better rates. Automated delivery within 2 minutes.',
-      image: 'https://sniperduels.shop/gem_icon.png',
-      url: 'https://sniperduels.shop/gems',
-      brand: {
-        '@type': 'Organization',
-        name: 'Sniper Duels Auto Shop',
-      },
-      category: 'Virtual Game Currency',
-      offers: {
-        '@type': 'AggregateOffer',
-        priceCurrency: 'USD',
-        lowPrice: '2.65',
-        highPrice: '2.90',
-        offerCount: '2',
-        url: 'https://sniperduels.shop/gems',
-        seller: {
-          '@type': 'Organization',
-          name: 'Sniper Duels Auto Shop',
-        },
-      },
-    },
+    productSchema,
     {
       '@context': 'https://schema.org',
       '@type': 'FAQPage',
@@ -117,6 +147,7 @@ export default function GemsLayout({ children }: { children: React.ReactNode }) 
         />
       ))}
       {children}
+      <Testimonials />
     </>
   )
 }
