@@ -98,7 +98,7 @@ export default function MarketplacePage() {
           {demo && !process.env.NEXT_PUBLIC_DEMO_MARKETPLACE && (
             <div className="mt-3 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 text-xs text-amber-300">
               <span className="font-semibold">Demo mode</span>
-              <span className="text-amber-200/80"> — fake UX preview. Buy buttons won't actually purchase.</span>
+              <span className="text-amber-200/80"> — fake UX preview. Buy buttons won&apos;t actually purchase.</span>
             </div>
           )}
         </div>
