@@ -30,7 +30,7 @@ export const SHOP_CATEGORIES = [
     id: 'crates',
     title: 'Crates',
     description: 'Mystery crates with chances for rare items.',
-    href: '/shop?category=crates',
+    href: '/marketplace',
     buttonText: 'Browse Crates',
     featured: false,
   },
