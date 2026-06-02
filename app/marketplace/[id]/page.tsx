@@ -379,35 +379,35 @@ function SimilarCard({ listing, demoFromUrl }: { listing: ListingDetail; demoFro
         ) : (
           <div className="text-zinc-700 text-[9px]">{listing.vaultItem.catalog.weapon}</div>
         )}
-        <div className="absolute top-1.5 left-1.5 flex flex-col items-start gap-0.5">
+        <div className="absolute top-1.5 left-1.5 flex flex-col items-start gap-0.5 max-w-[75%]">
           <span
-            className="rounded px-1 py-0.5 bg-zinc-950/85 border text-[9px] font-extrabold uppercase tracking-wider"
+            className="rounded px-1 py-0.5 bg-zinc-950/85 border text-[9px] md:text-[10px] font-extrabold uppercase tracking-wider whitespace-nowrap"
             style={{ borderColor: `${s.dotHex}80`, color: s.dotHex }}
-            title={s.label}
+            title={`Rarity · ${s.label}`}
           >
             {s.label}
           </span>
           {ft && (
             <span
-              className="rounded bg-zinc-950/85 border border-red-500/40 flex items-center gap-0.5 pl-0.5 pr-1 py-0.5"
-              title={`${ft.label} · ${fp.kills.toLocaleString()}`}
+              className="rounded bg-zinc-950/85 border border-red-500/40 flex items-center gap-0.5 pl-0.5 pr-1 py-0.5 whitespace-nowrap"
+              title={`${ft.label} tracker · ${fp.kills.toLocaleString()}`}
             >
-              <img src={ft.iconUrl} alt={ft.label} className="w-2.5 h-2.5" loading="lazy" />
-              <span className="text-[9px] font-bold text-red-400 tracking-wide">
+              <img src={ft.iconUrl} alt={ft.label} className="w-2.5 h-2.5 md:w-3 md:h-3" loading="lazy" />
+              <span className="text-[9px] md:text-[10px] font-bold text-red-400 tracking-wide">
                 {fp.kills >= 1000 ? `${(fp.kills/1000).toFixed(1)}k` : fp.kills}
               </span>
             </span>
           )}
         </div>
         {fp.fx && (
-          <div className="absolute top-1.5 right-1.5 bg-cyan-500/95 text-zinc-900 rounded w-4 h-4 flex items-center justify-center" title={`FX · ${fp.fx}`}>
-            <Sparkles className="w-2.5 h-2.5" />
+          <div className="absolute top-1.5 right-1.5 bg-cyan-500/95 text-zinc-900 rounded w-4 h-4 md:w-5 md:h-5 flex items-center justify-center" title={`FX · ${fp.fx}`}>
+            <Sparkles className="w-2.5 h-2.5 md:w-3 md:h-3" />
           </div>
         )}
       </div>
-      <div className="p-2 border-t border-zinc-800/60">
-        <div className="text-[11px] text-zinc-400 truncate">{listing.vaultItem.catalog.skin}</div>
-        <div className="text-sm font-extrabold text-emerald-400">${Number(listing.priceUsd).toFixed(2)}</div>
+      <div className="p-2 border-t border-zinc-800/60 text-center">
+        <div className="text-[10px] md:text-[11px] text-zinc-400 truncate">{listing.vaultItem.catalog.skin}</div>
+        <div className="text-sm md:text-base font-extrabold text-emerald-400 tabular-nums">${Number(listing.priceUsd).toFixed(2)}</div>
       </div>
     </Link>
   )

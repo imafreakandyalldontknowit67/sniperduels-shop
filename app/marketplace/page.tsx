@@ -271,22 +271,24 @@ function ItemCard({ listing, demo }: { listing: Listing; demo: boolean }) {
           </div>
         )}
 
-        {/* Top-left stack: rarity tag + FragTrakr below it */}
-        <div className="absolute top-2 left-2 flex flex-col items-start gap-1">
+        {/* Top-left stack: rarity tag + FragTrakr below it.
+            Dynamically sized — content-based widths, scales text/icons with
+            breakpoint, never wraps internally. */}
+        <div className="absolute top-1.5 left-1.5 md:top-2 md:left-2 flex flex-col items-start gap-1 max-w-[70%]">
           <div
-            className="rounded-md px-1.5 py-0.5 border bg-zinc-950/85 backdrop-blur-sm shadow-md"
+            className="rounded-md px-1.5 py-0.5 border bg-zinc-950/85 backdrop-blur-sm shadow whitespace-nowrap"
             style={{ borderColor: `${s.dotHex}80`, color: s.dotHex }}
             title={`Rarity · ${s.label}`}
           >
-            <span className="text-[10px] font-extrabold tracking-wider uppercase">{s.label}</span>
+            <span className="text-[9px] md:text-[10px] font-extrabold tracking-wider uppercase">{s.label}</span>
           </div>
           {ft && (
             <div
-              className="rounded-md bg-zinc-950/85 border border-red-500/40 backdrop-blur-sm flex items-center gap-1 pl-1 pr-1.5 py-0.5 shadow-md"
+              className="rounded-md bg-zinc-950/85 border border-red-500/40 backdrop-blur-sm flex items-center gap-1 pl-0.5 md:pl-1 pr-1.5 py-0.5 shadow whitespace-nowrap"
               title={`${ft.label} tracker · ${fp.kills.toLocaleString()}`}
             >
-              <img src={ft.iconUrl} alt={ft.label} className="w-3.5 h-3.5" loading="lazy" />
-              <span className="text-[10px] font-bold text-red-400 tracking-wide">
+              <img src={ft.iconUrl} alt={ft.label} className="w-3 h-3 md:w-3.5 md:h-3.5" loading="lazy" />
+              <span className="text-[9px] md:text-[10px] font-bold text-red-400 tracking-wide">
                 {fp.kills >= 1000 ? `${(fp.kills/1000).toFixed(1)}k` : fp.kills} {ft.abbr}
               </span>
             </div>
@@ -296,42 +298,42 @@ function ItemCard({ listing, demo }: { listing: Listing; demo: boolean }) {
         {/* Top-right: FX badge */}
         {fp.fx && (
           <div
-            className="absolute top-2 right-2 bg-cyan-500/95 text-zinc-900 rounded-md flex items-center gap-1 px-1.5 py-0.5 shadow"
+            className="absolute top-1.5 right-1.5 md:top-2 md:right-2 bg-cyan-500/95 text-zinc-900 rounded-md flex items-center gap-1 px-1.5 py-0.5 shadow whitespace-nowrap"
             title={`FX · ${fp.fx}`}
           >
             <Sparkles className="w-3 h-3" />
-            <span className="text-[10px] font-bold tracking-wide">FX</span>
+            <span className="text-[9px] md:text-[10px] font-bold tracking-wide">FX</span>
           </div>
         )}
 
         {/* Secret tier crown */}
         {rarity === 'SECRET' && (
-          <Crown className="absolute bottom-2 right-2 w-4 h-4 text-zinc-200/80 drop-shadow" />
+          <Crown className="absolute bottom-1.5 right-1.5 md:bottom-2 md:right-2 w-4 h-4 text-zinc-200/80 drop-shadow" />
         )}
       </div>
 
-      {/* Footer: weapon + skin + price + See item button — labels centered */}
-      <div className="p-2.5 md:p-3 border-t border-zinc-800/60 text-center">
-        <div className="text-[11px] uppercase tracking-wider truncate font-medium text-zinc-400">
+      {/* Footer: weapon, skin, price stacked centered; full-width CTA below.
+          Stacked layout removes the price/button squeeze when prices hit 4–5
+          digits and gives the CTA proper visual weight on every breakpoint. */}
+      <div className="p-2 md:p-3 border-t border-zinc-800/60 text-center space-y-1.5 md:space-y-2">
+        <div className="text-[10px] md:text-[11px] uppercase tracking-wider truncate font-medium text-zinc-400">
           {listing.vaultItem.catalog.weapon}
         </div>
         <div className="font-semibold text-white text-sm md:text-base leading-tight truncate" title={skin}>
           {skin}
         </div>
-        <div className="mt-2 flex items-end justify-between gap-2">
-          <span className="text-base md:text-lg font-extrabold text-emerald-400 leading-none">
-            ${price.toFixed(2)}
-          </span>
-          <span
-            className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md shrink-0 ${
-              soldOut
-                ? 'bg-zinc-800 text-zinc-500 border border-zinc-700'
-                : 'bg-amber-500 text-zinc-900 group-hover:bg-amber-400 transition-colors'
-            }`}
-          >
-            {soldOut ? 'Sold out' : 'See item'}
-          </span>
+        <div className="text-lg md:text-xl font-extrabold text-emerald-400 leading-none tabular-nums">
+          ${price.toFixed(2)}
         </div>
+        <span
+          className={`block w-full text-[10px] md:text-xs font-bold uppercase tracking-wider py-1.5 md:py-2 rounded-md transition-colors ${
+            soldOut
+              ? 'bg-zinc-800 text-zinc-500 border border-zinc-700'
+              : 'bg-amber-500 text-zinc-900 group-hover:bg-amber-400'
+          }`}
+        >
+          {soldOut ? 'Sold out' : 'See item'}
+        </span>
       </div>
     </Link>
   )
