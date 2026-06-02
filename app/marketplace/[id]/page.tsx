@@ -131,11 +131,17 @@ function ListingDetailInner() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-950 to-black pb-32 md:pb-12">
-      <div className="max-w-5xl mx-auto px-3 md:px-6 py-4 md:py-8">
-        <Link href={demoFromUrl ? '/marketplace?demo=1' : '/marketplace'} className="text-zinc-400 hover:text-white inline-flex items-center gap-1 mb-3 text-sm">
+      {/* Back button: pinned to the left edge, matches the position users expect
+          relative to the site logo. */}
+      <div className="max-w-5xl mx-auto px-3 md:px-6 pt-3 md:pt-4">
+        <Link
+          href={demoFromUrl ? '/marketplace?demo=1' : '/marketplace'}
+          className="inline-flex items-center gap-1.5 text-sm text-zinc-300 hover:text-white bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 rounded-md px-2.5 py-1.5 transition-colors"
+        >
           <ArrowLeft className="w-4 h-4"/> Back
         </Link>
-
+      </div>
+      <div className="max-w-5xl mx-auto px-3 md:px-6 pt-3 md:pt-4 pb-4 md:pb-8">
         <div className="grid md:grid-cols-2 gap-4 md:gap-8">
           {/* Hero image */}
           <div
@@ -193,26 +199,45 @@ function ListingDetailInner() {
               {listing.vaultItem.catalog.skin}
             </div>
 
-            {/* Attribute chips — icon-led, short labels */}
+            {/* Attribute chips — rarity first, then condition / FX / FT / festive */}
             <div className="flex flex-wrap gap-1.5 mt-3">
+              <span
+                className="text-[10px] uppercase tracking-wider font-extrabold px-2 py-1 rounded bg-zinc-950/85 border"
+                style={{ borderColor: `${s.dotHex}80`, color: s.dotHex }}
+                title={`Rarity · ${s.label}`}
+              >
+                {s.label}
+              </span>
               {fp.condition && (
-                <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
+                <span
+                  className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-zinc-800 text-zinc-300 border border-zinc-700"
+                  title={`Condition · ${fp.condition}`}
+                >
                   {fp.condition}
                 </span>
               )}
               {fp.fx && (
-                <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 inline-flex items-center gap-1">
+                <span
+                  className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 inline-flex items-center gap-1"
+                  title={`FX effect · ${fp.fx}`}
+                >
                   <Sparkles className="w-3 h-3" />FX · {fp.fx}
                 </span>
               )}
               {ft && (
-                <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-red-500/15 text-red-300 border border-red-500/30 inline-flex items-center gap-1">
+                <span
+                  className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-red-500/15 text-red-300 border border-red-500/30 inline-flex items-center gap-1"
+                  title={`${ft.label} tracker — counts in-game ${ft.label.toLowerCase()}`}
+                >
                   <img src={ft.iconUrl} alt="" className="w-3 h-3" loading="lazy" />
                   {ft.label}
                 </span>
               )}
               {fp.festive && (
-                <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-orange-500/15 text-orange-300 border border-orange-500/30">
+                <span
+                  className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-orange-500/15 text-orange-300 border border-orange-500/30"
+                  title="Festive variant — from a holiday or event crate"
+                >
                   Festive
                 </span>
               )}
@@ -344,29 +369,37 @@ function SimilarCard({ listing, demoFromUrl }: { listing: ListingDetail; demoFro
   return (
     <Link
       href={href}
-      className="group relative block bg-zinc-900 rounded-xl overflow-hidden transition-all active:scale-95 md:hover:scale-[1.03]"
-      style={{
-        border: `1.5px solid ${s.dotHex}`,
-        boxShadow: `0 0 0 1px ${s.dotHex}26`,
-      }}
+      className="group relative block bg-zinc-900 rounded-xl overflow-hidden transition-all active:scale-95 md:hover:scale-[1.03] border border-zinc-700/60 md:hover:border-zinc-500"
     >
-      <div className={`relative aspect-square ${s.bg} flex items-center justify-center p-2`}>
+      <div className="relative aspect-square bg-zinc-900/40 flex items-center justify-center p-2">
         {icon ? (
           <Image src={icon} alt={listing.vaultItem.catalog.name} width={150} height={150}
                  className="object-contain w-full h-full" unoptimized />
         ) : (
           <div className="text-zinc-700 text-[9px]">{listing.vaultItem.catalog.weapon}</div>
         )}
-        {ft && (
-          <div className="absolute top-1.5 left-1.5 bg-zinc-950/90 border border-red-500/40 rounded flex items-center gap-0.5 pl-0.5 pr-1 py-0.5">
-            <img src={ft.iconUrl} alt={ft.label} className="w-2.5 h-2.5" loading="lazy" />
-            <span className="text-[9px] font-bold text-red-400 tracking-wide">
-              {fp.kills >= 1000 ? `${(fp.kills/1000).toFixed(1)}k` : fp.kills}
+        <div className="absolute top-1.5 left-1.5 flex flex-col items-start gap-0.5">
+          <span
+            className="rounded px-1 py-0.5 bg-zinc-950/85 border text-[9px] font-extrabold uppercase tracking-wider"
+            style={{ borderColor: `${s.dotHex}80`, color: s.dotHex }}
+            title={s.label}
+          >
+            {s.label}
+          </span>
+          {ft && (
+            <span
+              className="rounded bg-zinc-950/85 border border-red-500/40 flex items-center gap-0.5 pl-0.5 pr-1 py-0.5"
+              title={`${ft.label} · ${fp.kills.toLocaleString()}`}
+            >
+              <img src={ft.iconUrl} alt={ft.label} className="w-2.5 h-2.5" loading="lazy" />
+              <span className="text-[9px] font-bold text-red-400 tracking-wide">
+                {fp.kills >= 1000 ? `${(fp.kills/1000).toFixed(1)}k` : fp.kills}
+              </span>
             </span>
-          </div>
-        )}
+          )}
+        </div>
         {fp.fx && (
-          <div className="absolute top-1.5 right-1.5 bg-cyan-500/95 text-zinc-900 rounded w-4 h-4 flex items-center justify-center" title={`FX: ${fp.fx}`}>
+          <div className="absolute top-1.5 right-1.5 bg-cyan-500/95 text-zinc-900 rounded w-4 h-4 flex items-center justify-center" title={`FX · ${fp.fx}`}>
             <Sparkles className="w-2.5 h-2.5" />
           </div>
         )}

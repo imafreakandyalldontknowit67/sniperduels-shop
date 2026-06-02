@@ -246,20 +246,17 @@ function ItemCard({ listing, demo }: { listing: Listing; demo: boolean }) {
   const href = demo ? `/marketplace/${listing.id}?demo=1` : `/marketplace/${listing.id}`
   const skin = listing.vaultItem.catalog.skin
   const ft = fp.fragtrakr ? fragtrakInfo(fp.fragtrak_type) : null
+  // soldOut would come from listing.vaultItem.status !== 'listed' on real data.
+  // Demo listings are always available so this is always false here.
+  const soldOut = false
 
   return (
     <Link
       href={href}
-      className={`group relative block bg-zinc-900 rounded-xl overflow-hidden transition-all duration-200 active:scale-95 md:hover:scale-[1.02] md:hover:shadow-xl ${s.glow}`}
-      style={{
-        // Rarity-colored card border at full intensity — replaces the white/zinc
-        // outline with the matching rarity color.
-        border: `1.5px solid ${s.dotHex}`,
-        boxShadow: `0 0 0 1px ${s.dotHex}26`,
-      }}
+      className="group relative block bg-zinc-900 rounded-xl overflow-hidden transition-all duration-200 active:scale-95 md:hover:scale-[1.02] md:hover:shadow-xl border border-zinc-700/60 md:hover:border-zinc-500"
     >
-      {/* Image area */}
-      <div className={`relative aspect-square ${s.bg} flex items-center justify-center p-3 md:p-4`}>
+      {/* Image area — slanted images leave the top-left free for the rarity / FT stack */}
+      <div className="relative aspect-square bg-zinc-900/40 flex items-center justify-center p-3 md:p-4">
         {icon ? (
           <Image
             src={icon}
@@ -274,24 +271,34 @@ function ItemCard({ listing, demo }: { listing: Listing; demo: boolean }) {
           </div>
         )}
 
-        {/* Top-left: FragTrakr badge with game icon + type label + count */}
-        {ft && (
-          <div className="absolute top-2 left-2 bg-zinc-950/90 border border-red-500/40 rounded-md flex items-center gap-1 pl-1 pr-1.5 py-0.5 shadow-md">
-            <img
-              src={ft.iconUrl}
-              alt={ft.label}
-              className="w-3.5 h-3.5"
-              loading="lazy"
-            />
-            <span className="text-[10px] font-bold text-red-400 tracking-wide">
-              {fp.kills >= 1000 ? `${(fp.kills/1000).toFixed(1)}k` : fp.kills} {ft.abbr}
-            </span>
+        {/* Top-left stack: rarity tag + FragTrakr below it */}
+        <div className="absolute top-2 left-2 flex flex-col items-start gap-1">
+          <div
+            className="rounded-md px-1.5 py-0.5 border bg-zinc-950/85 backdrop-blur-sm shadow-md"
+            style={{ borderColor: `${s.dotHex}80`, color: s.dotHex }}
+            title={`Rarity · ${s.label}`}
+          >
+            <span className="text-[10px] font-extrabold tracking-wider uppercase">{s.label}</span>
           </div>
-        )}
+          {ft && (
+            <div
+              className="rounded-md bg-zinc-950/85 border border-red-500/40 backdrop-blur-sm flex items-center gap-1 pl-1 pr-1.5 py-0.5 shadow-md"
+              title={`${ft.label} tracker · ${fp.kills.toLocaleString()}`}
+            >
+              <img src={ft.iconUrl} alt={ft.label} className="w-3.5 h-3.5" loading="lazy" />
+              <span className="text-[10px] font-bold text-red-400 tracking-wide">
+                {fp.kills >= 1000 ? `${(fp.kills/1000).toFixed(1)}k` : fp.kills} {ft.abbr}
+              </span>
+            </div>
+          )}
+        </div>
 
-        {/* Top-right: FX badge (no in-game FX icon manifest — sparkle + name) */}
+        {/* Top-right: FX badge */}
         {fp.fx && (
-          <div className="absolute top-2 right-2 bg-cyan-500/95 text-zinc-900 rounded-md flex items-center gap-1 px-1.5 py-0.5 shadow" title={`FX: ${fp.fx}`}>
+          <div
+            className="absolute top-2 right-2 bg-cyan-500/95 text-zinc-900 rounded-md flex items-center gap-1 px-1.5 py-0.5 shadow"
+            title={`FX · ${fp.fx}`}
+          >
             <Sparkles className="w-3 h-3" />
             <span className="text-[10px] font-bold tracking-wide">FX</span>
           </div>
@@ -299,39 +306,33 @@ function ItemCard({ listing, demo }: { listing: Listing; demo: boolean }) {
 
         {/* Secret tier crown */}
         {rarity === 'SECRET' && (
-          <Crown className="absolute bottom-2 right-2 w-4 h-4 text-zinc-200 drop-shadow" />
+          <Crown className="absolute bottom-2 right-2 w-4 h-4 text-zinc-200/80 drop-shadow" />
         )}
       </div>
 
-      {/* Footer: weapon + skin + price */}
-      <div className={`p-2.5 md:p-3 border-t border-zinc-800/60 ${rarity === 'SECRET' ? 'bg-zinc-950' : ''}`}>
-        <div className="text-[11px] uppercase tracking-wider truncate font-medium" style={{ color: s.dotHex }}>
+      {/* Footer: weapon + skin + price + See item button */}
+      <div className="p-2.5 md:p-3 border-t border-zinc-800/60">
+        <div className="text-[11px] uppercase tracking-wider truncate font-medium text-zinc-400">
           {listing.vaultItem.catalog.weapon}
         </div>
         <div className="font-semibold text-white text-sm md:text-base leading-tight truncate" title={skin}>
           {skin}
         </div>
-        <div className="mt-1.5 flex items-center justify-between">
+        <div className="mt-2 flex items-end justify-between gap-2">
           <span className="text-base md:text-lg font-extrabold text-emerald-400 leading-none">
             ${price.toFixed(2)}
           </span>
-          {fp.condition && (
-            <span className="text-[9px] text-zinc-500 uppercase tracking-wider truncate ml-2">
-              {abbrevCondition(fp.condition)}
-            </span>
-          )}
+          <span
+            className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md shrink-0 ${
+              soldOut
+                ? 'bg-zinc-800 text-zinc-500 border border-zinc-700'
+                : 'bg-amber-500 text-zinc-900 group-hover:bg-amber-400 transition-colors'
+            }`}
+          >
+            {soldOut ? 'Sold out' : 'See item'}
+          </span>
         </div>
       </div>
     </Link>
   )
-}
-
-function abbrevCondition(c: string): string {
-  // Quick 2-letter abbreviation to keep mobile clean
-  const map: Record<string, string> = {
-    'MINT CONDITION': 'MN',
-    'STANDARD ISSUE': 'ST',
-    'WELL WORN': 'WW',
-  }
-  return map[c.toUpperCase()] ?? c
 }
