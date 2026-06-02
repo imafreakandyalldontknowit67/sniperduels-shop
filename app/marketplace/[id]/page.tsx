@@ -7,7 +7,7 @@
  * No seller info shown — this is a generalized marketplace, the bot fronts
  * all sales.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -30,6 +30,14 @@ interface ListingDetail {
 }
 
 export default function ListingDetailPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-zinc-950" />}>
+      <ListingDetailInner />
+    </Suspense>
+  )
+}
+
+function ListingDetailInner() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const sp = useSearchParams()

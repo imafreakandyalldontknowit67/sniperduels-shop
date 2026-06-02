@@ -8,7 +8,7 @@
  * the card. No seller name (this is a generalized storefront — the bot
  * fronts all listings).
  */
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, Suspense } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
@@ -29,6 +29,14 @@ interface Listing {
 }
 
 export default function MarketplacePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-zinc-950" />}>
+      <MarketplaceInner />
+    </Suspense>
+  )
+}
+
+function MarketplaceInner() {
   const sp = useSearchParams()
   // Build-time env: NEXT_PUBLIC_DEMO_MARKETPLACE=1 forces demo for the entire
   // deploy (e.g. designer preview on a Coolify dev URL). URL ?demo=1 also
