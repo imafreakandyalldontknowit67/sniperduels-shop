@@ -80,12 +80,16 @@ export async function cancelAllPendingOrders(reason: string): Promise<number> {
 }
 
 /**
- * Called when the bot heartbeat transitions offline → online. Older behavior
- * was to cancel ALL pending orders, including fresh ones the bot could have
- * fulfilled in seconds. New behavior: only cancel orders that are already
- * past the bot-poll auto-expiry threshold (matches ORDER_TIMEOUT_MS in
- * `app/api/bot/orders/route.ts`). Younger orders are left in `pending` so the
- * bot's next poll picks them up via normal flow.
+ * Called when the GEM bot heartbeat transitions offline → online. Older
+ * behavior was to cancel ALL pending orders, including fresh ones the bot
+ * could have fulfilled in seconds. New behavior: only cancel GEM orders
+ * that are already past the bot-poll auto-expiry threshold (matches
+ * ORDER_TIMEOUT_MS in `app/api/bot/orders/route.ts`).
+ *
+ * SCOPED TO `type === 'gems'`. Item-flow marketplace orders are handled by a
+ * different bot (item bot) on a different Roblox account, and the product
+ * model is to queue them indefinitely while the item bot reconnects — they
+ * must NOT be auto-cancelled by the gem-bot's heartbeat.
  *
  * Refunds for cancelled orders go to the user's WALLET (no payment processor
  * round trip — `expireOrder` already calls `addToWallet`). Deposits remain
@@ -96,7 +100,7 @@ export async function settlePendingOrders(
   maxAgeMs: number = 30 * 60_000,
 ): Promise<{ cancelled: number; left: number }> {
   const allOrders = await getOrders()
-  const pending = allOrders.filter(o => o.status === 'pending')
+  const pending = allOrders.filter(o => o.status === 'pending' && o.type === 'gems')
   const now = Date.now()
   let cancelled = 0
   let left = 0

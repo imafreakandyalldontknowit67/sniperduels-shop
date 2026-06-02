@@ -11,11 +11,11 @@ export const COLORS = {
 // Shop categories
 export const SHOP_CATEGORIES = [
   {
-    id: 'items',
-    title: 'Items',
+    id: 'marketplace',
+    title: 'Marketplace',
     description: 'Snipers and knives traded directly to you via our delivery system.',
-    href: '/shop',
-    buttonText: 'Browse Items',
+    href: '/marketplace',
+    buttonText: 'Browse Marketplace',
     featured: false,
   },
   {
@@ -75,7 +75,7 @@ export const TRUST_STATS = {
 export const NAV_LINKS = [
   { label: 'Home', href: '/' },
   { label: 'Gems', href: '/gems' },
-  { label: 'Items', href: '/shop' },
+  { label: 'Marketplace', href: '/marketplace' },
 ] as const
 
 // Footer links

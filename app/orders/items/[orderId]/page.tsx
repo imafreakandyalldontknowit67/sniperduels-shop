@@ -9,6 +9,7 @@ import { useParams, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui'
 import { Check, Loader2, AlertTriangle } from 'lucide-react'
+import MarketplaceOutageBanner from '@/components/MarketplaceOutageBanner'
 
 interface OrderStatus {
   order: {
@@ -81,7 +82,9 @@ export default function OrderTrackingPage() {
   })()
 
   return (
-    <div className="max-w-2xl mx-auto p-6 md:p-8">
+    <div>
+      <MarketplaceOutageBanner />
+      <div className="max-w-2xl mx-auto p-6 md:p-8">
       <h1 className="text-2xl font-bold text-white mb-2">Order {status.order.id.slice(0, 8)}</h1>
       <div className="text-gray-400 mb-6 font-mono">
         {status.vaultItem?.catalog.name ?? status.order.itemName} — ${status.order.totalPrice}
@@ -142,6 +145,7 @@ export default function OrderTrackingPage() {
           <Link href="/marketplace" className="underline">/marketplace</Link>.
         </div>
       )}
+      </div>
     </div>
   )
 }

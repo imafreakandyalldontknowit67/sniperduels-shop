@@ -17,6 +17,8 @@ import { useAuth } from '@/components/providers'
 import { iconUrl } from '@/lib/itemIcon'
 import { rarityStyle } from '@/lib/rarity'
 import { fragtrakInfo } from '@/lib/fragtrakIcon'
+import { useItemBotStatus, type ItemBotStatus } from '@/hooks/useItemBotStatus'
+import MarketplaceOutageBanner from '@/components/MarketplaceOutageBanner'
 
 interface ListingDetail {
   id: string
@@ -42,6 +44,7 @@ function ListingDetailInner() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const sp = useSearchParams()
+  const itemBot = useItemBotStatus()
   const demoFromUrl = sp.get('demo') === '1'
   const demoFromEnv = process.env.NEXT_PUBLIC_DEMO_MARKETPLACE === '1'
   const demo = demoFromUrl || demoFromEnv
@@ -131,6 +134,7 @@ function ListingDetailInner() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-950 to-black pb-32 md:pb-12">
+      <MarketplaceOutageBanner />
       {/* Back button: aligned with the site logo's left edge in the fixed
           header — uses the same horizontal padding as the header (px-3 sm:px-5
           lg:px-8) so it lines up directly under the SNIPER DUELS SHOP mark. */}
@@ -268,6 +272,7 @@ function ListingDetailInner() {
                 onLogin={login}
                 robloxName={robloxName}
                 setRobloxName={setRobloxName}
+                itemBot={itemBot}
               />
             </div>
           </div>
@@ -304,6 +309,7 @@ function ListingDetailInner() {
       {/* Sticky mobile buy bar */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-zinc-950/95 backdrop-blur border-t border-zinc-800 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <BuyPanel
+          itemBot={itemBot}
           price={price}
           minOfferUsd={listing.minOfferUsd ? Number(listing.minOfferUsd) : null}
           user={user}
@@ -425,9 +431,27 @@ function BuyPanel(props: {
   robloxName: string
   setRobloxName: (s: string) => void
   compact?: boolean
+  itemBot?: ItemBotStatus | null
 }) {
-  const { price, minOfferUsd, user, walletBalance, isOwn, buying, onBuy, onLogin, robloxName, setRobloxName, compact } = props
+  const { price, minOfferUsd, user, walletBalance, isOwn, buying, onBuy, onLogin, robloxName, setRobloxName, compact, itemBot } = props
   const canAfford = walletBalance >= price
+
+  // State-aware queue caption — only when the bot isn't in lobby/online happy
+  // path. Buy buttons stay enabled in every case; the message just sets the
+  // right expectation about delivery timing.
+  let queueHint: { tone: 'busy' | 'offline'; text: string } | null = null
+  if (itemBot) {
+    if (!itemBot.online && itemBot.state !== 'lobby') {
+      queueHint = {
+        tone: 'offline',
+        text: 'Bot is reconnecting — your order will queue and ship as soon as it’s back.',
+      }
+    } else if (itemBot.state === 'in_duel' && (itemBot.secondsAgo ?? 0) >= 30) {
+      queueHint = { tone: 'busy', text: 'Bot is in a duel — your order is next in line.' }
+    } else if (itemBot.state === 'trade_panel' || itemBot.state === 'trade_window') {
+      queueHint = { tone: 'busy', text: 'Bot is mid-trade — your order is next in line.' }
+    }
+  }
 
   if (compact) {
     return (
@@ -476,6 +500,15 @@ function BuyPanel(props: {
         </div>
       ) : (
         <div className="space-y-3">
+          {queueHint && (
+            <div className={`text-[11px] leading-snug px-3 py-2 rounded-md border ${
+              queueHint.tone === 'offline'
+                ? 'bg-amber-500/10 border-amber-500/40 text-amber-200'
+                : 'bg-sky-500/10 border-sky-500/40 text-sky-200'
+            }`}>
+              {queueHint.text}
+            </div>
+          )}
           <div>
             <label className="text-xs text-zinc-400 mb-1.5 block">Deliver to Roblox username</label>
             <input

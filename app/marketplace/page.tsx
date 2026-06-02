@@ -16,6 +16,7 @@ import { Search, X, SlidersHorizontal, Sparkles, Crown } from 'lucide-react'
 import { iconUrl } from '@/lib/itemIcon'
 import { rarityStyle, RARITY_OPTIONS } from '@/lib/rarity'
 import { fragtrakInfo } from '@/lib/fragtrakIcon'
+import MarketplaceOutageBanner from '@/components/MarketplaceOutageBanner'
 
 interface Listing {
   id: string
@@ -87,25 +88,33 @@ function MarketplaceInner() {
   const activeFilterCount =
     (type !== 'all' ? 1 : 0) + (rarity !== 'all' ? 1 : 0) + (maxUsd ? 1 : 0)
 
+  // Color the live-counter pill based on inventory depth — same pattern as
+  // the gems stock pill (red empty / amber low / green healthy).
+  const liveCount = filtered.length
+  const countTone =
+    liveCount === 0 ? 'border-red-500/40 text-red-300' :
+    liveCount < 8 ? 'border-amber-500/40 text-amber-300' :
+    'border-emerald-500/40 text-emerald-300'
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-950 to-black">
+      <MarketplaceOutageBanner />
       <div className="max-w-7xl mx-auto px-3 md:px-6 py-5 md:py-10">
-        {/* Header */}
-        <div className="mb-5 md:mb-8 px-1">
-          <div className="flex items-center gap-2 mb-1.5">
-            <Sparkles className="w-4 h-4 text-amber-400" />
-            <span className="text-[10px] uppercase tracking-widest text-amber-400 font-semibold">
-              Items Marketplace
-            </span>
-          </div>
-          <h1 className="text-2xl md:text-5xl font-extrabold text-white tracking-tight">
-            Snipers &amp; Knives
+        {/* Header — matches /gems pattern: centered uppercase H1 with a live
+            counter pill below. */}
+        <div className="text-center mb-6 sm:mb-8 md:mb-10">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-accent mb-3 sm:mb-4 uppercase">
+            Marketplace
           </h1>
-          <p className="text-zinc-400 mt-1.5 text-xs md:text-base max-w-2xl">
-            Buy from the bot — delivered in-game in minutes. Every listing held in escrow, auto-refunded if anything goes wrong.
+          <div className={`inline-flex items-center gap-2 border rounded-full px-3 py-1.5 text-xs sm:text-sm font-semibold ${countTone}`}>
+            <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
+            <span>{loading ? 'Loading listings…' : `${liveCount} ${liveCount === 1 ? 'listing' : 'listings'} live`}</span>
+          </div>
+          <p className="text-zinc-400 mt-3 text-xs sm:text-sm md:text-base max-w-2xl mx-auto px-3">
+            Sniper Duels snipers &amp; knives — held by the bot, delivered in-game in minutes. Every order held in escrow, auto-refunded if anything goes wrong.
           </p>
           {demo && !process.env.NEXT_PUBLIC_DEMO_MARKETPLACE && (
-            <div className="mt-3 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 text-xs text-amber-300">
+            <div className="mt-3 mx-auto max-w-md bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 text-xs text-amber-300">
               <span className="font-semibold">Demo mode</span>
               <span className="text-amber-200/80"> — fake UX preview. Buy buttons won&apos;t actually purchase.</span>
             </div>
