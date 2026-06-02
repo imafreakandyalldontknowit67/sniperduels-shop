@@ -1454,8 +1454,8 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-044",
-    "priceUsd": "37.94",
-    "minOfferUsd": "32.25",
+    "priceUsd": "35.13",
+    "minOfferUsd": "29.86",
     "vaultItem": {
       "id": "demo-vault-demo-044",
       "fingerprint": {
@@ -1465,7 +1465,7 @@ const LISTINGS: DemoListing[] = [
         "fragtrakr": true,
         "fragtrak_type": "Kills",
         "kills": 361,
-        "festive": true
+        "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-044",
@@ -1582,8 +1582,8 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-048",
-    "priceUsd": "95.42",
-    "minOfferUsd": "81.11",
+    "priceUsd": "88.35",
+    "minOfferUsd": "75.10",
     "vaultItem": {
       "id": "demo-vault-demo-048",
       "fingerprint": {
@@ -1593,7 +1593,7 @@ const LISTINGS: DemoListing[] = [
         "fragtrakr": true,
         "fragtrak_type": "Kills",
         "kills": 329,
-        "festive": true
+        "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-048",
@@ -1614,8 +1614,8 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-049",
-    "priceUsd": "97.27",
-    "minOfferUsd": "82.68",
+    "priceUsd": "90.06",
+    "minOfferUsd": "76.55",
     "vaultItem": {
       "id": "demo-vault-demo-049",
       "fingerprint": {
@@ -1625,7 +1625,7 @@ const LISTINGS: DemoListing[] = [
         "fragtrakr": false,
         "fragtrak_type": null,
         "kills": 0,
-        "festive": true
+        "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-049",
@@ -1710,7 +1710,7 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-052",
-    "priceUsd": "10.95",
+    "priceUsd": "10.14",
     "minOfferUsd": null,
     "vaultItem": {
       "id": "demo-vault-demo-052",
@@ -1721,7 +1721,7 @@ const LISTINGS: DemoListing[] = [
         "fragtrakr": false,
         "fragtrak_type": null,
         "kills": 0,
-        "festive": true
+        "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-052",
@@ -1742,8 +1742,8 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-053",
-    "priceUsd": "22.32",
-    "minOfferUsd": "18.97",
+    "priceUsd": "20.67",
+    "minOfferUsd": "17.57",
     "vaultItem": {
       "id": "demo-vault-demo-053",
       "fingerprint": {
@@ -1753,7 +1753,7 @@ const LISTINGS: DemoListing[] = [
         "fragtrakr": true,
         "fragtrak_type": "Kills",
         "kills": 0,
-        "festive": true
+        "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-053",

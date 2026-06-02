@@ -117,7 +117,9 @@ function makeFingerprint(item) {
   // Festive is the BASE catalog flag (item IS a festive variant by design —
   // Holiday/Christmas/Halloween crates etc.). festive_eligible is too broad —
   // 282/291 items have it true. The base `festive` field is the truth.
-  const festive = item.festive === true
+  // Knives are never displayed with the festive badge in-game — even ones
+  // from holiday crates (Karambit Cookie, Bayonet Vampiric, etc.).
+  const festive = item.festive === true && !isKnife
 
   // Kill count only exists when fragtrakr is applied — no fragtrak, no public
   // kill count.
