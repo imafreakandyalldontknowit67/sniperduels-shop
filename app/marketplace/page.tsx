@@ -276,19 +276,19 @@ function ItemCard({ listing, demo }: { listing: Listing; demo: boolean }) {
             breakpoint, never wraps internally. */}
         <div className="absolute top-1.5 left-1.5 md:top-2 md:left-2 flex flex-col items-start gap-1 max-w-[70%]">
           <div
-            className="rounded-md px-1.5 py-0.5 border bg-zinc-950/85 backdrop-blur-sm shadow whitespace-nowrap"
+            className="rounded-md px-1.5 py-0.5 border bg-zinc-950/85 backdrop-blur-sm shadow whitespace-nowrap inline-flex items-center leading-none"
             style={{ borderColor: `${s.dotHex}80`, color: s.dotHex }}
             title={`Rarity · ${s.label}`}
           >
-            <span className="text-[9px] md:text-[10px] font-extrabold tracking-wider uppercase">{s.label}</span>
+            <span className="text-[9px] md:text-[10px] font-extrabold tracking-wider uppercase leading-none">{s.label}</span>
           </div>
           {ft && (
             <div
-              className="rounded-md bg-zinc-950/85 border border-red-500/40 backdrop-blur-sm flex items-center gap-1 pl-0.5 md:pl-1 pr-1.5 py-0.5 shadow whitespace-nowrap"
+              className="rounded-md bg-zinc-950/85 border border-red-500/40 backdrop-blur-sm flex items-center gap-1 pl-0.5 md:pl-1 pr-1.5 py-0.5 shadow whitespace-nowrap leading-none"
               title={`${ft.label} tracker · ${fp.kills.toLocaleString()}`}
             >
               <img src={ft.iconUrl} alt={ft.label} className="w-3 h-3 md:w-3.5 md:h-3.5" loading="lazy" />
-              <span className="text-[9px] md:text-[10px] font-bold text-red-400 tracking-wide">
+              <span className="text-[9px] md:text-[10px] font-bold text-red-400 tracking-wide leading-none">
                 {fp.kills >= 1000 ? `${(fp.kills/1000).toFixed(1)}k` : fp.kills} {ft.abbr}
               </span>
             </div>
@@ -298,11 +298,11 @@ function ItemCard({ listing, demo }: { listing: Listing; demo: boolean }) {
         {/* Top-right: FX badge */}
         {fp.fx && (
           <div
-            className="absolute top-1.5 right-1.5 md:top-2 md:right-2 bg-cyan-500/95 text-zinc-900 rounded-md flex items-center gap-1 px-1.5 py-0.5 shadow whitespace-nowrap"
+            className="absolute top-1.5 right-1.5 md:top-2 md:right-2 bg-cyan-500/95 text-zinc-900 rounded-md flex items-center gap-1 px-1.5 py-0.5 shadow whitespace-nowrap leading-none"
             title={`FX · ${fp.fx}`}
           >
             <Sparkles className="w-3 h-3" />
-            <span className="text-[9px] md:text-[10px] font-bold tracking-wide">FX</span>
+            <span className="text-[9px] md:text-[10px] font-bold tracking-wide leading-none">FX</span>
           </div>
         )}
 

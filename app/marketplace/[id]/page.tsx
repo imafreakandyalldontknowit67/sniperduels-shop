@@ -203,7 +203,7 @@ function ListingDetailInner() {
             {/* Attribute chips — rarity first, then condition / FX / FT / festive */}
             <div className="flex flex-wrap gap-1.5 mt-3">
               <span
-                className="text-[10px] uppercase tracking-wider font-extrabold px-2 py-1 rounded bg-zinc-950/85 border"
+                className="text-[10px] uppercase tracking-wider font-extrabold px-2 py-1 rounded bg-zinc-950/85 border inline-flex items-center leading-none"
                 style={{ borderColor: `${s.dotHex}80`, color: s.dotHex }}
                 title={`Rarity · ${s.label}`}
               >
@@ -381,7 +381,7 @@ function SimilarCard({ listing, demoFromUrl }: { listing: ListingDetail; demoFro
         )}
         <div className="absolute top-1.5 left-1.5 flex flex-col items-start gap-0.5 max-w-[75%]">
           <span
-            className="rounded px-1 py-0.5 bg-zinc-950/85 border text-[9px] md:text-[10px] font-extrabold uppercase tracking-wider whitespace-nowrap"
+            className="rounded px-1 py-0.5 bg-zinc-950/85 border text-[9px] md:text-[10px] font-extrabold uppercase tracking-wider whitespace-nowrap inline-flex items-center leading-none"
             style={{ borderColor: `${s.dotHex}80`, color: s.dotHex }}
             title={`Rarity · ${s.label}`}
           >
@@ -389,11 +389,11 @@ function SimilarCard({ listing, demoFromUrl }: { listing: ListingDetail; demoFro
           </span>
           {ft && (
             <span
-              className="rounded bg-zinc-950/85 border border-red-500/40 flex items-center gap-0.5 pl-0.5 pr-1 py-0.5 whitespace-nowrap"
+              className="rounded bg-zinc-950/85 border border-red-500/40 flex items-center gap-0.5 pl-0.5 pr-1 py-0.5 whitespace-nowrap leading-none"
               title={`${ft.label} tracker · ${fp.kills.toLocaleString()}`}
             >
               <img src={ft.iconUrl} alt={ft.label} className="w-2.5 h-2.5 md:w-3 md:h-3" loading="lazy" />
-              <span className="text-[9px] md:text-[10px] font-bold text-red-400 tracking-wide">
+              <span className="text-[9px] md:text-[10px] font-bold text-red-400 tracking-wide leading-none">
                 {fp.kills >= 1000 ? `${(fp.kills/1000).toFixed(1)}k` : fp.kills}
               </span>
             </span>
