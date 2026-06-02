@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Carousel Preview — Sniper Duels</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0b;
+      color: #fff;
+      font-family: system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: none;
+      -moz-osx-font-smoothing: unset;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    /* Label */
+    .section-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #6b7280;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    /* Carousel wrapper */
+    .carousel-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 560px;
+      overflow: hidden;
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+      mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+    }
+
+    /* Scrolling track */
+    .carousel-track {
+      display: flex;
+      width: max-content;
+      animation: marquee 35s linear infinite;
+    }
+    .carousel-track:hover {
+      animation-play-state: paused;
+    }
+
+    /* Each repeated set */
+    .carousel-set {
+      display: flex;
+      flex-shrink: 0;
+      align-items: center;
+      gap: 2rem;
+      padding-right: 2rem;
+    }
+
+    /* Individual payment method */
+    .pm {
+      display: flex;
+      flex-shrink: 0;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      opacity: 0.5;
+      transition: opacity 0.4s ease;
+    }
+    .pm:hover {
+      opacity: 1;
+    }
+
+    /* Icon container — uniform sizing */
+    .pm-icon {
+      width: 44px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pm-icon img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      filter: grayscale(0.3) brightness(1.1);
+    }
+    .pm:hover .pm-icon img {
+      filter: grayscale(0) brightness(1.2);
+    }
+
+    /* Label text */
+    .pm-label {
+      font-size: 0.55rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #4b5563;
+      white-space: nowrap;
+    }
+    .pm:hover .pm-label {
+      color: #9ca3af;
+    }
+
+    /* Powered by */
+    .powered {
+      font-size: 0.55rem;
+      color: #374151;
+      text-align: center;
+      margin-top: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* Pixel-style border container */
+    .card {
+      background: rgba(26, 26, 30, 0.5);
+      border: 2px solid #2a2a2e;
+      padding: 1.25rem 1.5rem;
+      max-width: 560px;
+      width: 100%;
+    }
+
+    /* Top gold accent line */
+    .card::before {
+      content: '';
+      display: block;
+      width: 40px;
+      height: 2px;
+      background: #e1ad2d;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <p class="section-label">Payment methods</p>
+    <div class="carousel-wrap">
+      <div class="carousel-track">
+        <!-- Set 1 -->
+        <div class="carousel-set">
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/visa.svg" alt="Visa"></div>
+            <span class="pm-label">Visa</span>
+          </div>
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/mastercard.svg" alt="Mastercard"></div>
+            <span class="pm-label">Mastercard</span>
+          </div>
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/applepay.svg" alt="Apple Pay"></div>
+            <span class="pm-label">Apple Pay</span>
+          </div>
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/googlepay.svg" alt="Google Pay"></div>
+            <span class="pm-label">Google Pay</span>
+          </div>
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/cashapp.svg" alt="Cash App"></div>
+            <span class="pm-label">Cash App</span>
+          </div>
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/pix.svg" alt="Pix"></div>
+            <span class="pm-label">Pix</span>
+          </div>
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/ideal.svg" alt="iDEAL"></div>
+            <span class="pm-label">iDEAL</span>
+          </div>
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/alipay.svg" alt="Alipay"></div>
+            <span class="pm-label">Alipay</span>
+          </div>
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/samsungpay.svg" alt="Samsung Pay"></div>
+            <span class="pm-label">Samsung Pay</span>
+          </div>
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/bancontact.svg" alt="Bancontact"></div>
+            <span class="pm-label">Bancontact</span>
+          </div>
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/sepa.svg" alt="SEPA"></div>
+            <span class="pm-label">SEPA</span>
+          </div>
+        </div>
+        <!-- Set 2 (duplicate for seamless loop) -->
+        <div class="carousel-set" aria-hidden="true">
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/visa.svg" alt="Visa"></div>
+            <span class="pm-label">Visa</span>
+          </div>
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/mastercard.svg" alt="Mastercard"></div>
+            <span class="pm-label">Mastercard</span>
+          </div>
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/applepay.svg" alt="Apple Pay"></div>
+            <span class="pm-label">Apple Pay</span>
+          </div>
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/googlepay.svg" alt="Google Pay"></div>
+            <span class="pm-label">Google Pay</span>
+          </div>
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/cashapp.svg" alt="Cash App"></div>
+            <span class="pm-label">Cash App</span>
+          </div>
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/pix.svg" alt="Pix"></div>
+            <span class="pm-label">Pix</span>
+          </div>
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/ideal.svg" alt="iDEAL"></div>
+            <span class="pm-label">iDEAL</span>
+          </div>
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/alipay.svg" alt="Alipay"></div>
+            <span class="pm-label">Alipay</span>
+          </div>
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/samsungpay.svg" alt="Samsung Pay"></div>
+            <span class="pm-label">Samsung Pay</span>
+          </div>
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/bancontact.svg" alt="Bancontact"></div>
+            <span class="pm-label">Bancontact</span>
+          </div>
+          <div class="pm">
+            <div class="pm-icon"><img src="/images/payment/sepa.svg" alt="SEPA"></div>
+            <span class="pm-label">SEPA</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="powered">Powered by Pandabase</p>
+  </div>
+</body>
+</html>

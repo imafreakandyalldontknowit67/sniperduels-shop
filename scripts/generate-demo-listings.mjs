@@ -93,8 +93,14 @@ function killsForRarity(r) {
   return Math.floor(lo + rand() * (hi - lo))
 }
 
+// Per game_fragtrak_available.json — knives only track "Kills", snipers
+// can track any of these 5 types.
+const SNIPER_FRAGTRAK_TYPES = ['Kills', 'HeadshotKills', 'NoscopeKills', 'QuickscopeKills', 'LowerBodyKills']
+const KNIFE_FRAGTRAK_TYPES = ['Kills']
+
 function makeFingerprint(item) {
   const rarity = item.rarity
+  const isKnife = item.weapon_type === 'Knife'
   const conds = (item.conditions ?? ['STANDARD ISSUE']).filter(c => !(item.disallowed_conditions ?? []).includes(c))
   const condition = pick(conds.length ? conds : ['STANDARD ISSUE'])
 
@@ -103,16 +109,19 @@ function makeFingerprint(item) {
 
   const canFt = item.can_have_fragtrakr
   const fragtrakr = canFt && maybe(FT_PROB[rarity] ?? 0.2)
+  // Per-weapon fragtrak type. Knives only have "Kills", snipers any of 5 types.
+  // The fragtrakr is the ONLY kill counter — no separate "kills" without one.
+  const fragtrakType = fragtrakr
+    ? pick(isKnife ? KNIFE_FRAGTRAK_TYPES : SNIPER_FRAGTRAK_TYPES)
+    : null
 
   const festive = item.festive_eligible && maybe(FESTIVE_PROB)
 
-  const kills = killsForRarity(rarity)
-  const quickscope = kills > 0 && maybe(0.4) ? Math.floor(kills * (0.1 + rand() * 0.3)) : null
+  // Kill count only exists when fragtrakr is applied — no fragtrak, no public
+  // kill count.
+  const kills = fragtrakr ? killsForRarity(rarity) : 0
 
-  const [existLo, existHi] = EXIST_RANGE[rarity] ?? [100, 1000]
-  const exist = Math.floor(existLo + rand() * (existHi - existLo))
-
-  return { rarity, condition, fx, fragtrakr, kills, quickscope_kills: quickscope, exist, festive }
+  return { rarity, condition, fx, fragtrakr, fragtrak_type: fragtrakType, kills, festive }
 }
 
 function priceFor(item, fingerprint) {
@@ -122,9 +131,11 @@ function priceFor(item, fingerprint) {
   if (fingerprint.fx) p *= 1.18
   if (fingerprint.fragtrakr) p *= 1.12
   if (fingerprint.festive) p *= 1.08
-  if (fingerprint.kills > 1000) p *= 1.1
+  if (fingerprint.kills > 1000) p *= 1.10
   return Math.max(0.99, Math.round(p * 100) / 100)
 }
+
+// (exist count removed from the demo — not needed for the UX preview)
 
 const SELLERS = [
   ['blueclock', 'Blueclock'],
@@ -248,9 +259,8 @@ export interface DemoListing {
       condition: string
       fx: string | null
       fragtrakr: boolean
+      fragtrak_type: string | null
       kills: number
-      quickscope_kills: number | null
-      exist: number
       festive: boolean
     }
     catalog: {

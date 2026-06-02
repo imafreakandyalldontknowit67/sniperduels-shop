@@ -12,10 +12,11 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui'
-import { ArrowLeft, Wallet, CreditCard, ShieldCheck, Clock, Sparkles, Target, Crown } from 'lucide-react'
+import { ArrowLeft, Wallet, CreditCard, ShieldCheck, Clock, Sparkles, Crown } from 'lucide-react'
 import { useAuth } from '@/components/providers'
 import { iconUrl } from '@/lib/itemIcon'
 import { rarityStyle } from '@/lib/rarity'
+import { fragtrakInfo } from '@/lib/fragtrakIcon'
 
 interface ListingDetail {
   id: string
@@ -122,6 +123,7 @@ function ListingDetailInner() {
   const canAfford = walletBalance >= price
   const icon = iconUrl(listing.vaultItem.catalog.name)
   const isOwn = user?.id === listing.vaultItem.owner.id
+  const ft = fp.fragtrakr ? fragtrakInfo(fp.fragtrak_type) : null
 
   // Bucket similar listings: same skin (variants of THIS skin) vs other
   const sameSkin = similar.filter(l => l.vaultItem.catalog.name === listing.vaultItem.catalog.name)
@@ -136,7 +138,13 @@ function ListingDetailInner() {
 
         <div className="grid md:grid-cols-2 gap-4 md:gap-8">
           {/* Hero image */}
-          <div className={`relative aspect-square ${s.bg} border ${s.border} rounded-2xl overflow-hidden flex items-center justify-center p-6 md:p-10`}>
+          <div
+            className={`relative aspect-square ${s.bg} rounded-2xl overflow-hidden flex items-center justify-center p-6 md:p-10`}
+            style={{
+              border: `1.5px solid ${s.dotHex}`,
+              boxShadow: `0 0 0 1px ${s.dotHex}26`,
+            }}
+          >
             {icon ? (
               <Image
                 src={icon}
@@ -155,9 +163,12 @@ function ListingDetailInner() {
             {rarity === 'SECRET' && (
               <Crown className="absolute top-3 right-3 w-5 h-5 text-zinc-200 drop-shadow" />
             )}
-            {fp.fragtrakr && (
-              <div className="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold uppercase tracking-wider px-2 py-1 rounded shadow-md">
-                FT
+            {ft && (
+              <div className="absolute top-3 left-3 bg-zinc-950/90 border border-red-500/40 rounded-md flex items-center gap-1.5 pl-1.5 pr-2 py-1 shadow-md">
+                <img src={ft.iconUrl} alt={ft.label} className="w-4 h-4" loading="lazy" />
+                <span className="text-xs font-bold text-red-400 tracking-wide">
+                  {fp.kills.toLocaleString()} {ft.abbr}
+                </span>
               </div>
             )}
           </div>
@@ -165,11 +176,7 @@ function ListingDetailInner() {
           {/* Info & buy */}
           <div>
             <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider mb-1">
-              <span
-                className="w-2 h-2 rounded-full ring-2 ring-zinc-900/70"
-                style={{ backgroundColor: s.dotHex }}
-              />
-              <span className={`font-bold ${s.text}`}>{s.label}</span>
+              <span className="font-bold" style={{ color: s.dotHex }}>{s.label}</span>
               <span className="text-zinc-600">·</span>
               <span className="text-zinc-500">{listing.vaultItem.catalog.type}</span>
               {listing.vaultItem.catalog.crate && (
@@ -198,9 +205,10 @@ function ListingDetailInner() {
                   <Sparkles className="w-3 h-3" />FX · {fp.fx}
                 </span>
               )}
-              {fp.fragtrakr && (
-                <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-red-500/15 text-red-300 border border-red-500/30">
-                  FragTrakr
+              {ft && (
+                <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-red-500/15 text-red-300 border border-red-500/30 inline-flex items-center gap-1">
+                  <img src={ft.iconUrl} alt="" className="w-3 h-3" loading="lazy" />
+                  {ft.label}
                 </span>
               )}
               {fp.festive && (
@@ -210,12 +218,16 @@ function ListingDetailInner() {
               )}
             </div>
 
-            {/* Stats grid */}
-            <div className="grid grid-cols-3 gap-2 mt-4">
-              <Stat icon={<Target className="w-3 h-3" />} label="Kills" value={fp.kills} />
-              <Stat icon={<Crown className="w-3 h-3" />} label="Quickscope" value={fp.quickscope_kills} />
-              <Stat icon={null} label="Exist" value={fp.exist} />
-            </div>
+            {/* The fragtrakr counter is the only kill stat — show it big when present */}
+            {ft && (
+              <div className="mt-4 bg-zinc-900 border border-zinc-800 rounded-lg p-3 flex items-center gap-3">
+                <img src={ft.iconUrl} alt={ft.label} className="w-8 h-8" />
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-zinc-500">{ft.label}</div>
+                  <div className="text-2xl font-extrabold text-red-400">{fp.kills.toLocaleString()}</div>
+                </div>
+              </div>
+            )}
 
             {/* Price + buy panel - inline on desktop, sticky bottom on mobile */}
             <div className="hidden md:block mt-6">
@@ -327,9 +339,17 @@ function SimilarCard({ listing, demoFromUrl }: { listing: ListingDetail; demoFro
   const s = rarityStyle(rarity)
   const icon = iconUrl(listing.vaultItem.catalog.name)
   const href = demoFromUrl ? `/marketplace/${listing.id}?demo=1` : `/marketplace/${listing.id}`
+  const ft = fp.fragtrakr ? fragtrakInfo(fp.fragtrak_type) : null
 
   return (
-    <Link href={href} className={`group relative block bg-zinc-900 border ${s.border} rounded-xl overflow-hidden transition-all active:scale-95 md:hover:scale-[1.03]`}>
+    <Link
+      href={href}
+      className="group relative block bg-zinc-900 rounded-xl overflow-hidden transition-all active:scale-95 md:hover:scale-[1.03]"
+      style={{
+        border: `1.5px solid ${s.dotHex}`,
+        boxShadow: `0 0 0 1px ${s.dotHex}26`,
+      }}
+    >
       <div className={`relative aspect-square ${s.bg} flex items-center justify-center p-2`}>
         {icon ? (
           <Image src={icon} alt={listing.vaultItem.catalog.name} width={150} height={150}
@@ -337,23 +357,17 @@ function SimilarCard({ listing, demoFromUrl }: { listing: ListingDetail; demoFro
         ) : (
           <div className="text-zinc-700 text-[9px]">{listing.vaultItem.catalog.weapon}</div>
         )}
-        <div
-          className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full ring-1 ring-zinc-900"
-          style={{ backgroundColor: s.dotHex }}
-        />
-        {fp.fragtrakr && (
-          <div className="absolute top-1.5 left-1.5 bg-red-600 text-white text-[8px] font-bold uppercase tracking-wider px-1 py-0.5 rounded">
-            FT
+        {ft && (
+          <div className="absolute top-1.5 left-1.5 bg-zinc-950/90 border border-red-500/40 rounded flex items-center gap-0.5 pl-0.5 pr-1 py-0.5">
+            <img src={ft.iconUrl} alt={ft.label} className="w-2.5 h-2.5" loading="lazy" />
+            <span className="text-[9px] font-bold text-red-400 tracking-wide">
+              {fp.kills >= 1000 ? `${(fp.kills/1000).toFixed(1)}k` : fp.kills}
+            </span>
           </div>
         )}
         {fp.fx && (
-          <div className="absolute bottom-1.5 left-1.5 bg-cyan-500/90 text-zinc-900 rounded-full w-4 h-4 flex items-center justify-center" title={`FX: ${fp.fx}`}>
+          <div className="absolute top-1.5 right-1.5 bg-cyan-500/95 text-zinc-900 rounded w-4 h-4 flex items-center justify-center" title={`FX: ${fp.fx}`}>
             <Sparkles className="w-2.5 h-2.5" />
-          </div>
-        )}
-        {fp.kills > 0 && (
-          <div className="absolute bottom-1.5 right-1.5 bg-zinc-900/80 text-white text-[9px] font-bold rounded px-1 py-0.5">
-            {fp.kills >= 1000 ? `${(fp.kills/1000).toFixed(1)}k` : fp.kills}
           </div>
         )}
       </div>

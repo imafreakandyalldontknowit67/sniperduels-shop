@@ -12,9 +12,10 @@ import { useState, useEffect, useMemo, Suspense } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
-import { Search, X, SlidersHorizontal, Sparkles, Zap, Target, Crown } from 'lucide-react'
+import { Search, X, SlidersHorizontal, Sparkles, Crown } from 'lucide-react'
 import { iconUrl } from '@/lib/itemIcon'
 import { rarityStyle, RARITY_OPTIONS } from '@/lib/rarity'
+import { fragtrakInfo } from '@/lib/fragtrakIcon'
 
 interface Listing {
   id: string
@@ -94,14 +95,14 @@ function MarketplaceInner() {
           <div className="flex items-center gap-2 mb-1.5">
             <Sparkles className="w-4 h-4 text-amber-400" />
             <span className="text-[10px] uppercase tracking-widest text-amber-400 font-semibold">
-              {demo ? 'Preview · Fake Listings' : 'Live Marketplace'}
+              Items Marketplace
             </span>
           </div>
           <h1 className="text-2xl md:text-5xl font-extrabold text-white tracking-tight">
-            Sniper Duels Items
+            Snipers &amp; Knives
           </h1>
           <p className="text-zinc-400 mt-1.5 text-xs md:text-base max-w-2xl">
-            Buy from the bot. Delivered in-game in minutes. Auto-refunded if anything goes wrong.
+            Buy from the bot — delivered in-game in minutes. Every listing held in escrow, auto-refunded if anything goes wrong.
           </p>
           {demo && !process.env.NEXT_PUBLIC_DEMO_MARKETPLACE && (
             <div className="mt-3 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 text-xs text-amber-300">
@@ -242,14 +243,20 @@ function ItemCard({ listing, demo }: { listing: Listing; demo: boolean }) {
   const s = rarityStyle(rarity)
   const icon = iconUrl(listing.vaultItem.catalog.name)
   const price = Number(listing.priceUsd)
-  const isHighTier = s.power >= 5
   const href = demo ? `/marketplace/${listing.id}?demo=1` : `/marketplace/${listing.id}`
   const skin = listing.vaultItem.catalog.skin
+  const ft = fp.fragtrakr ? fragtrakInfo(fp.fragtrak_type) : null
 
   return (
     <Link
       href={href}
-      className={`group relative block bg-zinc-900 border ${s.border} rounded-xl overflow-hidden transition-all duration-200 active:scale-95 md:hover:scale-[1.02] md:hover:shadow-xl ${s.glow}`}
+      className={`group relative block bg-zinc-900 rounded-xl overflow-hidden transition-all duration-200 active:scale-95 md:hover:scale-[1.02] md:hover:shadow-xl ${s.glow}`}
+      style={{
+        // Rarity-colored card border at full intensity — replaces the white/zinc
+        // outline with the matching rarity color.
+        border: `1.5px solid ${s.dotHex}`,
+        boxShadow: `0 0 0 1px ${s.dotHex}26`,
+      }}
     >
       {/* Image area */}
       <div className={`relative aspect-square ${s.bg} flex items-center justify-center p-3 md:p-4`}>
@@ -267,44 +274,38 @@ function ItemCard({ listing, demo }: { listing: Listing; demo: boolean }) {
           </div>
         )}
 
-        {/* Top-right rarity dot (always visible, no text on mobile) */}
-        <div
-          className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full ring-2 ring-zinc-900/70"
-          style={{ backgroundColor: s.dotHex }}
-          title={s.label}
-        />
-
-        {/* Top-left: FT (FragTrakr) red badge — small, clear */}
-        {fp.fragtrakr && (
-          <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded shadow-md">
-            FT
+        {/* Top-left: FragTrakr badge with game icon + type label + count */}
+        {ft && (
+          <div className="absolute top-2 left-2 bg-zinc-950/90 border border-red-500/40 rounded-md flex items-center gap-1 pl-1 pr-1.5 py-0.5 shadow-md">
+            <img
+              src={ft.iconUrl}
+              alt={ft.label}
+              className="w-3.5 h-3.5"
+              loading="lazy"
+            />
+            <span className="text-[10px] font-bold text-red-400 tracking-wide">
+              {fp.kills >= 1000 ? `${(fp.kills/1000).toFixed(1)}k` : fp.kills} {ft.abbr}
+            </span>
           </div>
         )}
 
-        {/* Bottom-left: icon-only attribute chips, no text */}
-        <div className="absolute bottom-2 left-2 flex items-center gap-1">
-          {fp.fx && (
-            <div className="bg-cyan-500/90 text-zinc-900 rounded-full w-5 h-5 flex items-center justify-center shadow" title={`FX: ${fp.fx}`}>
-              <Sparkles className="w-3 h-3" />
-            </div>
-          )}
-          {fp.kills > 0 && (
-            <div className="bg-zinc-900/80 text-white text-[10px] font-bold rounded-full px-1.5 h-5 flex items-center gap-0.5 shadow" title={`${fp.kills} kills`}>
-              <Target className="w-2.5 h-2.5 text-red-400" />
-              {fp.kills >= 1000 ? `${(fp.kills/1000).toFixed(1)}k` : fp.kills}
-            </div>
-          )}
-        </div>
+        {/* Top-right: FX badge (no in-game FX icon manifest — sparkle + name) */}
+        {fp.fx && (
+          <div className="absolute top-2 right-2 bg-cyan-500/95 text-zinc-900 rounded-md flex items-center gap-1 px-1.5 py-0.5 shadow" title={`FX: ${fp.fx}`}>
+            <Sparkles className="w-3 h-3" />
+            <span className="text-[10px] font-bold tracking-wide">FX</span>
+          </div>
+        )}
 
-        {/* Top-tier crown */}
-        {isHighTier && rarity === 'SECRET' && (
-          <Crown className="absolute top-2 left-1/2 -translate-x-1/2 w-3.5 h-3.5 text-zinc-200 drop-shadow" />
+        {/* Secret tier crown */}
+        {rarity === 'SECRET' && (
+          <Crown className="absolute bottom-2 right-2 w-4 h-4 text-zinc-200 drop-shadow" />
         )}
       </div>
 
-      {/* Footer: skin name + price (no weapon, no seller — keep it lean) */}
+      {/* Footer: weapon + skin + price */}
       <div className={`p-2.5 md:p-3 border-t border-zinc-800/60 ${rarity === 'SECRET' ? 'bg-zinc-950' : ''}`}>
-        <div className="text-[11px] uppercase tracking-wider text-zinc-500 truncate font-medium">
+        <div className="text-[11px] uppercase tracking-wider truncate font-medium" style={{ color: s.dotHex }}>
           {listing.vaultItem.catalog.weapon}
         </div>
         <div className="font-semibold text-white text-sm md:text-base leading-tight truncate" title={skin}>
