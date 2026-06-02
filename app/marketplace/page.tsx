@@ -310,8 +310,8 @@ function ItemCard({ listing, demo }: { listing: Listing; demo: boolean }) {
         )}
       </div>
 
-      {/* Footer: weapon + skin + price + See item button */}
-      <div className="p-2.5 md:p-3 border-t border-zinc-800/60">
+      {/* Footer: weapon + skin + price + See item button — labels centered */}
+      <div className="p-2.5 md:p-3 border-t border-zinc-800/60 text-center">
         <div className="text-[11px] uppercase tracking-wider truncate font-medium text-zinc-400">
           {listing.vaultItem.catalog.weapon}
         </div>
