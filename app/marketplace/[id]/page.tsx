@@ -12,7 +12,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui'
-import { ArrowLeft, Wallet, CreditCard, ShieldCheck, Clock, Sparkles, Crown } from 'lucide-react'
+import { ArrowLeft, Wallet, CreditCard, Zap, PackageCheck, Sparkles, Crown } from 'lucide-react'
 import { useAuth } from '@/components/providers'
 import { iconUrl } from '@/lib/itemIcon'
 import { rarityStyle } from '@/lib/rarity'
@@ -280,8 +280,8 @@ function ListingDetailInner() {
 
         {/* Trust strip */}
         <div className="mt-6 md:mt-8 grid grid-cols-1 md:grid-cols-3 gap-2.5">
-          <TrustItem icon={<Clock className="w-4 h-4" />} title="Fast delivery" body="Bot delivers in-game within ~2 minutes." />
-          <TrustItem icon={<ShieldCheck className="w-4 h-4" />} title="Held in escrow" body="The bot holds the item until you accept." />
+          <TrustItem icon={<Zap className="w-4 h-4" />} title="Fast delivery" body="Bot delivers in-game within ~2 minutes." />
+          <TrustItem icon={<PackageCheck className="w-4 h-4" />} title="In stock now" body="Bot already holds this exact item — no waiting on supply." />
           <TrustItem icon={<Wallet className="w-4 h-4" />} title="Auto refunds" body="Anything goes wrong, money goes straight back." />
         </div>
 

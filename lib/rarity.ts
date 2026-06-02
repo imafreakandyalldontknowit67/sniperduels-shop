@@ -98,13 +98,16 @@ export const RARITY_STYLES: Record<string, RarityStyle> = {
     power: 5,
   },
   SECRET: {
-    // Dark gray base in-game with a metallic shimmer — we apply a silver
-    // border + near-black fill so it reads as "ultra rare hidden".
+    // Game base is dark gray with a metallic shimmer. On the web that
+    // shimmer can't translate, and #353535 disappears against the
+    // dark badge background — bumped to bright silver (#d4d4d8, zinc-300)
+    // so the SECRET tag actually reads. Conveys the "premium metallic"
+    // intent without going invisible.
     border: 'border-zinc-300/60',
     bg: 'bg-zinc-950',
     text: 'text-zinc-200',
     glow: 'shadow-white/10',
-    dotHex: '#353535',
+    dotHex: '#d4d4d8',
     label: 'Secret',
     power: 6,
   },
