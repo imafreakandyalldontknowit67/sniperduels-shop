@@ -74,7 +74,6 @@ const EXIST_RANGE = {
 // Higher rarities are likelier to carry FX / FT.
 const FX_PROB = { SECRET: 0.55, LEGENDARY: 0.45, COLLECTABLE: 0.4, EPIC: 0.35, RARE: 0.25, UNCOMMON: 0.15, COMMON: 0.05, KNIFE: 0.05 }
 const FT_PROB = { SECRET: 0.45, LEGENDARY: 0.4, COLLECTABLE: 0.3, EPIC: 0.3, RARE: 0.25, UNCOMMON: 0.2, COMMON: 0.05, KNIFE: 0.25 }
-const FESTIVE_PROB = 0.12
 
 function killsForRarity(r) {
   const ranges = {
@@ -115,7 +114,10 @@ function makeFingerprint(item) {
     ? pick(isKnife ? KNIFE_FRAGTRAK_TYPES : SNIPER_FRAGTRAK_TYPES)
     : null
 
-  const festive = item.festive_eligible && maybe(FESTIVE_PROB)
+  // Festive is the BASE catalog flag (item IS a festive variant by design —
+  // Holiday/Christmas/Halloween crates etc.). festive_eligible is too broad —
+  // 282/291 items have it true. The base `festive` field is the truth.
+  const festive = item.festive === true
 
   // Kill count only exists when fragtrakr is applied — no fragtrak, no public
   // kill count.

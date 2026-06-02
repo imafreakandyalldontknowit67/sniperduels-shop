@@ -46,8 +46,8 @@ export interface DemoListing {
 const LISTINGS: DemoListing[] = [
   {
     "id": "demo-000",
-    "priceUsd": "145.21",
-    "minOfferUsd": "123.43",
+    "priceUsd": "126.74",
+    "minOfferUsd": "107.73",
     "vaultItem": {
       "id": "demo-vault-demo-000",
       "fingerprint": {
@@ -78,14 +78,14 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-001",
-    "priceUsd": "142.78",
-    "minOfferUsd": "121.36",
+    "priceUsd": "122.36",
+    "minOfferUsd": "104.01",
     "vaultItem": {
       "id": "demo-vault-demo-001",
       "fingerprint": {
         "rarity": "SECRET",
-        "condition": "WELL WORN",
-        "fx": "CRYPTIC",
+        "condition": "STANDARD ISSUE",
+        "fx": null,
         "fragtrakr": false,
         "fragtrak_type": null,
         "kills": 0,
@@ -110,17 +110,17 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-002",
-    "priceUsd": "129.65",
-    "minOfferUsd": "110.20",
+    "priceUsd": "141.11",
+    "minOfferUsd": "119.94",
     "vaultItem": {
       "id": "demo-vault-demo-002",
       "fingerprint": {
         "rarity": "SECRET",
-        "condition": "STANDARD ISSUE",
-        "fx": null,
-        "fragtrakr": false,
-        "fragtrak_type": null,
-        "kills": 0,
+        "condition": "WELL WORN",
+        "fx": "LOVE",
+        "fragtrakr": true,
+        "fragtrak_type": "LowerBodyKills",
+        "kills": 839,
         "festive": false
       },
       "catalog": {
@@ -142,8 +142,8 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-003",
-    "priceUsd": "177.90",
-    "minOfferUsd": "151.22",
+    "priceUsd": "191.06",
+    "minOfferUsd": "162.40",
     "vaultItem": {
       "id": "demo-vault-demo-003",
       "fingerprint": {
@@ -174,17 +174,17 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-004",
-    "priceUsd": "154.23",
-    "minOfferUsd": "131.10",
+    "priceUsd": "253.79",
+    "minOfferUsd": "215.72",
     "vaultItem": {
       "id": "demo-vault-demo-004",
       "fingerprint": {
         "rarity": "SECRET",
-        "condition": "MINT CONDITION",
-        "fx": null,
+        "condition": "STANDARD ISSUE",
+        "fx": "SURGE",
         "fragtrakr": true,
         "fragtrak_type": "QuickscopeKills",
-        "kills": 3444,
+        "kills": 3188,
         "festive": false
       },
       "catalog": {
@@ -206,17 +206,17 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-005",
-    "priceUsd": "114.48",
-    "minOfferUsd": "97.31",
+    "priceUsd": "120.68",
+    "minOfferUsd": "102.58",
     "vaultItem": {
       "id": "demo-vault-demo-005",
       "fingerprint": {
         "rarity": "SECRET",
-        "condition": "STANDARD ISSUE",
+        "condition": "MINT CONDITION",
         "fx": null,
-        "fragtrakr": true,
-        "fragtrak_type": "LowerBodyKills",
-        "kills": 270,
+        "fragtrakr": false,
+        "fragtrak_type": null,
+        "kills": 0,
         "festive": false
       },
       "catalog": {
@@ -238,18 +238,18 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-006",
-    "priceUsd": "240.76",
-    "minOfferUsd": "204.65",
+    "priceUsd": "130.89",
+    "minOfferUsd": "111.26",
     "vaultItem": {
       "id": "demo-vault-demo-006",
       "fingerprint": {
         "rarity": "SECRET",
-        "condition": "MINT CONDITION",
-        "fx": "PLAGUEBORN",
-        "fragtrakr": false,
-        "fragtrak_type": null,
+        "condition": "WELL WORN",
+        "fx": "INFERNAL",
+        "fragtrakr": true,
+        "fragtrak_type": "Kills",
         "kills": 0,
-        "festive": false
+        "festive": true
       },
       "catalog": {
         "id": "demo-cat-demo-006",
@@ -270,17 +270,17 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-007",
-    "priceUsd": "184.61",
-    "minOfferUsd": "156.92",
+    "priceUsd": "114.11",
+    "minOfferUsd": "96.99",
     "vaultItem": {
       "id": "demo-vault-demo-007",
       "fingerprint": {
         "rarity": "SECRET",
-        "condition": "STANDARD ISSUE",
+        "condition": "WELL WORN",
         "fx": null,
         "fragtrakr": true,
         "fragtrak_type": "LowerBodyKills",
-        "kills": 2558,
+        "kills": 3942,
         "festive": true
       },
       "catalog": {
@@ -302,26 +302,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-008",
-    "priceUsd": "166.20",
-    "minOfferUsd": "141.27",
+    "priceUsd": "84.27",
+    "minOfferUsd": "71.63",
     "vaultItem": {
       "id": "demo-vault-demo-008",
       "fingerprint": {
         "rarity": "LEGENDARY",
-        "condition": "MINT CONDITION",
-        "fx": "CERULEANOZYMANDIAS",
-        "fragtrakr": true,
-        "fragtrak_type": "QuickscopeKills",
-        "kills": 1168,
-        "festive": false
+        "condition": "STANDARD ISSUE",
+        "fx": null,
+        "fragtrakr": false,
+        "fragtrak_type": null,
+        "kills": 0,
+        "festive": true
       },
       "catalog": {
         "id": "demo-cat-demo-008",
-        "name": "AWP | CRIMSON OZYMANDIAS",
-        "weapon": "AWP",
-        "skin": "CRIMSON OZYMANDIAS",
+        "name": "SHOTGUN | GEMS ARE INFINITE",
+        "weapon": "SHOTGUN",
+        "skin": "GEMS ARE INFINITE",
         "type": "sniper",
-        "crate": "Classic Case",
+        "crate": "April Fools 2026",
         "slug": null
       },
       "owner": {
@@ -334,26 +334,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-009",
-    "priceUsd": "94.26",
-    "minOfferUsd": "80.12",
+    "priceUsd": "110.70",
+    "minOfferUsd": "94.09",
     "vaultItem": {
       "id": "demo-vault-demo-009",
       "fingerprint": {
         "rarity": "LEGENDARY",
-        "condition": "STANDARD ISSUE",
-        "fx": null,
-        "fragtrakr": false,
-        "fragtrak_type": null,
-        "kills": 0,
-        "festive": true
+        "condition": "WELL WORN",
+        "fx": "GALACTICBREEZE",
+        "fragtrakr": true,
+        "fragtrak_type": "Kills",
+        "kills": 1534,
+        "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-009",
-        "name": "INTERVENTION | EVERGREEN WINTER",
-        "weapon": "INTERVENTION",
-        "skin": "EVERGREEN WINTER",
+        "name": "VKS | VANILLA",
+        "weapon": "VKS",
+        "skin": "VANILLA",
         "type": "sniper",
-        "crate": "Christmas Present 2025",
+        "crate": "Skin Case #2",
         "slug": null
       },
       "owner": {
@@ -366,26 +366,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-010",
-    "priceUsd": "59.22",
-    "minOfferUsd": "50.34",
+    "priceUsd": "76.33",
+    "minOfferUsd": "64.88",
     "vaultItem": {
       "id": "demo-vault-demo-010",
       "fingerprint": {
         "rarity": "LEGENDARY",
-        "condition": "WELL WORN",
-        "fx": "SHOCK",
+        "condition": "STANDARD ISSUE",
+        "fx": null,
         "fragtrakr": false,
         "fragtrak_type": null,
         "kills": 0,
-        "festive": true
+        "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-010",
-        "name": "SHOTGUN | ASTRA",
-        "weapon": "SHOTGUN",
-        "skin": "ASTRA",
+        "name": "INTERVENTION | VANILLA",
+        "weapon": "INTERVENTION",
+        "skin": "VANILLA",
         "type": "sniper",
-        "crate": "Skin Case #2",
+        "crate": "Release Case",
         "slug": null
       },
       "owner": {
@@ -398,26 +398,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-011",
-    "priceUsd": "91.25",
-    "minOfferUsd": "77.56",
+    "priceUsd": "80.61",
+    "minOfferUsd": "68.52",
     "vaultItem": {
       "id": "demo-vault-demo-011",
       "fingerprint": {
         "rarity": "LEGENDARY",
-        "condition": "WELL WORN",
-        "fx": "REX",
-        "fragtrakr": true,
-        "fragtrak_type": "Kills",
-        "kills": 1230,
+        "condition": "STANDARD ISSUE",
+        "fx": "NOXNOSTRA",
+        "fragtrakr": false,
+        "fragtrak_type": null,
+        "kills": 0,
         "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-011",
-        "name": "VKS | VANILLA",
-        "weapon": "VKS",
-        "skin": "VANILLA",
+        "name": "AWP | CERULEAN OZYMANDIAS",
+        "weapon": "AWP",
+        "skin": "CERULEAN OZYMANDIAS",
         "type": "sniper",
-        "crate": "Skin Case #2",
+        "crate": "Classic Case",
         "slug": null
       },
       "owner": {
@@ -430,24 +430,24 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-012",
-    "priceUsd": "82.96",
-    "minOfferUsd": "70.52",
+    "priceUsd": "99.30",
+    "minOfferUsd": "84.41",
     "vaultItem": {
       "id": "demo-vault-demo-012",
       "fingerprint": {
         "rarity": "LEGENDARY",
         "condition": "WELL WORN",
         "fx": null,
-        "fragtrakr": false,
-        "fragtrak_type": null,
-        "kills": 0,
+        "fragtrakr": true,
+        "fragtrak_type": "HeadshotKills",
+        "kills": 1004,
         "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-012",
-        "name": "AWP | VANILLA",
+        "name": "AWP | BUBBLEGUM",
         "weapon": "AWP",
-        "skin": "VANILLA",
+        "skin": "BUBBLEGUM",
         "type": "sniper",
         "crate": "Release Case",
         "slug": null
@@ -462,14 +462,14 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-013",
-    "priceUsd": "51.49",
-    "minOfferUsd": "43.77",
+    "priceUsd": "110.21",
+    "minOfferUsd": "93.68",
     "vaultItem": {
       "id": "demo-vault-demo-013",
       "fingerprint": {
         "rarity": "LEGENDARY",
-        "condition": "WELL WORN",
-        "fx": "ASCENDED",
+        "condition": "MINT CONDITION",
+        "fx": "PLAGUEBORN",
         "fragtrakr": false,
         "fragtrak_type": null,
         "kills": 0,
@@ -477,11 +477,11 @@ const LISTINGS: DemoListing[] = [
       },
       "catalog": {
         "id": "demo-cat-demo-013",
-        "name": "AWP | BOREALIS",
-        "weapon": "AWP",
-        "skin": "BOREALIS",
+        "name": "SHOTGUN | VANILLA",
+        "weapon": "SHOTGUN",
+        "skin": "VANILLA",
         "type": "sniper",
-        "crate": "Christmas Present 2025",
+        "crate": "Skin Case #2",
         "slug": null
       },
       "owner": {
@@ -494,14 +494,14 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-014",
-    "priceUsd": "72.61",
-    "minOfferUsd": "61.72",
+    "priceUsd": "106.75",
+    "minOfferUsd": "90.74",
     "vaultItem": {
       "id": "demo-vault-demo-014",
       "fingerprint": {
         "rarity": "LEGENDARY",
         "condition": "STANDARD ISSUE",
-        "fx": "SHOCK",
+        "fx": null,
         "fragtrakr": false,
         "fragtrak_type": null,
         "kills": 0,
@@ -509,11 +509,11 @@ const LISTINGS: DemoListing[] = [
       },
       "catalog": {
         "id": "demo-cat-demo-014",
-        "name": "AWP | VHS",
-        "weapon": "AWP",
-        "skin": "VHS",
+        "name": "DEAGLE | VANILLA",
+        "weapon": "DEAGLE",
+        "skin": "VANILLA",
         "type": "sniper",
-        "crate": "Skin Case #2",
+        "crate": "Skin Case #1",
         "slug": null
       },
       "owner": {
@@ -526,26 +526,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-015",
-    "priceUsd": "122.09",
-    "minOfferUsd": "103.78",
+    "priceUsd": "40.79",
+    "minOfferUsd": "34.67",
     "vaultItem": {
       "id": "demo-vault-demo-015",
       "fingerprint": {
         "rarity": "LEGENDARY",
-        "condition": "MINT CONDITION",
+        "condition": "WELL WORN",
         "fx": null,
-        "fragtrakr": true,
-        "fragtrak_type": "NoscopeKills",
+        "fragtrakr": false,
+        "fragtrak_type": null,
         "kills": 0,
-        "festive": false
+        "festive": true
       },
       "catalog": {
         "id": "demo-cat-demo-015",
-        "name": "SHOTGUN | GEMS ARE INFINITE",
-        "weapon": "SHOTGUN",
-        "skin": "GEMS ARE INFINITE",
+        "name": "INTERVENTION | HEARTBREAK",
+        "weapon": "INTERVENTION",
+        "skin": "HEARTBREAK",
         "type": "sniper",
-        "crate": "April Fools 2026",
+        "crate": "Valentines 2026",
         "slug": null
       },
       "owner": {
@@ -558,26 +558,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-016",
-    "priceUsd": "19.55",
-    "minOfferUsd": null,
+    "priceUsd": "26.32",
+    "minOfferUsd": "22.37",
     "vaultItem": {
       "id": "demo-vault-demo-016",
       "fingerprint": {
         "rarity": "COLLECTABLE",
         "condition": "MINT CONDITION",
         "fx": null,
-        "fragtrakr": false,
-        "fragtrak_type": null,
-        "kills": 0,
+        "fragtrakr": true,
+        "fragtrak_type": "QuickscopeKills",
+        "kills": 232,
         "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-016",
-        "name": "AWP | CELTIC",
-        "weapon": "AWP",
-        "skin": "CELTIC",
+        "name": "EXECUTIONER | ASCII WHITE",
+        "weapon": "EXECUTIONER",
+        "skin": "ASCII WHITE",
         "type": "sniper",
-        "crate": "March 2026 Collectable",
+        "crate": "December 2025 Collectable",
         "slug": null
       },
       "owner": {
@@ -590,13 +590,13 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-017",
-    "priceUsd": "22.78",
-    "minOfferUsd": "19.36",
+    "priceUsd": "48.19",
+    "minOfferUsd": "40.96",
     "vaultItem": {
       "id": "demo-vault-demo-017",
       "fingerprint": {
         "rarity": "COLLECTABLE",
-        "condition": "WELL WORN",
+        "condition": "MINT CONDITION",
         "fx": null,
         "fragtrakr": false,
         "fragtrak_type": null,
@@ -605,9 +605,9 @@ const LISTINGS: DemoListing[] = [
       },
       "catalog": {
         "id": "demo-cat-demo-017",
-        "name": "AWP | FOR HER",
+        "name": "AWP | FOR HIM",
         "weapon": "AWP",
-        "skin": "FOR HER",
+        "skin": "FOR HIM",
         "type": "sniper",
         "crate": "Valentines 2026 Collectable",
         "slug": null
@@ -622,26 +622,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-018",
-    "priceUsd": "19.37",
+    "priceUsd": "16.19",
     "minOfferUsd": null,
     "vaultItem": {
       "id": "demo-vault-demo-018",
       "fingerprint": {
         "rarity": "COLLECTABLE",
         "condition": "STANDARD ISSUE",
-        "fx": "GALACTICBREEZE",
-        "fragtrakr": true,
-        "fragtrak_type": "QuickscopeKills",
-        "kills": 178,
+        "fx": "INFERNAL",
+        "fragtrakr": false,
+        "fragtrak_type": null,
+        "kills": 0,
         "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-018",
-        "name": "AWP | PEPPERMINT",
+        "name": "AWP | CELTIC",
         "weapon": "AWP",
-        "skin": "PEPPERMINT",
+        "skin": "CELTIC",
         "type": "sniper",
-        "crate": "Christmas 2025 Collectable",
+        "crate": "March 2026 Collectable",
         "slug": null
       },
       "owner": {
@@ -654,26 +654,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-019",
-    "priceUsd": "32.81",
-    "minOfferUsd": "27.89",
+    "priceUsd": "15.49",
+    "minOfferUsd": null,
     "vaultItem": {
       "id": "demo-vault-demo-019",
       "fingerprint": {
         "rarity": "COLLECTABLE",
-        "condition": "WELL WORN",
+        "condition": "MINT CONDITION",
         "fx": null,
-        "fragtrakr": true,
-        "fragtrak_type": "HeadshotKills",
+        "fragtrakr": false,
+        "fragtrak_type": null,
         "kills": 0,
         "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-019",
-        "name": "DEAGLE | CELTIC",
-        "weapon": "DEAGLE",
-        "skin": "CELTIC",
+        "name": "AWP | REX",
+        "weapon": "AWP",
+        "skin": "REX",
         "type": "sniper",
-        "crate": "March 2026 Collectable",
+        "crate": "Rex Skin Package",
         "slug": null
       },
       "owner": {
@@ -686,26 +686,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-020",
-    "priceUsd": "17.35",
+    "priceUsd": "16.62",
     "minOfferUsd": null,
     "vaultItem": {
       "id": "demo-vault-demo-020",
       "fingerprint": {
         "rarity": "COLLECTABLE",
-        "condition": "WELL WORN",
+        "condition": "STANDARD ISSUE",
         "fx": null,
-        "fragtrakr": true,
-        "fragtrak_type": "NoscopeKills",
+        "fragtrakr": false,
+        "fragtrak_type": null,
         "kills": 0,
         "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-020",
-        "name": "SHOTGUN | SHAMROCK",
-        "weapon": "SHOTGUN",
-        "skin": "SHAMROCK",
+        "name": "VKS | WITCHES BREW",
+        "weapon": "VKS",
+        "skin": "WITCHES BREW",
         "type": "sniper",
-        "crate": "March 2026 Collectable",
+        "crate": "May 2026 Collectable",
         "slug": null
       },
       "owner": {
@@ -718,23 +718,23 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-021",
-    "priceUsd": "31.20",
-    "minOfferUsd": "26.52",
+    "priceUsd": "10.42",
+    "minOfferUsd": null,
     "vaultItem": {
       "id": "demo-vault-demo-021",
       "fingerprint": {
         "rarity": "COLLECTABLE",
-        "condition": "MINT CONDITION",
+        "condition": "WELL WORN",
         "fx": null,
         "fragtrakr": false,
         "fragtrak_type": null,
         "kills": 0,
-        "festive": false
+        "festive": true
       },
       "catalog": {
         "id": "demo-cat-demo-021",
-        "name": "INTERVENTION | PEPPERMINT",
-        "weapon": "INTERVENTION",
+        "name": "AWP | PEPPERMINT",
+        "weapon": "AWP",
         "skin": "PEPPERMINT",
         "type": "sniper",
         "crate": "Christmas 2025 Collectable",
@@ -750,26 +750,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-022",
-    "priceUsd": "39.42",
-    "minOfferUsd": "33.51",
+    "priceUsd": "29.70",
+    "minOfferUsd": "25.24",
     "vaultItem": {
       "id": "demo-vault-demo-022",
       "fingerprint": {
         "rarity": "EPIC",
-        "condition": "MINT CONDITION",
-        "fx": null,
-        "fragtrakr": true,
-        "fragtrak_type": "NoscopeKills",
-        "kills": 789,
+        "condition": "WELL WORN",
+        "fx": "MAGICIAN",
+        "fragtrakr": false,
+        "fragtrak_type": null,
+        "kills": 0,
         "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-022",
-        "name": "SHOTGUN | EPIC FACE",
-        "weapon": "SHOTGUN",
-        "skin": "EPIC FACE",
+        "name": "INTERVENTION | VIPER",
+        "weapon": "INTERVENTION",
+        "skin": "VIPER",
         "type": "sniper",
-        "crate": "April Fools 2026",
+        "crate": "Skin Case #2",
         "slug": null
       },
       "owner": {
@@ -782,26 +782,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-023",
-    "priceUsd": "74.36",
-    "minOfferUsd": "63.21",
+    "priceUsd": "57.78",
+    "minOfferUsd": "49.11",
     "vaultItem": {
       "id": "demo-vault-demo-023",
       "fingerprint": {
         "rarity": "EPIC",
-        "condition": "STANDARD ISSUE",
-        "fx": "GUY",
-        "fragtrakr": true,
-        "fragtrak_type": "HeadshotKills",
-        "kills": 491,
-        "festive": false
+        "condition": "MINT CONDITION",
+        "fx": "SHOCK",
+        "fragtrakr": false,
+        "fragtrak_type": null,
+        "kills": 0,
+        "festive": true
       },
       "catalog": {
         "id": "demo-cat-demo-023",
-        "name": "AWP | SHOGUN",
+        "name": "AWP | JEWEL",
         "weapon": "AWP",
-        "skin": "SHOGUN",
+        "skin": "JEWEL",
         "type": "sniper",
-        "crate": "Skin Case #1",
+        "crate": "Valentines 2026",
         "slug": null
       },
       "owner": {
@@ -814,26 +814,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-024",
-    "priceUsd": "72.87",
-    "minOfferUsd": "61.94",
+    "priceUsd": "41.33",
+    "minOfferUsd": "35.13",
     "vaultItem": {
       "id": "demo-vault-demo-024",
       "fingerprint": {
         "rarity": "EPIC",
-        "condition": "MINT CONDITION",
+        "condition": "STANDARD ISSUE",
         "fx": null,
         "fragtrakr": false,
         "fragtrak_type": null,
         "kills": 0,
-        "festive": true
+        "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-024",
-        "name": "AWP | SUNSET RUNNER",
+        "name": "AWP | DYNASTY",
         "weapon": "AWP",
-        "skin": "SUNSET RUNNER",
+        "skin": "DYNASTY",
         "type": "sniper",
-        "crate": "Release Case",
+        "crate": "Skin Case #1",
         "slug": null
       },
       "owner": {
@@ -846,26 +846,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-025",
-    "priceUsd": "33.27",
-    "minOfferUsd": "28.28",
+    "priceUsd": "74.28",
+    "minOfferUsd": "63.14",
     "vaultItem": {
       "id": "demo-vault-demo-025",
       "fingerprint": {
         "rarity": "EPIC",
-        "condition": "WELL WORN",
-        "fx": null,
+        "condition": "MINT CONDITION",
+        "fx": "ROSEPETALS",
         "fragtrakr": false,
         "fragtrak_type": null,
         "kills": 0,
-        "festive": true
+        "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-025",
-        "name": "INTERVENTION | VALKYRIE",
-        "weapon": "INTERVENTION",
-        "skin": "VALKYRIE",
+        "name": "AWP | FRUTIGER AERO",
+        "weapon": "AWP",
+        "skin": "FRUTIGER AERO",
         "type": "sniper",
-        "crate": "Classic Case",
+        "crate": "Skin Case #2",
         "slug": null
       },
       "owner": {
@@ -878,13 +878,13 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-026",
-    "priceUsd": "25.25",
-    "minOfferUsd": "21.46",
+    "priceUsd": "47.86",
+    "minOfferUsd": "40.68",
     "vaultItem": {
       "id": "demo-vault-demo-026",
       "fingerprint": {
         "rarity": "EPIC",
-        "condition": "WELL WORN",
+        "condition": "STANDARD ISSUE",
         "fx": null,
         "fragtrakr": false,
         "fragtrak_type": null,
@@ -893,11 +893,11 @@ const LISTINGS: DemoListing[] = [
       },
       "catalog": {
         "id": "demo-cat-demo-026",
-        "name": "AWP | RED SPIRAL",
-        "weapon": "AWP",
-        "skin": "RED SPIRAL",
+        "name": "INTERVENTION | APEX",
+        "weapon": "INTERVENTION",
+        "skin": "APEX",
         "type": "sniper",
-        "crate": "Hallows Basket 2025",
+        "crate": "Release Case",
         "slug": null
       },
       "owner": {
@@ -910,26 +910,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-027",
-    "priceUsd": "53.07",
-    "minOfferUsd": "45.11",
+    "priceUsd": "34.75",
+    "minOfferUsd": "29.54",
     "vaultItem": {
       "id": "demo-vault-demo-027",
       "fingerprint": {
         "rarity": "EPIC",
-        "condition": "WELL WORN",
+        "condition": "STANDARD ISSUE",
         "fx": null,
         "fragtrakr": true,
-        "fragtrak_type": "QuickscopeKills",
-        "kills": 102,
-        "festive": false
+        "fragtrak_type": "Kills",
+        "kills": 1381,
+        "festive": true
       },
       "catalog": {
         "id": "demo-cat-demo-027",
-        "name": "INTERVENTION | BLACK VALK",
+        "name": "INTERVENTION | BLACK KNIGHT",
         "weapon": "INTERVENTION",
-        "skin": "BLACK VALK",
+        "skin": "BLACK KNIGHT",
         "type": "sniper",
-        "crate": "Classic Case",
+        "crate": "Hallows Basket 2025",
         "slug": null
       },
       "owner": {
@@ -942,14 +942,14 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-028",
-    "priceUsd": "31.92",
-    "minOfferUsd": "27.13",
+    "priceUsd": "46.83",
+    "minOfferUsd": "39.81",
     "vaultItem": {
       "id": "demo-vault-demo-028",
       "fingerprint": {
         "rarity": "EPIC",
-        "condition": "WELL WORN",
-        "fx": null,
+        "condition": "STANDARD ISSUE",
+        "fx": "INFERNO",
         "fragtrakr": false,
         "fragtrak_type": null,
         "kills": 0,
@@ -957,11 +957,11 @@ const LISTINGS: DemoListing[] = [
       },
       "catalog": {
         "id": "demo-cat-demo-028",
-        "name": "INTERVENTION | VIPER",
-        "weapon": "INTERVENTION",
-        "skin": "VIPER",
+        "name": "AWP | SHOGUN",
+        "weapon": "AWP",
+        "skin": "SHOGUN",
         "type": "sniper",
-        "crate": "Skin Case #2",
+        "crate": "Skin Case #1",
         "slug": null
       },
       "owner": {
@@ -974,26 +974,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-029",
-    "priceUsd": "25.36",
-    "minOfferUsd": "21.56",
+    "priceUsd": "47.74",
+    "minOfferUsd": "40.58",
     "vaultItem": {
       "id": "demo-vault-demo-029",
       "fingerprint": {
         "rarity": "EPIC",
-        "condition": "MINT CONDITION",
-        "fx": null,
-        "fragtrakr": false,
-        "fragtrak_type": null,
+        "condition": "STANDARD ISSUE",
+        "fx": "LOVE",
+        "fragtrakr": true,
+        "fragtrak_type": "NoscopeKills",
         "kills": 0,
-        "festive": false
+        "festive": true
       },
       "catalog": {
         "id": "demo-cat-demo-029",
-        "name": "DEAGLE | SNOWFLAKE",
-        "weapon": "DEAGLE",
-        "skin": "SNOWFLAKE",
+        "name": "SHOTGUN | EPIC FACE",
+        "weapon": "SHOTGUN",
+        "skin": "EPIC FACE",
         "type": "sniper",
-        "crate": "Christmas Present 2025",
+        "crate": "April Fools 2026",
         "slug": null
       },
       "owner": {
@@ -1006,14 +1006,14 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-030",
-    "priceUsd": "24.74",
-    "minOfferUsd": "21.03",
+    "priceUsd": "13.20",
+    "minOfferUsd": null,
     "vaultItem": {
       "id": "demo-vault-demo-030",
       "fingerprint": {
         "rarity": "RARE",
-        "condition": "STANDARD ISSUE",
-        "fx": "BLACKLIGHT",
+        "condition": "MINT CONDITION",
+        "fx": null,
         "fragtrakr": false,
         "fragtrak_type": null,
         "kills": 0,
@@ -1021,11 +1021,11 @@ const LISTINGS: DemoListing[] = [
       },
       "catalog": {
         "id": "demo-cat-demo-030",
-        "name": "DEFAULT | LIGHTNING",
+        "name": "DEFAULT | RING OF FIRE",
         "weapon": "DEFAULT",
-        "skin": "LIGHTNING",
+        "skin": "RING OF FIRE",
         "type": "sniper",
-        "crate": "Release Case",
+        "crate": "Classic Case",
         "slug": null
       },
       "owner": {
@@ -1038,7 +1038,7 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-031",
-    "priceUsd": "8.22",
+    "priceUsd": "9.23",
     "minOfferUsd": null,
     "vaultItem": {
       "id": "demo-vault-demo-031",
@@ -1049,15 +1049,15 @@ const LISTINGS: DemoListing[] = [
         "fragtrakr": false,
         "fragtrak_type": null,
         "kills": 0,
-        "festive": false
+        "festive": true
       },
       "catalog": {
         "id": "demo-cat-demo-031",
-        "name": "DEFAULT | FLEUR DE AMOUR",
+        "name": "DEFAULT | PEPPERMINT",
         "weapon": "DEFAULT",
-        "skin": "FLEUR DE AMOUR",
+        "skin": "PEPPERMINT",
         "type": "sniper",
-        "crate": "Valentines 2026",
+        "crate": "Christmas Present 2025",
         "slug": null
       },
       "owner": {
@@ -1070,13 +1070,13 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-032",
-    "priceUsd": "20.50",
-    "minOfferUsd": "17.43",
+    "priceUsd": "14.86",
+    "minOfferUsd": null,
     "vaultItem": {
       "id": "demo-vault-demo-032",
       "fingerprint": {
         "rarity": "RARE",
-        "condition": "STANDARD ISSUE",
+        "condition": "WELL WORN",
         "fx": null,
         "fragtrakr": false,
         "fragtrak_type": null,
@@ -1085,11 +1085,11 @@ const LISTINGS: DemoListing[] = [
       },
       "catalog": {
         "id": "demo-cat-demo-032",
-        "name": "DEFAULT | MONARCH",
+        "name": "DEFAULT | ABYSS",
         "weapon": "DEFAULT",
-        "skin": "MONARCH",
+        "skin": "ABYSS",
         "type": "sniper",
-        "crate": "Skin Case #2",
+        "crate": "Classic Case",
         "slug": null
       },
       "owner": {
@@ -1102,26 +1102,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-033",
-    "priceUsd": "9.97",
+    "priceUsd": "10.62",
     "minOfferUsd": null,
     "vaultItem": {
       "id": "demo-vault-demo-033",
       "fingerprint": {
         "rarity": "RARE",
         "condition": "STANDARD ISSUE",
-        "fx": "INFERNO",
-        "fragtrakr": false,
-        "fragtrak_type": null,
-        "kills": 0,
-        "festive": false
+        "fx": null,
+        "fragtrakr": true,
+        "fragtrak_type": "NoscopeKills",
+        "kills": 394,
+        "festive": true
       },
       "catalog": {
         "id": "demo-cat-demo-033",
-        "name": "DEFAULT | PEPPERMINT",
+        "name": "DEFAULT | CAULDRON",
         "weapon": "DEFAULT",
-        "skin": "PEPPERMINT",
+        "skin": "CAULDRON",
         "type": "sniper",
-        "crate": "Christmas Present 2025",
+        "crate": "Hallows Basket 2025",
         "slug": null
       },
       "owner": {
@@ -1134,14 +1134,14 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-034",
-    "priceUsd": "32.09",
-    "minOfferUsd": "27.28",
+    "priceUsd": "14.02",
+    "minOfferUsd": null,
     "vaultItem": {
       "id": "demo-vault-demo-034",
       "fingerprint": {
         "rarity": "RARE",
         "condition": "MINT CONDITION",
-        "fx": "AFFECTION",
+        "fx": "REDMIST",
         "fragtrakr": false,
         "fragtrak_type": null,
         "kills": 0,
@@ -1166,26 +1166,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-035",
-    "priceUsd": "24.56",
-    "minOfferUsd": "20.88",
+    "priceUsd": "18.66",
+    "minOfferUsd": null,
     "vaultItem": {
       "id": "demo-vault-demo-035",
       "fingerprint": {
         "rarity": "RARE",
-        "condition": "MINT CONDITION",
-        "fx": null,
-        "fragtrakr": false,
-        "fragtrak_type": null,
+        "condition": "WELL WORN",
+        "fx": "GUY",
+        "fragtrakr": true,
+        "fragtrak_type": "Kills",
         "kills": 0,
-        "festive": false
+        "festive": true
       },
       "catalog": {
         "id": "demo-cat-demo-035",
-        "name": "DEFAULT | TIDAL",
+        "name": "DEFAULT | VAMPIRE HUNTER",
         "weapon": "DEFAULT",
-        "skin": "TIDAL",
+        "skin": "VAMPIRE HUNTER",
         "type": "sniper",
-        "crate": "Skin Case #1",
+        "crate": "Hallows Basket 2025",
         "slug": null
       },
       "owner": {
@@ -1198,7 +1198,7 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-036",
-    "priceUsd": "6.35",
+    "priceUsd": "9.08",
     "minOfferUsd": null,
     "vaultItem": {
       "id": "demo-vault-demo-036",
@@ -1206,18 +1206,18 @@ const LISTINGS: DemoListing[] = [
         "rarity": "UNCOMMON",
         "condition": "STANDARD ISSUE",
         "fx": null,
-        "fragtrakr": true,
-        "fragtrak_type": "Kills",
-        "kills": 205,
+        "fragtrakr": false,
+        "fragtrak_type": null,
+        "kills": 0,
         "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-036",
-        "name": "DEFAULT | STALKER",
+        "name": "DEFAULT | POLAROID",
         "weapon": "DEFAULT",
-        "skin": "STALKER",
+        "skin": "POLAROID",
         "type": "sniper",
-        "crate": "Hallows Basket 2025",
+        "crate": "Skin Case #2",
         "slug": null
       },
       "owner": {
@@ -1230,13 +1230,13 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-037",
-    "priceUsd": "5.59",
+    "priceUsd": "5.57",
     "minOfferUsd": null,
     "vaultItem": {
       "id": "demo-vault-demo-037",
       "fingerprint": {
         "rarity": "UNCOMMON",
-        "condition": "STANDARD ISSUE",
+        "condition": "WELL WORN",
         "fx": null,
         "fragtrakr": false,
         "fragtrak_type": null,
@@ -1245,11 +1245,11 @@ const LISTINGS: DemoListing[] = [
       },
       "catalog": {
         "id": "demo-cat-demo-037",
-        "name": "DEFAULT | DISCO",
+        "name": "DEFAULT | PINK CAMO",
         "weapon": "DEFAULT",
-        "skin": "DISCO",
+        "skin": "PINK CAMO",
         "type": "sniper",
-        "crate": "Skin Case #2",
+        "crate": "Valentines 2026",
         "slug": null
       },
       "owner": {
@@ -1262,26 +1262,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-038",
-    "priceUsd": "8.78",
+    "priceUsd": "2.60",
     "minOfferUsd": null,
     "vaultItem": {
       "id": "demo-vault-demo-038",
       "fingerprint": {
         "rarity": "UNCOMMON",
-        "condition": "MINT CONDITION",
+        "condition": "WELL WORN",
         "fx": null,
-        "fragtrakr": false,
-        "fragtrak_type": null,
+        "fragtrakr": true,
+        "fragtrak_type": "HeadshotKills",
         "kills": 0,
-        "festive": false
+        "festive": true
       },
       "catalog": {
         "id": "demo-cat-demo-038",
-        "name": "DEFAULT | TRIBAL",
+        "name": "DEFAULT | REINDEER",
         "weapon": "DEFAULT",
-        "skin": "TRIBAL",
+        "skin": "REINDEER",
         "type": "sniper",
-        "crate": "Skin Case #1",
+        "crate": "Christmas Present 2025",
         "slug": null
       },
       "owner": {
@@ -1294,7 +1294,7 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-039",
-    "priceUsd": "7.97",
+    "priceUsd": "2.67",
     "minOfferUsd": null,
     "vaultItem": {
       "id": "demo-vault-demo-039",
@@ -1309,11 +1309,11 @@ const LISTINGS: DemoListing[] = [
       },
       "catalog": {
         "id": "demo-cat-demo-039",
-        "name": "DEFAULT | GLACIAL",
+        "name": "DEFAULT | INDUSTRIAL",
         "weapon": "DEFAULT",
-        "skin": "GLACIAL",
+        "skin": "INDUSTRIAL",
         "type": "sniper",
-        "crate": "Christmas Present 2025",
+        "crate": "Skin Case #1",
         "slug": null
       },
       "owner": {
@@ -1326,13 +1326,13 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-040",
-    "priceUsd": "2.31",
+    "priceUsd": "3.63",
     "minOfferUsd": null,
     "vaultItem": {
       "id": "demo-vault-demo-040",
       "fingerprint": {
         "rarity": "COMMON",
-        "condition": "MINT CONDITION",
+        "condition": "STANDARD ISSUE",
         "fx": null,
         "fragtrakr": false,
         "fragtrak_type": null,
@@ -1358,26 +1358,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-041",
-    "priceUsd": "30.06",
-    "minOfferUsd": "25.55",
+    "priceUsd": "19.21",
+    "minOfferUsd": null,
     "vaultItem": {
       "id": "demo-vault-demo-041",
       "fingerprint": {
         "rarity": "KNIFE",
-        "condition": "WELL WORN",
+        "condition": "STANDARD ISSUE",
         "fx": null,
-        "fragtrakr": false,
-        "fragtrak_type": null,
-        "kills": 0,
+        "fragtrakr": true,
+        "fragtrak_type": "Kills",
+        "kills": 268,
         "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-041",
-        "name": "SFO TH SWORD | ICE DAGGER",
-        "weapon": "SFO TH SWORD",
-        "skin": "ICE DAGGER",
+        "name": "BUTTERFLY | DAMASCUS",
+        "weapon": "BUTTERFLY",
+        "skin": "DAMASCUS",
         "type": "knife",
-        "crate": "Classic Case",
+        "crate": "Skin Case #1",
         "slug": null
       },
       "owner": {
@@ -1390,26 +1390,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-042",
-    "priceUsd": "54.34",
-    "minOfferUsd": "46.19",
+    "priceUsd": "24.75",
+    "minOfferUsd": "21.04",
     "vaultItem": {
       "id": "demo-vault-demo-042",
       "fingerprint": {
         "rarity": "KNIFE",
-        "condition": "MINT CONDITION",
+        "condition": "STANDARD ISSUE",
         "fx": null,
-        "fragtrakr": false,
-        "fragtrak_type": null,
-        "kills": 0,
-        "festive": true
+        "fragtrakr": true,
+        "fragtrak_type": "Kills",
+        "kills": 602,
+        "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-042",
-        "name": "KATANA | FROSTBORN",
-        "weapon": "KATANA",
-        "skin": "FROSTBORN",
+        "name": "SURVIVOR | ADURITE",
+        "weapon": "SURVIVOR",
+        "skin": "ADURITE",
         "type": "knife",
-        "crate": "Christmas Present 2025",
+        "crate": "Classic Case",
         "slug": null
       },
       "owner": {
@@ -1422,26 +1422,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-043",
-    "priceUsd": "70.91",
-    "minOfferUsd": "60.27",
+    "priceUsd": "58.66",
+    "minOfferUsd": "49.86",
     "vaultItem": {
       "id": "demo-vault-demo-043",
       "fingerprint": {
         "rarity": "KNIFE",
         "condition": "MINT CONDITION",
         "fx": null,
-        "fragtrakr": true,
-        "fragtrak_type": "Kills",
-        "kills": 889,
+        "fragtrakr": false,
+        "fragtrak_type": null,
+        "kills": 0,
         "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-043",
-        "name": "KARAMBIT | KOI",
-        "weapon": "KARAMBIT",
-        "skin": "KOI",
+        "name": "SFO TH SWORD | ICE DAGGER",
+        "weapon": "SFO TH SWORD",
+        "skin": "ICE DAGGER",
         "type": "knife",
-        "crate": "Skin Case #1",
+        "crate": "Classic Case",
         "slug": null
       },
       "owner": {
@@ -1454,8 +1454,8 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-044",
-    "priceUsd": "82.65",
-    "minOfferUsd": "70.25",
+    "priceUsd": "37.94",
+    "minOfferUsd": "32.25",
     "vaultItem": {
       "id": "demo-vault-demo-044",
       "fingerprint": {
@@ -1464,16 +1464,16 @@ const LISTINGS: DemoListing[] = [
         "fx": null,
         "fragtrakr": true,
         "fragtrak_type": "Kills",
-        "kills": 0,
-        "festive": false
+        "kills": 361,
+        "festive": true
       },
       "catalog": {
         "id": "demo-cat-demo-044",
-        "name": "SURVIVOR | OG BLUESTEEL",
-        "weapon": "SURVIVOR",
-        "skin": "OG BLUESTEEL",
+        "name": "DEFAULT | DEFAULT OF DESTINY",
+        "weapon": "DEFAULT",
+        "skin": "DEFAULT OF DESTINY",
         "type": "knife",
-        "crate": "Classic Case",
+        "crate": "April Fools 2026",
         "slug": null
       },
       "owner": {
@@ -1486,17 +1486,17 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-045",
-    "priceUsd": "70.01",
-    "minOfferUsd": "59.51",
+    "priceUsd": "87.98",
+    "minOfferUsd": "74.78",
     "vaultItem": {
       "id": "demo-vault-demo-045",
       "fingerprint": {
         "rarity": "KNIFE",
-        "condition": "WELL WORN",
+        "condition": "STANDARD ISSUE",
         "fx": null,
         "fragtrakr": true,
         "fragtrak_type": "Kills",
-        "kills": 1046,
+        "kills": 781,
         "festive": false
       },
       "catalog": {
@@ -1518,13 +1518,13 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-046",
-    "priceUsd": "33.25",
-    "minOfferUsd": "28.26",
+    "priceUsd": "15.03",
+    "minOfferUsd": null,
     "vaultItem": {
       "id": "demo-vault-demo-046",
       "fingerprint": {
         "rarity": "KNIFE",
-        "condition": "STANDARD ISSUE",
+        "condition": "MINT CONDITION",
         "fx": null,
         "fragtrakr": false,
         "fragtrak_type": null,
@@ -1533,9 +1533,9 @@ const LISTINGS: DemoListing[] = [
       },
       "catalog": {
         "id": "demo-cat-demo-046",
-        "name": "BAYONET | WANWOOD",
-        "weapon": "BAYONET",
-        "skin": "WANWOOD",
+        "name": "KATANA | BLACK IRON",
+        "weapon": "KATANA",
+        "skin": "BLACK IRON",
         "type": "knife",
         "crate": "Classic Case",
         "slug": null
@@ -1550,13 +1550,13 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-047",
-    "priceUsd": "30.04",
-    "minOfferUsd": "25.53",
+    "priceUsd": "16.60",
+    "minOfferUsd": null,
     "vaultItem": {
       "id": "demo-vault-demo-047",
       "fingerprint": {
         "rarity": "KNIFE",
-        "condition": "WELL WORN",
+        "condition": "MINT CONDITION",
         "fx": null,
         "fragtrakr": false,
         "fragtrak_type": null,
@@ -1565,11 +1565,11 @@ const LISTINGS: DemoListing[] = [
       },
       "catalog": {
         "id": "demo-cat-demo-047",
-        "name": "BAYONET | VAMPIRIC",
-        "weapon": "BAYONET",
-        "skin": "VAMPIRIC",
+        "name": "SFO TH SWORD | FIREBRAND",
+        "weapon": "SFO TH SWORD",
+        "skin": "FIREBRAND",
         "type": "knife",
-        "crate": "Hallows Basket 2025",
+        "crate": "Classic Case",
         "slug": null
       },
       "owner": {
@@ -1582,26 +1582,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-048",
-    "priceUsd": "61.16",
-    "minOfferUsd": "51.99",
+    "priceUsd": "95.42",
+    "minOfferUsd": "81.11",
     "vaultItem": {
       "id": "demo-vault-demo-048",
       "fingerprint": {
         "rarity": "KNIFE",
         "condition": "STANDARD ISSUE",
         "fx": null,
-        "fragtrakr": false,
-        "fragtrak_type": null,
-        "kills": 0,
-        "festive": false
+        "fragtrakr": true,
+        "fragtrak_type": "Kills",
+        "kills": 329,
+        "festive": true
       },
       "catalog": {
         "id": "demo-cat-demo-048",
-        "name": "DEFAULT | DEFAULT OF DESTINY",
-        "weapon": "DEFAULT",
-        "skin": "DEFAULT OF DESTINY",
+        "name": "BUTTERFLY | VELVET",
+        "weapon": "BUTTERFLY",
+        "skin": "VELVET",
         "type": "knife",
-        "crate": "April Fools 2026",
+        "crate": "Valentines 2026",
         "slug": null
       },
       "owner": {
@@ -1614,26 +1614,26 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-049",
-    "priceUsd": "27.68",
-    "minOfferUsd": "23.53",
+    "priceUsd": "97.27",
+    "minOfferUsd": "82.68",
     "vaultItem": {
       "id": "demo-vault-demo-049",
       "fingerprint": {
         "rarity": "KNIFE",
-        "condition": "STANDARD ISSUE",
+        "condition": "MINT CONDITION",
         "fx": null,
         "fragtrakr": false,
         "fragtrak_type": null,
         "kills": 0,
-        "festive": false
+        "festive": true
       },
       "catalog": {
         "id": "demo-cat-demo-049",
-        "name": "KATANA | VANILLA",
-        "weapon": "KATANA",
-        "skin": "VANILLA",
+        "name": "BAYONET | CULTIST",
+        "weapon": "BAYONET",
+        "skin": "CULTIST",
         "type": "knife",
-        "crate": "Skin Case #1",
+        "crate": "Hallows Basket 2025",
         "slug": null
       },
       "owner": {
@@ -1646,8 +1646,8 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-050",
-    "priceUsd": "20.27",
-    "minOfferUsd": "17.23",
+    "priceUsd": "63.29",
+    "minOfferUsd": "53.80",
     "vaultItem": {
       "id": "demo-vault-demo-050",
       "fingerprint": {
@@ -1661,9 +1661,9 @@ const LISTINGS: DemoListing[] = [
       },
       "catalog": {
         "id": "demo-cat-demo-050",
-        "name": "BUTTERFLY | VENOM",
+        "name": "BUTTERFLY | CHERRY",
         "weapon": "BUTTERFLY",
-        "skin": "VENOM",
+        "skin": "CHERRY",
         "type": "knife",
         "crate": "Skin Case #1",
         "slug": null
@@ -1678,13 +1678,13 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-051",
-    "priceUsd": "16.54",
-    "minOfferUsd": null,
+    "priceUsd": "60.27",
+    "minOfferUsd": "51.23",
     "vaultItem": {
       "id": "demo-vault-demo-051",
       "fingerprint": {
         "rarity": "KNIFE",
-        "condition": "MINT CONDITION",
+        "condition": "WELL WORN",
         "fx": null,
         "fragtrakr": false,
         "fragtrak_type": null,
@@ -1693,9 +1693,9 @@ const LISTINGS: DemoListing[] = [
       },
       "catalog": {
         "id": "demo-cat-demo-051",
-        "name": "BUTTERFLY | BLACK IRON",
-        "weapon": "BUTTERFLY",
-        "skin": "BLACK IRON",
+        "name": "DEFAULT | WANWOOD",
+        "weapon": "DEFAULT",
+        "skin": "WANWOOD",
         "type": "knife",
         "crate": "Classic Case",
         "slug": null
@@ -1710,8 +1710,8 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-052",
-    "priceUsd": "20.39",
-    "minOfferUsd": "17.33",
+    "priceUsd": "10.95",
+    "minOfferUsd": null,
     "vaultItem": {
       "id": "demo-vault-demo-052",
       "fingerprint": {
@@ -1725,11 +1725,11 @@ const LISTINGS: DemoListing[] = [
       },
       "catalog": {
         "id": "demo-cat-demo-052",
-        "name": "KARAMBIT | SAKURA",
-        "weapon": "KARAMBIT",
-        "skin": "SAKURA",
+        "name": "SURVIVOR | PEPPERMINT",
+        "weapon": "SURVIVOR",
+        "skin": "PEPPERMINT",
         "type": "knife",
-        "crate": "Skin Case #1",
+        "crate": "Christmas Present 2025",
         "slug": null
       },
       "owner": {
@@ -1742,13 +1742,13 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-053",
-    "priceUsd": "67.94",
-    "minOfferUsd": "57.75",
+    "priceUsd": "22.32",
+    "minOfferUsd": "18.97",
     "vaultItem": {
       "id": "demo-vault-demo-053",
       "fingerprint": {
         "rarity": "KNIFE",
-        "condition": "MINT CONDITION",
+        "condition": "WELL WORN",
         "fx": null,
         "fragtrakr": true,
         "fragtrak_type": "Kills",
@@ -1757,11 +1757,11 @@ const LISTINGS: DemoListing[] = [
       },
       "catalog": {
         "id": "demo-cat-demo-053",
-        "name": "BAYONET | VANILLA",
-        "weapon": "BAYONET",
-        "skin": "VANILLA",
+        "name": "BUTTERFLY | BUTTERFLY OF DESTINY",
+        "weapon": "BUTTERFLY",
+        "skin": "BUTTERFLY OF DESTINY",
         "type": "knife",
-        "crate": "Release Case",
+        "crate": "April Fools 2026",
         "slug": null
       },
       "owner": {
@@ -1774,8 +1774,8 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-054",
-    "priceUsd": "57.80",
-    "minOfferUsd": "49.13",
+    "priceUsd": "38.21",
+    "minOfferUsd": "32.48",
     "vaultItem": {
       "id": "demo-vault-demo-054",
       "fingerprint": {
@@ -1789,11 +1789,11 @@ const LISTINGS: DemoListing[] = [
       },
       "catalog": {
         "id": "demo-cat-demo-054",
-        "name": "BUTTERFLY | OG BLUESTEEL",
-        "weapon": "BUTTERFLY",
-        "skin": "OG BLUESTEEL",
+        "name": "BAYONET | MALACHITE",
+        "weapon": "BAYONET",
+        "skin": "MALACHITE",
         "type": "knife",
-        "crate": "Classic Case",
+        "crate": "Skin Case #2",
         "slug": null
       },
       "owner": {
@@ -1806,13 +1806,13 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-055",
-    "priceUsd": "176.13",
-    "minOfferUsd": "149.71",
+    "priceUsd": "92.70",
+    "minOfferUsd": "78.80",
     "vaultItem": {
       "id": "demo-vault-demo-055",
       "fingerprint": {
         "rarity": "SECRET",
-        "condition": "MINT CONDITION",
+        "condition": "WELL WORN",
         "fx": null,
         "fragtrakr": false,
         "fragtrak_type": null,
@@ -1838,17 +1838,17 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-056",
-    "priceUsd": "186.68",
-    "minOfferUsd": "158.68",
+    "priceUsd": "159.80",
+    "minOfferUsd": "135.83",
     "vaultItem": {
       "id": "demo-vault-demo-056",
       "fingerprint": {
         "rarity": "SECRET",
-        "condition": "MINT CONDITION",
+        "condition": "STANDARD ISSUE",
         "fx": null,
-        "fragtrakr": false,
-        "fragtrak_type": null,
-        "kills": 0,
+        "fragtrakr": true,
+        "fragtrak_type": "LowerBodyKills",
+        "kills": 290,
         "festive": false
       },
       "catalog": {
@@ -1870,14 +1870,14 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-057",
-    "priceUsd": "105.65",
-    "minOfferUsd": "89.80",
+    "priceUsd": "158.01",
+    "minOfferUsd": "134.31",
     "vaultItem": {
       "id": "demo-vault-demo-057",
       "fingerprint": {
         "rarity": "SECRET",
-        "condition": "WELL WORN",
-        "fx": null,
+        "condition": "STANDARD ISSUE",
+        "fx": "SHOCK",
         "fragtrakr": false,
         "fragtrak_type": null,
         "kills": 0,
@@ -1902,17 +1902,17 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-058",
-    "priceUsd": "266.90",
-    "minOfferUsd": "226.86",
+    "priceUsd": "149.69",
+    "minOfferUsd": "127.24",
     "vaultItem": {
       "id": "demo-vault-demo-058",
       "fingerprint": {
         "rarity": "SECRET",
-        "condition": "MINT CONDITION",
+        "condition": "STANDARD ISSUE",
         "fx": null,
         "fragtrakr": true,
         "fragtrak_type": "Kills",
-        "kills": 2171,
+        "kills": 984,
         "festive": false
       },
       "catalog": {
@@ -1934,14 +1934,14 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-059",
-    "priceUsd": "128.90",
-    "minOfferUsd": "109.56",
+    "priceUsd": "184.49",
+    "minOfferUsd": "156.82",
     "vaultItem": {
       "id": "demo-vault-demo-059",
       "fingerprint": {
         "rarity": "SECRET",
-        "condition": "WELL WORN",
-        "fx": null,
+        "condition": "STANDARD ISSUE",
+        "fx": "VOIDGRASP",
         "fragtrakr": false,
         "fragtrak_type": null,
         "kills": 0,
@@ -1966,14 +1966,14 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-060",
-    "priceUsd": "207.85",
-    "minOfferUsd": "176.67",
+    "priceUsd": "201.83",
+    "minOfferUsd": "171.56",
     "vaultItem": {
       "id": "demo-vault-demo-060",
       "fingerprint": {
         "rarity": "SECRET",
         "condition": "STANDARD ISSUE",
-        "fx": "DARKCHAINS",
+        "fx": "CRYPTIC",
         "fragtrakr": false,
         "fragtrak_type": null,
         "kills": 0,
@@ -1998,16 +1998,16 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-061",
-    "priceUsd": "166.33",
-    "minOfferUsd": "141.38",
+    "priceUsd": "275.65",
+    "minOfferUsd": "234.30",
     "vaultItem": {
       "id": "demo-vault-demo-061",
       "fingerprint": {
         "rarity": "SECRET",
         "condition": "MINT CONDITION",
-        "fx": null,
-        "fragtrakr": false,
-        "fragtrak_type": null,
+        "fx": "DARKCHAINS",
+        "fragtrakr": true,
+        "fragtrak_type": "LowerBodyKills",
         "kills": 0,
         "festive": false
       },
@@ -2030,18 +2030,18 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-062",
-    "priceUsd": "294.92",
-    "minOfferUsd": "250.68",
+    "priceUsd": "116.47",
+    "minOfferUsd": "99.00",
     "vaultItem": {
       "id": "demo-vault-demo-062",
       "fingerprint": {
         "rarity": "SECRET",
-        "condition": "MINT CONDITION",
-        "fx": "SPELLWORK",
+        "condition": "WELL WORN",
+        "fx": "CERULEANOZYMANDIAS",
         "fragtrakr": true,
-        "fragtrak_type": "QuickscopeKills",
-        "kills": 1901,
-        "festive": true
+        "fragtrak_type": "Kills",
+        "kills": 0,
+        "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-062",
@@ -2062,18 +2062,18 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-063",
-    "priceUsd": "139.25",
-    "minOfferUsd": "118.36",
+    "priceUsd": "165.15",
+    "minOfferUsd": "140.38",
     "vaultItem": {
       "id": "demo-vault-demo-063",
       "fingerprint": {
         "rarity": "SECRET",
-        "condition": "STANDARD ISSUE",
-        "fx": "OMEGA",
+        "condition": "MINT CONDITION",
+        "fx": "LOVE",
         "fragtrakr": false,
         "fragtrak_type": null,
         "kills": 0,
-        "festive": true
+        "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-063",
@@ -2094,18 +2094,18 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-064",
-    "priceUsd": "256.73",
-    "minOfferUsd": "218.22",
+    "priceUsd": "159.11",
+    "minOfferUsd": "135.24",
     "vaultItem": {
       "id": "demo-vault-demo-064",
       "fingerprint": {
         "rarity": "SECRET",
-        "condition": "MINT CONDITION",
-        "fx": "SHOCK",
+        "condition": "WELL WORN",
+        "fx": "NOXNOSTRA",
         "fragtrakr": false,
         "fragtrak_type": null,
         "kills": 0,
-        "festive": true
+        "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-064",
@@ -2126,18 +2126,18 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-065",
-    "priceUsd": "221.88",
-    "minOfferUsd": "188.60",
+    "priceUsd": "141.77",
+    "minOfferUsd": "120.50",
     "vaultItem": {
       "id": "demo-vault-demo-065",
       "fingerprint": {
         "rarity": "SECRET",
         "condition": "STANDARD ISSUE",
-        "fx": "FRIGID",
+        "fx": "VOIDCRY",
         "fragtrakr": false,
         "fragtrak_type": null,
         "kills": 0,
-        "festive": true
+        "festive": false
       },
       "catalog": {
         "id": "demo-cat-demo-065",
@@ -2158,14 +2158,14 @@ const LISTINGS: DemoListing[] = [
   },
   {
     "id": "demo-066",
-    "priceUsd": "205.09",
-    "minOfferUsd": "174.33",
+    "priceUsd": "150.43",
+    "minOfferUsd": "127.87",
     "vaultItem": {
       "id": "demo-vault-demo-066",
       "fingerprint": {
         "rarity": "SECRET",
-        "condition": "STANDARD ISSUE",
-        "fx": "LOVESHOT",
+        "condition": "WELL WORN",
+        "fx": null,
         "fragtrakr": false,
         "fragtrak_type": null,
         "kills": 0,

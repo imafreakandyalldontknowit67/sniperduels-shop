@@ -29,32 +29,19 @@ interface FragtrakInfo {
   iconUrl: string
 }
 
-const ASSET_IDS: Record<string, string> = {
-  Kills:           '128872940996269',
-  HeadshotKills:   '137013109878768',
-  NoscopeKills:    '109196165935503',
-  QuickscopeKills: '121356609311584',
-  LowerBodyKills:  '128872940996269', // shares the kills icon in-game
-  PoolWins:        '120846951139462',
-}
-
-const LABELS: Record<string, { label: string; abbr: string }> = {
-  Kills:           { label: 'Kills',            abbr: 'K'   },
-  HeadshotKills:   { label: 'Headshot Kills',   abbr: 'HS'  },
-  NoscopeKills:    { label: 'Noscope Kills',    abbr: 'NS'  },
-  QuickscopeKills: { label: 'Quickscope Kills', abbr: 'QS'  },
-  LowerBodyKills:  { label: 'Lower Body Kills', abbr: 'LB'  },
-  PoolWins:        { label: 'Pool Wins',        abbr: 'PW'  },
+// Locally-served icons under /public/items/fragtrak/. The PNGs are pulled
+// from Roblox's thumbnail CDN once (real in-game icons). The "Kills" and
+// "LowerBodyKills" assets returned an UnavailableImage from Roblox so they
+// fall back to clean SVG glyphs.
+const ICONS: Record<string, { label: string; abbr: string; iconUrl: string }> = {
+  Kills:           { label: 'Kills',            abbr: 'K',  iconUrl: '/items/fragtrak/Kills.svg' },
+  HeadshotKills:   { label: 'Headshot Kills',   abbr: 'HS', iconUrl: '/items/fragtrak/HeadshotKills.png' },
+  NoscopeKills:    { label: 'Noscope Kills',    abbr: 'NS', iconUrl: '/items/fragtrak/NoscopeKills.png' },
+  QuickscopeKills: { label: 'Quickscope Kills', abbr: 'QS', iconUrl: '/items/fragtrak/QuickscopeKills.png' },
+  LowerBodyKills:  { label: 'Lower Body Kills', abbr: 'LB', iconUrl: '/items/fragtrak/LowerBodyKills.svg' },
 }
 
 export function fragtrakInfo(type: string | null | undefined): FragtrakInfo | null {
   if (!type) return null
-  const assetId = ASSET_IDS[type]
-  const labels = LABELS[type]
-  if (!assetId || !labels) return null
-  return {
-    label: labels.label,
-    abbr: labels.abbr,
-    iconUrl: `https://www.roblox.com/asset-thumbnail/image?assetId=${assetId}&width=150&height=150&format=png`,
-  }
+  return ICONS[type] ?? null
 }
