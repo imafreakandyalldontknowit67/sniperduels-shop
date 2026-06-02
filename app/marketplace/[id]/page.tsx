@@ -131,9 +131,10 @@ function ListingDetailInner() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-950 to-black pb-32 md:pb-12">
-      {/* Back button: pinned to the left edge, matches the position users expect
-          relative to the site logo. */}
-      <div className="max-w-5xl mx-auto px-3 md:px-6 pt-3 md:pt-4">
+      {/* Back button: aligned with the site logo's left edge in the fixed
+          header — uses the same horizontal padding as the header (px-3 sm:px-5
+          lg:px-8) so it lines up directly under the SNIPER DUELS SHOP mark. */}
+      <div className="w-full px-3 sm:px-5 lg:px-8 pt-3 md:pt-4">
         <Link
           href={demoFromUrl ? '/marketplace?demo=1' : '/marketplace'}
           className="inline-flex items-center gap-1.5 text-sm text-zinc-300 hover:text-white bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 rounded-md px-2.5 py-1.5 transition-colors"
