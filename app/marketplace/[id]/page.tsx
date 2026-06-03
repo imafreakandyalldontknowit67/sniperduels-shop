@@ -12,7 +12,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui'
-import { ArrowLeft, Wallet, CreditCard, Zap, PackageCheck, Sparkles, Crown } from 'lucide-react'
+import { ArrowLeft, Wallet, CreditCard, Zap, PackageCheck, ShieldCheck, Sparkles, Crown } from 'lucide-react'
 import { useAuth } from '@/components/providers'
 import { iconUrl } from '@/lib/itemIcon'
 import { rarityStyle } from '@/lib/rarity'
@@ -461,7 +461,12 @@ function BuyPanel(props: {
           <div className="text-2xl font-extrabold text-emerald-400 leading-none">${price.toFixed(2)}</div>
         </div>
         {!user ? (
-          <button onClick={onLogin} className="px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-900 font-bold text-sm">Log in</button>
+          <button onClick={onLogin} className="relative inline-flex items-center justify-center shrink-0 pixel-btn-press" style={{ textDecoration: 'none' }}>
+            <img src="/images/pixel/pngs/asset-59.png" alt="" className="h-11 w-[120px]" />
+            <span className="absolute inset-0 flex items-center justify-center font-extrabold text-zinc-900 text-xs uppercase tracking-wider">
+              Log in
+            </span>
+          </button>
         ) : isOwn ? (
           <div className="text-sm text-zinc-500 italic px-4">Your listing</div>
         ) : (
@@ -493,7 +498,16 @@ function BuyPanel(props: {
       </div>
 
       {!user ? (
-        <Button onClick={onLogin} className="w-full bg-amber-500 hover:bg-amber-400 text-zinc-900 font-bold">Log in to buy</Button>
+        <button
+          onClick={onLogin}
+          className="relative inline-flex items-center justify-center w-full pixel-btn-press"
+          style={{ textDecoration: 'none' }}
+        >
+          <img src="/images/pixel/pngs/asset-59.png" alt="" className="h-12 w-full" />
+          <span className="absolute inset-0 flex items-center justify-center font-extrabold text-zinc-900 text-sm uppercase tracking-wider">
+            Log in to buy
+          </span>
+        </button>
       ) : isOwn ? (
         <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm text-zinc-400 text-center">
           This is your own listing.

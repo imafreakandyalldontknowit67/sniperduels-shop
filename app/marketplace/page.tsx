@@ -334,15 +334,18 @@ function ItemCard({ listing, demo }: { listing: Listing; demo: boolean }) {
         <div className="text-lg md:text-xl font-extrabold text-emerald-400 leading-none tabular-nums">
           ${price.toFixed(2)}
         </div>
-        <span
-          className={`block w-full text-[10px] md:text-xs font-bold uppercase tracking-wider py-1.5 md:py-2 rounded-md transition-colors ${
-            soldOut
-              ? 'bg-zinc-800 text-zinc-500 border border-zinc-700'
-              : 'bg-amber-500 text-zinc-900 group-hover:bg-amber-400'
-          }`}
-        >
-          {soldOut ? 'Sold out' : 'See item'}
-        </span>
+        {soldOut ? (
+          <span className="block w-full text-[10px] md:text-xs font-bold uppercase tracking-wider py-1.5 md:py-2 rounded-md bg-zinc-800 text-zinc-500 border border-zinc-700">
+            Sold out
+          </span>
+        ) : (
+          <span className="relative inline-flex items-center justify-center w-full">
+            <img src="/images/pixel/pngs/asset-59.png" alt="" className="h-9 md:h-10 w-full" />
+            <span className="absolute inset-0 flex items-center justify-center font-extrabold text-zinc-900 text-[10px] md:text-xs uppercase tracking-wider">
+              See item
+            </span>
+          </span>
+        )}
       </div>
     </Link>
   )
