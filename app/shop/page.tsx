@@ -206,7 +206,7 @@ export default function ShopPage() {
         {/* Page Header */}
         <div className="text-center mb-16">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 uppercase">
-            Browse <span className="text-accent">Items</span>
+            Buy Sniper Duels <span className="text-accent">Items</span>
           </h1>
           <p className="text-gray-400 max-w-2xl mx-auto text-xs uppercase">
             Choose from our selection of snipers, knives, and crates. All items delivered automatically.

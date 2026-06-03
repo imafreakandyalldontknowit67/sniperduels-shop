@@ -1,6 +1,13 @@
 import { Hero, HowItWorks, ShopCategories, TrustSection, OAuthErrorBanner } from '@/components/home'
 import { ScrollReveal } from '@/components/ui'
 import OutageBanner from '@/components/OutageBanner'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: {
+    absolute: 'Sniper Duels Shop — Buy Sniper Duels Gems & Items | Instant Auto Delivery',
+  },
+}
 
 export default function HomePage() {
   const breadcrumbSchema = {

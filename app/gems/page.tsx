@@ -932,7 +932,7 @@ function GemsContent() {
         {/* Page Header */}
         <div className="text-center mb-6 sm:mb-8 md:mb-10">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-accent mb-3 sm:mb-4 uppercase">
-            Gems
+            Buy Sniper Duels Gems
           </h1>
 
           {totalStockK > 0 && (
