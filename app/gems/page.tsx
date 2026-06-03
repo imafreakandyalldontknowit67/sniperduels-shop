@@ -824,7 +824,7 @@ function GemsContent() {
         </div>
       )}
 
-      <div className="max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-16 pb-32 md:pb-16">
+      <div className="max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-16 pb-44 md:pb-16">
         {/* Toast */}
         {toast && (
           <div

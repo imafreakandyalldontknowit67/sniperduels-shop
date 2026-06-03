@@ -57,8 +57,8 @@ export function Header() {
             />
           </Link>
 
-          {/* Desktop Navigation - Centered */}
-          <div className="hidden md:flex items-center gap-12 absolute left-1/2 -translate-x-1/2">
+          {/* Desktop Navigation - Centered (in-flow flex so it can't overlap the logo/currency) */}
+          <div className="hidden md:flex flex-1 items-center justify-center gap-8 lg:gap-12 px-4">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
