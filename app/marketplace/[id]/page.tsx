@@ -280,7 +280,7 @@ function ListingDetailInner() {
 
         {/* Trust strip */}
         <div className="mt-6 md:mt-8 grid grid-cols-1 md:grid-cols-3 gap-2.5">
-          <TrustItem icon={<Zap className="w-4 h-4" />} title="Fast delivery" body="Bot delivers in-game within ~2 minutes." />
+          <TrustItem icon={<Zap className="w-4 h-4" />} title="Fast delivery" body="Bot delivers in-game in under 2 minutes." />
           <TrustItem icon={<PackageCheck className="w-4 h-4" />} title="In stock now" body="Bot already holds this exact item — no waiting on supply." />
           <TrustItem icon={<Wallet className="w-4 h-4" />} title="Auto refunds" body="Anything goes wrong, money goes straight back." />
         </div>
@@ -550,7 +550,7 @@ function BuyPanel(props: {
           </button>
           <p className="text-[11px] text-zinc-500 flex items-start gap-2 leading-relaxed">
             <ShieldCheck className="w-3 h-3 mt-0.5 shrink-0 text-emerald-500" />
-            Delivered in-game within ~2 minutes after payment clears.
+            Delivered in-game in under 2 minutes after payment clears.
           </p>
         </div>
       )}
