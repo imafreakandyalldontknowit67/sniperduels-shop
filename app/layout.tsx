@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Sniper Duels Auto Shop — Buy Gems, Items & Crates | Automatic Delivery',
     description: 'The first automated item shop for Sniper Duels. Purchase gems, items, and crates with automatic 24/7 delivery.',
-    siteName: 'Sniper Duels Auto Shop',
+    siteName: 'Sniper Duels Shop',
     url: 'https://sniperduels.shop',
     images: [{ url: '/og-banner.png', width: 1200, height: 630 }],
     type: 'website',

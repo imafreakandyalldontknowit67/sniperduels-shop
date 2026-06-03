@@ -8,6 +8,12 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://sniperduels.shop/gems',
   },
+  openGraph: {
+    // Relative URL resolves against metadataBase (app/layout.tsx) so og:url
+    // is the gems page, not the inherited apex. The per-route og:image is
+    // auto-injected by app/gems/opengraph-image.tsx.
+    url: '/gems',
+  },
 }
 
 export default function GemsLayout({ children }: { children: React.ReactNode }) {
@@ -146,6 +152,19 @@ export default function GemsLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
         />
       ))}
+      {/*
+        Server-rendered, crawlable answer text. /gems is a client component so
+        its visible body has no quotable copy in the static HTML for search
+        engines and AI answer engines. This sr-only paragraph (visually hidden,
+        present in the SSR HTML) gives them a direct, citable answer without
+        changing the page's visual layout. Mirrors the AggregateOffer schema.
+      */}
+      <p className="sr-only">
+        Sniper Duels gems cost $2.90 per 1,000 gems for orders from 1k to 99k,
+        dropping to $2.65 per 1,000 at 100k or more. Every order is auto-delivered
+        in under 2 minutes through our private Roblox server, with the full USD
+        amount credited back to your wallet if a delivery cannot be completed.
+      </p>
       {children}
       <Testimonials />
     </>

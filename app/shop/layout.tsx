@@ -6,6 +6,12 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://sniperduels.shop/shop',
   },
+  openGraph: {
+    // Relative URL resolves against metadataBase (app/layout.tsx) so og:url
+    // is the shop page, not the inherited apex. The per-route og:image is
+    // auto-injected by app/shop/opengraph-image.tsx.
+    url: '/shop',
+  },
 }
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
