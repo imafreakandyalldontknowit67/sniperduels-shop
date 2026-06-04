@@ -957,6 +957,20 @@ function GemsContent() {
               )}
             </div>
           )}
+
+          {/* Popular packages — internal links to programmatic landing pages */}
+          <nav aria-label="Popular gem packages" className="mt-4 text-[10px] sm:text-xs text-gray-500 uppercase">
+            <span className="mr-1">Popular:</span>
+            <Link href="/gems/cheap" className="text-gray-400 hover:text-accent transition-colors">Cheap gems</Link>
+            <span className="mx-1.5">·</span>
+            <Link href="/gems/100k" className="text-gray-400 hover:text-accent transition-colors">100k gems</Link>
+            <span className="mx-1.5">·</span>
+            <Link href="/gems/500k" className="text-gray-400 hover:text-accent transition-colors">500k gems</Link>
+            <span className="mx-1.5">·</span>
+            <Link href="/gems/1m" className="text-gray-400 hover:text-accent transition-colors">1 million gems</Link>
+            <span className="mx-1.5">·</span>
+            <Link href="/gems/buy" className="text-gray-400 hover:text-accent transition-colors">Buy gems guide</Link>
+          </nav>
         </div>
 
         {/* Two column layout */}

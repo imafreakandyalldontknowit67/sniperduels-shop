@@ -14,7 +14,7 @@ export function Footer() {
   return (
     <footer className="bg-dark-900" style={{ borderTop: '1px solid #2a2a2e' }}>
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="sm:col-span-2 md:col-span-1">
             <Link href="/" className="inline-block mb-3">
@@ -38,10 +38,47 @@ export function Footer() {
             </div>
           </div>
 
+          {/* Buy Gems */}
+          <div>
+            <h3 className="text-white font-bold text-xs uppercase mb-3 sm:mb-4">Buy Gems</h3>
+            <ul className="space-y-2 sm:space-y-3">
+              <li>
+                <Link href="/gems" className="text-gray-400 hover:text-white text-[10px] sm:text-xs uppercase transition-colors">
+                  Buy Sniper Duels Gems
+                </Link>
+              </li>
+              <li>
+                <Link href="/gems/cheap" className="text-gray-400 hover:text-white text-[10px] sm:text-xs uppercase transition-colors">
+                  Cheap Gems
+                </Link>
+              </li>
+              <li>
+                <Link href="/gems/100k" className="text-gray-400 hover:text-white text-[10px] sm:text-xs uppercase transition-colors">
+                  100k Gems
+                </Link>
+              </li>
+              <li>
+                <Link href="/gems/500k" className="text-gray-400 hover:text-white text-[10px] sm:text-xs uppercase transition-colors">
+                  500k Gems
+                </Link>
+              </li>
+              <li>
+                <Link href="/gems/1m" className="text-gray-400 hover:text-white text-[10px] sm:text-xs uppercase transition-colors">
+                  1 Million Gems
+                </Link>
+              </li>
+            </ul>
+          </div>
+
           {/* About */}
           <div>
             <h3 className="text-white font-bold text-xs uppercase mb-3 sm:mb-4">About</h3>
             <ul className="space-y-2 sm:space-y-3">
+              <li>
+                <Link href="/about" className="text-gray-400 hover:text-white text-[10px] sm:text-xs uppercase transition-colors">
+                  About Us
+                </Link>
+              </li>
               <li>
                 <Link href="/faq" className="text-gray-400 hover:text-white text-[10px] sm:text-xs uppercase transition-colors">
                   FAQ
