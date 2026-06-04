@@ -67,6 +67,11 @@ export function Footer() {
                   1 Million Gems
                 </Link>
               </li>
+              <li>
+                <Link href="/gems/buy" className="text-gray-400 hover:text-white text-[10px] sm:text-xs uppercase transition-colors">
+                  Buy Gems Guide
+                </Link>
+              </li>
             </ul>
           </div>
 
