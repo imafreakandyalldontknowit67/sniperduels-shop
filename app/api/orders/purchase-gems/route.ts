@@ -26,7 +26,7 @@ import { logError } from '@/lib/error-log'
 
 const PRICING_TIERS = [
   { min: 1, max: 99, rate: 2.90 },
-  { min: 100, max: 500, rate: 2.65 },
+  { min: 100, max: Infinity, rate: 2.65 },
 ]
 
 function getRate(amountInK: number): number {
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         const rawBody = await request.clone().json().catch(() => null)
         const amountInK = rawBody?.amountInK
         const vendorListingId = rawBody?.vendorListingId
-        if (amountInK && typeof amountInK === 'number' && Number.isInteger(amountInK) && amountInK >= 1 && amountInK <= 500) {
+        if (amountInK && typeof amountInK === 'number' && Number.isInteger(amountInK) && amountInK >= 1) {
           const listingId = vendorListingId || 'platform'
           const intent = await prisma.pendingBuyIntent.create({
             data: {
@@ -89,9 +89,9 @@ export async function POST(request: NextRequest) {
     }
     const { amountInK, vendorListingId } = body
 
-    if (!amountInK || typeof amountInK !== 'number' || !Number.isInteger(amountInK) || amountInK < 1 || amountInK > 500) {
+    if (!amountInK || typeof amountInK !== 'number' || !Number.isInteger(amountInK) || amountInK < 1) {
       return NextResponse.json(
-        { error: 'amountInK must be an integer between 1 and 500' },
+        { error: 'amountInK must be a positive integer' },
         { status: 400 }
       )
     }

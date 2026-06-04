@@ -34,11 +34,11 @@ const PROGRAMMATIC_PAGES: Record<string, {
     ctaLabel: 'Buy 500k Gems',
   },
   '1m': {
-    amount: 500, // platform max — for orders >500k, vendor listings handle the rest
+    amount: 1000, // prefill 1M; the gems page clamps to whatever stock is available
     title: 'Buy 1 Million Sniper Duels Gems',
     metaDescription: 'Looking to buy 1 million Sniper Duels gems? Our marketplace combines platform stock and vendor listings to fulfill large orders with automated delivery.',
     h1: 'Buy 1 Million Sniper Duels Gems',
-    intro: 'For orders above 500k, our marketplace splits delivery across the platform stock and vendor listings to keep delivery fast. Pricing starts at $2.65 per thousand for platform stock; vendor rates vary. Combine multiple orders or contact support in Discord for custom large-volume pricing.',
+    intro: 'Buy gems in bulk — there is no fixed order cap, you can order as many as we have in stock. Pricing is $2.65 per thousand for platform stock; vendor listings may offer further discounts. For very large orders you can also contact support in Discord for custom pricing.',
     ctaLabel: 'Browse Gem Listings',
   },
   'cheap': {

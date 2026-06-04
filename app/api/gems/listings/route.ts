@@ -32,7 +32,9 @@ export async function GET() {
       vendorId: null,
       pricePerK: PLATFORM_TIERS[0].rate,
       minOrderK: 2,
-      maxOrderK: 500,
+      // No fixed order cap — the real ceiling is available platform stock
+      // (the frontend derives maxAmount from min(stockK, maxOrderK)).
+      maxOrderK: 1_000_000,
       stockK: platformStockK,
       bulkTiers: PLATFORM_TIERS.map(t => ({ minK: t.min, pricePerK: t.rate })),
       type: 'platform' as const,

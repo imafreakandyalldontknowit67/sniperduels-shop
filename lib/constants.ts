@@ -41,27 +41,27 @@ export const HOW_IT_WORKS_STEPS = [
   {
     step: 1,
     title: 'Login with Roblox',
-    description: 'Securely connect your Roblox account to get started.',
+    description: 'Securely connect your Roblox account — we never see your password.',
   },
   {
     step: 2,
-    title: 'Browse and Select Items',
-    description: 'Choose from our collection of snipers, knives, and crates — gems are available as well.',
+    title: 'Choose Your Gems',
+    description: 'Pick your gem amount and the cheapest price tier. No order cap — buy as much as we have in stock.',
   },
   {
     step: 3,
-    title: 'Complete Payment',
-    description: 'Pay securely through Pandabase.',
+    title: 'Add Funds & Pay',
+    description: 'Top up your wallet with card or crypto — your balance pays for the order instantly.',
   },
   {
     step: 4,
     title: 'Join Private Server',
-    description: "You'll receive a link to our private server.",
+    description: "You'll get a link to our private Roblox server in your dashboard.",
   },
   {
     step: 5,
     title: 'Accept Bot Trade',
-    description: 'Our stock bot will trade you. Just accept and receive your items.',
+    description: 'Our delivery bot trades you the gems automatically — usually under 2 minutes.',
   },
 ] as const
 
