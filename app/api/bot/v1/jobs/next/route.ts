@@ -129,34 +129,51 @@ export async function GET(request: NextRequest) {
   }
 
   // 3. Withdrawal jobs — user requested their item back.
-  const claimedWithdrawal = await prisma.$transaction(async tx => {
-    const candidate = await tx.itemWithdrawalJob.findFirst({
+  // BATCHED: pick the user with the oldest queued withdrawal, then claim ALL
+  // their queued withdrawals (cap 12 = trade slot limit) so the bot returns
+  // every item in a SINGLE in-game trade. Far better UX than 1 trade/item.
+  const claimedWithdrawals = await prisma.$transaction(async tx => {
+    const first = await tx.itemWithdrawalJob.findFirst({
       where: { status: 'queued' },
       orderBy: { createdAt: 'asc' },
-      include: { vaultItem: true },
     })
-    if (!candidate) return null
+    if (!first) return null
+    const jobs = await tx.itemWithdrawalJob.findMany({
+      where: { status: 'queued', userId: first.userId },
+      orderBy: { createdAt: 'asc' },
+      take: 12,
+      include: { vaultItem: { include: { catalog: true } } },
+    })
+    const ids = jobs.map(j => j.id)
     const updated = await tx.itemWithdrawalJob.updateMany({
-      where: { id: candidate.id, status: 'queued' },
+      where: { id: { in: ids }, status: 'queued' },
       data: {
         status: 'bot_in_trade',
         startedAt: new Date(),
         attempts: { increment: 1 },
       },
     })
-    return updated.count > 0 ? candidate : null
+    return updated.count > 0 ? jobs : null
   })
-  if (claimedWithdrawal) {
+  if (claimedWithdrawals && claimedWithdrawals.length > 0) {
     return NextResponse.json({
       kind: 'withdrawal',
       job: {
-        withdrawalId: claimedWithdrawal.id,
-        vaultItemId: claimedWithdrawal.vaultItemId,
-        userId: claimedWithdrawal.userId,
-        userRobloxName: claimedWithdrawal.userRobloxName,
-        catalogId: claimedWithdrawal.vaultItem.catalogId,
-        fingerprint: claimedWithdrawal.vaultItem.fingerprint,
-        lastCellHint: claimedWithdrawal.vaultItem.lastCellHint,
+        userId: claimedWithdrawals[0].userId,
+        userRobloxName: claimedWithdrawals[0].userRobloxName,
+        items: claimedWithdrawals.map(j => ({
+          withdrawalId: j.id,
+          vaultItemId: j.vaultItemId,
+          catalogId: j.vaultItem.catalogId,
+          // Merge the catalog name into the per-instance fingerprint so the bot
+          // has the in-game item name to search/match on (the stored fingerprint
+          // blob is attributes-only — name lives on the ItemCatalog row).
+          fingerprint: {
+            ...(j.vaultItem.fingerprint as Record<string, unknown>),
+            name: j.vaultItem.catalog.name,
+          },
+          lastCellHint: j.vaultItem.lastCellHint,
+        })),
       },
     })
   }
