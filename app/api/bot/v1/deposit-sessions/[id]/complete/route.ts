@@ -20,7 +20,35 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateBot } from '@/lib/bot-auth'
 import { prisma } from '@/lib/prisma'
-import { isValidFingerprint } from '@/lib/marketplace'
+
+/**
+ * Coerce arbitrary bot-sent fingerprint data into a valid ItemFingerprint shape.
+ * The deposited item is PHYSICALLY in the bot's custody and belongs to the user
+ * — we must NEVER drop it over a malformed field, or the user silently loses an
+ * item they own. Bad fields are normalized/nulled rather than rejecting the row.
+ */
+function sanitizeFingerprint(raw: any): Record<string, unknown> {
+  const o = (raw && typeof raw === 'object' && !Array.isArray(raw)) ? raw : {}
+  const str = (v: unknown) => (typeof v === 'string' && v.length ? v : null)
+  const int = (v: unknown) => {
+    const n = typeof v === 'number' ? v : (typeof v === 'string' ? Number(v) : NaN)
+    return Number.isFinite(n) && n >= 0 ? Math.floor(n) : null
+  }
+  return {
+    rarity: str(o.rarity),
+    condition: str(o.condition),
+    fragtrakr: o.fragtrakr === true,
+    fx: str(o.fx),
+    kills: int(o.kills),
+    quickscope_kills: int(o.quickscope_kills),
+    crate: str(o.crate),
+    exist: int(o.exist),
+    // Preserve extra descriptive fields the bot sends (festive, kill_type) so
+    // matching still has them; they don't affect validity.
+    festive: o.festive === true,
+    kill_type: str(o.kill_type),
+  }
+}
 
 export async function POST(
   request: NextRequest,
@@ -53,36 +81,36 @@ export async function POST(
   })
   const catalogByName = new Map(catalogRows.map(c => [c.name, c.id]))
 
-  // Create vault items in a transaction with the session update
+  // Create vault items in a transaction with the session update. We NEVER drop
+  // an item over a bad fingerprint (sanitize instead). The only unavoidable
+  // skip is an unknown catalog name — surfaced explicitly so it can be
+  // reconciled (the item is in the bot's custody but can't be FK'd to a row).
+  const skippedUnknownCatalog: string[] = []
   const result = await prisma.$transaction(async tx => {
     const created: { id: string; catalogName: string }[] = []
     for (const it of items) {
       const cName = it.catalogName?.toUpperCase()
-      const catalogId = catalogByName.get(cName)
+      const catalogId = cName ? catalogByName.get(cName) : undefined
       if (!catalogId) {
-        // Item not in catalog — should not happen post Phase 2 auto-approval,
-        // but if it does, skip and report back so admin can investigate.
+        // Item not in catalog — can't create a FK'd row. Surface loudly so an
+        // admin reconciles it against the bot inventory (item is NOT lost,
+        // just untracked until the catalog gains this name).
+        console.error(`[deposit-complete] UNKNOWN CATALOG NAME, item untracked: ${cName}`)
+        skippedUnknownCatalog.push(cName ?? '(empty)')
         continue
       }
-      // Hardening 9.10: validate fingerprint shape before write. Bot bugs
-      // should crash here loudly, not corrupt vault rows.
-      const fp = it.fingerprint ?? {}
-      if (!isValidFingerprint(fp)) {
-        console.error(`[deposit-complete] invalid fingerprint shape for ${cName}:`,
-          JSON.stringify(fp).slice(0, 300))
-        continue
-      }
+      // Sanitize rather than reject — the user owns this item, keep it.
+      const fp = sanitizeFingerprint(it.fingerprint)
       const v = await tx.vaultItem.create({
         data: {
           ownerId: session.userId,
           catalogId,
-          // Prisma's Json column wants a plain object, not the branded type.
           fingerprint: fp as object,
           status: 'deposited',
           lastCellHint: it.cellHint ?? null,
         },
       })
-      created.push({ id: v.id, catalogName: cName })
+      created.push({ id: v.id, catalogName: cName! })
     }
     await tx.itemDepositSession.update({
       where: { id },
@@ -98,6 +126,8 @@ export async function POST(
   return NextResponse.json({
     ok: true,
     vaultItemIds: result.map(r => r.id),
-    skipped: items.length - result.length,
+    created: result.length,
+    skipped: skippedUnknownCatalog.length,
+    skippedUnknownCatalog,  // names the bot/operator must reconcile
   })
 }
