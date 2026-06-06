@@ -45,23 +45,23 @@ export const HOW_IT_WORKS_STEPS = [
   },
   {
     step: 2,
-    title: 'Choose Your Gems',
-    description: 'Pick your gem amount and the cheapest price tier. No order cap — buy as much as we have in stock.',
+    title: 'Deposit Funds & Order',
+    description: 'Top up your wallet with card or crypto, then pick your gems or item to order.',
   },
   {
     step: 3,
-    title: 'Add Funds & Pay',
-    description: 'Top up your wallet with card or crypto — your balance pays for the order instantly.',
+    title: 'Wait for Your Turn',
+    description: "Your order joins the queue. You'll be notified when the bot is ready for you.",
   },
   {
     step: 4,
-    title: 'Join Private Server',
-    description: "You'll get a link to our private Roblox server in your dashboard.",
+    title: 'Join the Private Server',
+    description: "When it's your turn, join our private Roblox server and press \"I'm Ready\".",
   },
   {
     step: 5,
-    title: 'Accept Bot Trade',
-    description: 'Our delivery bot trades you the gems automatically — usually under 2 minutes.',
+    title: 'Accept the Trade',
+    description: 'Our delivery bot trades you automatically — usually under 2 minutes.',
   },
 ] as const
 

@@ -5,8 +5,10 @@ import type { Order } from '@/lib/storage'
 import { expireOrder, settlePendingOrders } from '@/lib/order-expiry'
 import { setBotOrdersPollSeen, getBotLastOrdersPoll, BOT_POLL_THRESHOLD_MS } from '@/lib/bot-heartbeat'
 
-// Orders older than this are auto-expired (in milliseconds)
-const ORDER_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
+// Orders older than this are auto-expired once they reach the front of the queue
+const ORDER_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes from reachedFrontAt
+// Fallback for orders still waiting in queue — only expire if truly abandoned
+const QUEUE_FALLBACK_TIMEOUT_MS = 4 * 60 * 60 * 1000 // 4 hours from createdAt
 
 // Time before an unready #1 order gets skipped (from when they reach #1, not order creation)
 const SKIP_TIMEOUT_MS = 3.5 * 60 * 1000 // 3.5 minutes
@@ -87,15 +89,27 @@ export async function GET(request: NextRequest) {
   )
 
   // Auto-expire stale orders
+  // Clock starts when the order reaches #1 in the queue (reachedFrontAt), NOT at creation.
+  // Orders still waiting in queue are only expired after 4 hours as a safety fallback.
   const now = Date.now()
   const activeOrders: typeof pendingOrProcessing = []
   for (const o of pendingOrProcessing) {
-    const age = now - new Date(o.createdAt).getTime()
-    if (age > ORDER_TIMEOUT_MS && o.status === 'pending') {
-      await expireOrder(o, 'Auto-expired: timed out after 30 minutes')
-    } else {
-      activeOrders.push(o)
+    if (o.status === 'pending') {
+      if (o.reachedFrontAt) {
+        const ageAtFront = now - new Date(o.reachedFrontAt).getTime()
+        if (ageAtFront > ORDER_TIMEOUT_MS) {
+          await expireOrder(o, 'Auto-expired: timed out 30 minutes after reaching front of queue')
+          continue
+        }
+      } else {
+        const totalAge = now - new Date(o.createdAt).getTime()
+        if (totalAge > QUEUE_FALLBACK_TIMEOUT_MS) {
+          await expireOrder(o, 'Auto-expired: order waited in queue for over 4 hours')
+          continue
+        }
+      }
     }
+    activeOrders.push(o)
   }
 
   // Sort: ready-first queue

@@ -101,12 +101,17 @@ export async function settlePendingOrders(
   let cancelled = 0
   let left = 0
   for (const order of pending) {
-    const age = now - new Date(order.createdAt).getTime()
-    if (age > maxAgeMs) {
-      const ok = await expireOrder(order, reason)
-      if (ok) cancelled++
+    if (order.reachedFrontAt) {
+      // Only cancel orders that were actively at the front when the bot went down
+      const ageAtFront = now - new Date(order.reachedFrontAt).getTime()
+      if (ageAtFront > maxAgeMs) {
+        const ok = await expireOrder(order, reason)
+        if (ok) cancelled++
+      } else {
+        left++
+      }
     } else {
-      left++
+      left++ // Still waiting in queue — keep alive for the bot to process
     }
   }
   return { cancelled, left }
