@@ -43,10 +43,11 @@ function sanitizeFingerprint(raw: any): Record<string, unknown> {
     quickscope_kills: int(o.quickscope_kills),
     crate: str(o.crate),
     exist: int(o.exist),
-    // Preserve extra descriptive fields the bot sends (festive, kill_type) so
-    // matching still has them; they don't affect validity.
+    // Preserve extra descriptive fields the bot sends (festive, kill_type,
+    // kill_effect) so matching still has them; they don't affect validity.
     festive: o.festive === true,
     kill_type: str(o.kill_type),
+    kill_effect: str(o.kill_effect),
   }
 }
 
