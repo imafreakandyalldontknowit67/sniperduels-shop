@@ -79,51 +79,60 @@ export async function GET(request: NextRequest) {
     })
   }
 
-  // 2. Delivery jobs — buyer paid, deliver the vault item.
+  // 2. Delivery jobs — buyer paid, deliver the vault item(s).
   // ONLY pick up jobs whose Order has cleared payment (status in
   // processing|completed). Pandabase-pending Orders sit until the webhook
   // flips them to 'processing'.
-  const claimedDelivery = await prisma.$transaction(async tx => {
-    const candidate = await tx.itemDeliveryJob.findFirst({
-      where: {
-        status: 'queued',
-        // Inline order-status filter via a nested findFirst would be ideal,
-        // but Prisma can't traverse cross-table on findFirst directly here.
-        // We filter post-fetch instead and skip non-paid orders.
-      },
+  // BATCHED: a buyer who bought several items (cart) gets them all in ONE
+  // trade. Find the oldest queued+paid delivery, then claim all of that
+  // buyer's queued+paid deliveries (cap 12 = trade slot limit).
+  const claimedDeliveries = await prisma.$transaction(async tx => {
+    // Pull a window of the oldest queued deliveries, then filter to paid ones.
+    const queued = await tx.itemDeliveryJob.findMany({
+      where: { status: 'queued' },
       orderBy: { createdAt: 'asc' },
-      include: { vaultItem: true },
+      take: 60,
+      include: { vaultItem: { include: { catalog: true } } },
     })
-    if (!candidate) return null
-    const order = await tx.order.findUnique({
-      where: { id: candidate.orderId },
-      select: { status: true },
+    if (queued.length === 0) return null
+    const orderIds = [...new Set(queued.map(j => j.orderId))]
+    const paidOrders = await tx.order.findMany({
+      where: { id: { in: orderIds }, status: { in: ['processing', 'completed'] } },
+      select: { id: true },
     })
-    if (!order || (order.status !== 'processing' && order.status !== 'completed')) {
-      return null  // payment not cleared yet — skip this poll cycle
-    }
+    const paidSet = new Set(paidOrders.map(o => o.id))
+    const paid = queued.filter(j => paidSet.has(j.orderId))
+    if (paid.length === 0) return null  // nothing cleared payment yet
+    // Group by buyer; take the buyer of the oldest paid job, cap 12.
+    const first = paid[0]
+    const forBuyer = paid.filter(j => j.buyerUserId === first.buyerUserId).slice(0, 12)
+    const ids = forBuyer.map(j => j.id)
     const updated = await tx.itemDeliveryJob.updateMany({
-      where: { id: candidate.id, status: 'queued' },
-      data: {
-        status: 'bot_in_trade',
-        startedAt: new Date(),
-        attempts: { increment: 1 },
-      },
+      where: { id: { in: ids }, status: 'queued' },
+      data: { status: 'bot_in_trade', startedAt: new Date(), attempts: { increment: 1 } },
     })
-    return updated.count > 0 ? candidate : null
+    return updated.count > 0 ? forBuyer : null
   })
-  if (claimedDelivery) {
+  if (claimedDeliveries && claimedDeliveries.length > 0) {
     return NextResponse.json({
       kind: 'delivery',
       job: {
-        deliveryId: claimedDelivery.id,
-        vaultItemId: claimedDelivery.vaultItemId,
-        buyerUserId: claimedDelivery.buyerUserId,
-        buyerRobloxName: claimedDelivery.buyerRobloxName,
-        orderId: claimedDelivery.orderId,
-        expectedFingerprint: claimedDelivery.expectedFingerprint,
-        catalogId: claimedDelivery.vaultItem.catalogId,
-        lastCellHint: claimedDelivery.vaultItem.lastCellHint,
+        buyerUserId: claimedDeliveries[0].buyerUserId,
+        buyerRobloxName: claimedDeliveries[0].buyerRobloxName,
+        items: claimedDeliveries.map(j => ({
+          deliveryId: j.id,
+          vaultItemId: j.vaultItemId,
+          orderId: j.orderId,
+          catalogId: j.vaultItem.catalogId,
+          lastCellHint: j.vaultItem.lastCellHint,
+          // Merge catalog name into the per-instance fingerprint so the bot has
+          // the in-game name to search/match on (delivery = STRICT match).
+          expectedFingerprint: {
+            ...(j.expectedFingerprint as Record<string, unknown>),
+            name: (j.expectedFingerprint as Record<string, unknown>)?.name
+              ?? j.vaultItem.catalog.name,
+          },
+        })),
       },
     })
   }
