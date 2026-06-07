@@ -107,9 +107,9 @@ export async function GET(request: NextRequest) {
     ])
 
     // === DEPOSIT PROFIT ===
-    // Users deposit $X, we charge them $X + processing fee (7% + $0.35)
-    // Pandabase takes 5.9% + $0.30 from the charge amount
-    // Our profit = processing fee collected - pandabase fees
+    // Users deposit $X, we recover the estimated card fee (5.9% + $0.30)
+    // so deposits land as close to 1:1 as possible after Pandabase/PSP costs.
+    // Our profit = processing recovery collected - actual Pandabase fees.
     const totalUserDeposits = d(depositAgg._sum.amount) // what goes to user wallets
     const totalProcessingFees = d(depositAgg._sum.processingFee) // our markup
     const totalChargeAmount = d(depositAgg._sum.chargeAmount) // total charged to user

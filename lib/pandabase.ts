@@ -2,6 +2,35 @@ import crypto from 'crypto'
 
 const API_URL = 'https://api.pandabase.io'
 
+export const PANDABASE_FEE_RATE = 0.059
+export const PANDABASE_FEE_FIXED_CENTS = 30
+
+export interface BillingAddress {
+  line1: string
+  line2?: string
+  city: string
+  state: string
+  postal_code: string
+  country: string
+}
+
+export interface CheckoutCustomer {
+  name: string
+  email: string
+  billing: BillingAddress
+}
+
+export interface PandaEstimate {
+  subtotal: number
+  tax: { rate: number; amount: number }
+  total: number
+  available_payment_methods?: string[]
+}
+
+export function calculateCardSubtotalCents(walletCreditCents: number): number {
+  return Math.ceil((walletCreditCents + PANDABASE_FEE_FIXED_CENTS) / (1 - PANDABASE_FEE_RATE))
+}
+
 function getConfig() {
   if (process.env.PANDABASE_DEV_MODE === 'true') {
     return { secretKey: 'dev', shopId: 'dev' }
@@ -24,7 +53,7 @@ function getConfig() {
  * The trailing `#${refId}` MUST stay at the end of the name — the webhook
  * matcher (app/api/webhooks/pandabase/route.ts) extracts it via regex.
  */
-export async function createCheckout(amount: number, walletCredit?: number): Promise<{
+export async function createCheckout(amount: number, walletCredit?: number, customer?: CheckoutCustomer): Promise<{
   sessionId: string
   checkoutUrl: string
   refId: string
@@ -55,6 +84,7 @@ export async function createCheckout(amount: number, walletCredit?: number): Pro
         amount: Math.round(amount * 100),
         quantity: 1,
       }],
+      ...(customer ? { customer } : {}),
       return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/deposit`,
     }),
   })
@@ -77,6 +107,52 @@ export async function createCheckout(amount: number, walletCredit?: number): Pro
   }
 
   return { sessionId, checkoutUrl, refId }
+}
+
+export async function estimateCheckout(amountCents: number, country: string, state: string, walletCredit?: number): Promise<PandaEstimate> {
+  const credit = walletCredit ?? amountCents / 100
+
+  if (process.env.PANDABASE_DEV_MODE === 'true') {
+    const rate = country.toUpperCase() === 'US' && state.toUpperCase() === 'CA' ? 0.0633 : 0
+    const taxAmount = Math.round(amountCents * rate)
+    return {
+      subtotal: amountCents,
+      tax: { rate, amount: taxAmount },
+      total: amountCents + taxAmount,
+      available_payment_methods: ['CARD', 'APPLE_PAY', 'GOOGLE_PAY'],
+    }
+  }
+
+  const { secretKey, shopId } = getConfig()
+  const res = await fetch(`${API_URL}/v2/stores/${shopId}/checkouts/estimate`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${secretKey}`,
+    },
+    body: JSON.stringify({
+      items: [{
+        name: `sniperduels.shop wallet credit ($${credit.toFixed(2)})`,
+        amount: amountCents,
+        quantity: 1,
+      }],
+      country: country.toUpperCase(),
+      state: state.toUpperCase(),
+    }),
+  })
+
+  if (!res.ok) {
+    const text = await res.text()
+    console.error('[Pandabase] Estimate failed:', res.status, text)
+    throw new Error(`Pandabase estimate failed: ${res.status}`)
+  }
+
+  const json = await res.json()
+  if (!json.ok || !json.data) {
+    throw new Error(`Pandabase estimate failed: ${json.error || 'missing data'}`)
+  }
+
+  return json.data as PandaEstimate
 }
 
 // Replay window for V2 (Standard Webhooks): reject events older than 5 minutes.

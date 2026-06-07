@@ -1,11 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useAuth, useCurrency } from '@/components/providers'
 import type { Deposit } from '@/lib/storage'
-import { REGIONS, estimateRegionTax } from '@/lib/us-sales-tax'
 
 const PRESET_AMOUNTS = [5, 10, 25, 50, 100]
 const POPULAR_CURRENCIES = ['btc', 'eth', 'sol', 'usdtsol', 'usdcsol', 'ltc']
@@ -32,12 +31,66 @@ function getCryptoIcon(id: string): string {
 
 type Tab = 'card' | 'crypto'
 
+type BillingForm = {
+  name: string
+  email: string
+  line1: string
+  line2: string
+  city: string
+  state: string
+  postal_code: string
+  country: string
+}
+
+type CardEstimate = {
+  walletCredit: number
+  walletCreditCents: number
+  subtotal: number
+  subtotalCents: number
+  processingRecovery: number
+  tax: number
+  taxCents: number
+  taxRate: number
+  total: number
+  totalCents: number
+  cryptoSavings: number
+  cryptoSavingsCents: number
+  availablePaymentMethods: string[]
+}
+
+const EMPTY_BILLING: BillingForm = {
+  name: '',
+  email: '',
+  line1: '',
+  line2: '',
+  city: '',
+  state: '',
+  postal_code: '',
+  country: 'US',
+}
+
+const US_STATES = [
+  'AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY',
+]
+
+const COUNTRIES = [
+  { code: 'US', label: 'United States' },
+  { code: 'CA', label: 'Canada' },
+  { code: 'GB', label: 'United Kingdom' },
+  { code: 'AU', label: 'Australia' },
+  { code: 'NZ', label: 'New Zealand' },
+  { code: 'DE', label: 'Germany' },
+  { code: 'FR', label: 'France' },
+  { code: 'NL', label: 'Netherlands' },
+  { code: 'BR', label: 'Brazil' },
+  { code: 'IN', label: 'India' },
+]
+
 export default function DepositPage() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const { user, isLoading, walletBalance: authWalletBalance } = useAuth()
   const { formatPrice, isUsd, currency, currencySymbol, convertToUsd, convertFromUsd } = useCurrency()
-  const [tab, setTab] = useState<Tab>('card')
+  const [tab, setTab] = useState<Tab>('crypto')
   const [amount, setAmount] = useState(() => {
     const prefill = searchParams.get('amount')
     return prefill && !isNaN(Number(prefill)) ? prefill : ''
@@ -52,25 +105,10 @@ export default function DepositPage() {
   const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [botOnline, setBotOnline] = useState(true)
-  const [taxRegion, setTaxRegion] = useState<string>('')
-  const [taxRegionDetected, setTaxRegionDetected] = useState(false)
-  const [taxRegionEditing, setTaxRegionEditing] = useState(false)
-
-  // Auto-detect from Cloudflare-injected headers on mount. We never let the
-  // customer downgrade to a lower-tax region from the UI — Pandabase taxes
-  // from their billing address regardless. The "(not me?)" link just expands
-  // the picker for genuine VPN / wrong-country cases.
-  useEffect(() => {
-    fetch('/api/geo', { cache: 'no-store' })
-      .then(r => r.json())
-      .then((g: { detected: boolean; regionCode: string | null }) => {
-        if (g?.detected && g.regionCode && REGIONS.some(r => r.code === g.regionCode)) {
-          setTaxRegion(g.regionCode)
-          setTaxRegionDetected(true)
-        }
-      })
-      .catch(() => { /* fall back to manual picker */ })
-  }, [])
+  const [billing, setBilling] = useState<BillingForm>(EMPTY_BILLING)
+  const [cardEstimate, setCardEstimate] = useState<CardEstimate | null>(null)
+  const [estimateLoading, setEstimateLoading] = useState(false)
+  const [billingTouched, setBillingTouched] = useState(false)
 
   // Mobile keyboard / viewport detection (Scope 1) — when the on-screen
   // keyboard pops up on mobile we want to (a) keep the focused input in
@@ -129,7 +167,9 @@ export default function DepositPage() {
       if (user) {
         fetchDeposits()
         fetchCurrencies()
-        fetch('/api/bot/status').then(r => r.json()).then(d => setBotOnline(d.online)).catch(() => {})
+        // TEMP PREVIEW BYPASS: keep the bot-online banner hidden while iterating
+        // on the deposit checkout UX.
+        setBotOnline(true)
       }
     }
   }, [isLoading, user, authWalletBalance])
@@ -160,6 +200,16 @@ export default function DepositPage() {
     }
   }, [isLoading, user])
 
+  useEffect(() => {
+    if (user && !billingTouched && !billing.name) {
+      setBilling(prev => ({ ...prev, name: user.displayName || user.name || '' }))
+    }
+  }, [user, billingTouched, billing.name])
+
+  useEffect(() => {
+    setCardEstimate(null)
+  }, [amount, currency, billing.name, billing.email, billing.line1, billing.line2, billing.city, billing.state, billing.postal_code, billing.country])
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -168,7 +218,8 @@ export default function DepositPage() {
     )
   }
 
-  if (!user) { router.push('/'); return null }
+  // TEMP PREVIEW BYPASS: keep rendering while logged out so this branch's
+  // deposit UX can be reviewed locally. Payment creation APIs still require auth.
 
   // Convert input amount (in user's currency) to USD
   function getUsdAmount(): number {
@@ -180,12 +231,87 @@ export default function DepositPage() {
   // Get min in user's currency
   const minLocal = isUsd ? 5 : convertFromUsd(5)
 
+  function updateBilling<K extends keyof BillingForm>(key: K, value: BillingForm[K]) {
+    setBillingTouched(true)
+    setBilling(prev => ({
+      ...prev,
+      [key]: (key === 'country' || key === 'state' ? String(value).toUpperCase() : value) as BillingForm[K],
+      ...(key === 'country' && value !== 'US' ? { state: prev.state } : {}),
+    }))
+  }
+
+  function billingReady(): boolean {
+    return !!(
+      billing.name.trim() &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(billing.email.trim()) &&
+      billing.line1.trim() &&
+      billing.city.trim() &&
+      billing.state.trim() &&
+      billing.postal_code.trim() &&
+      /^[A-Z]{2}$/.test(billing.country.trim().toUpperCase())
+    )
+  }
+
+  async function handleEstimateCardTotal() {
+    const numAmount = parseFloat(amount)
+    const usdAmount = getUsdAmount()
+    if (!usdAmount || usdAmount < 5) {
+      setMessage({ type: 'error', text: `Amount must be at least ${currencySymbol}${Math.ceil(minLocal)}` })
+      return
+    }
+    if (!billingReady()) {
+      setMessage({ type: 'error', text: 'Fill out your billing address so we can calculate the card total.' })
+      return
+    }
+    setEstimateLoading(true)
+    setMessage(null)
+    try {
+      const res = await fetch('/api/deposits/estimate-card', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: numAmount, localCurrency: currency, billing, website: hpField }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setMessage({ type: 'error', text: data.error || 'Failed to estimate card total' })
+        return
+      }
+      setCardEstimate(data)
+      posthog.capture('deposit_card_estimated', {
+        provider: 'pandabase',
+        amount_usd: data.walletCredit,
+        charge_amount: data.subtotal,
+        estimated_tax: data.tax,
+        estimated_total: data.total,
+        crypto_savings: data.cryptoSavings,
+        billing_country: billing.country,
+        billing_state: billing.state,
+      })
+    } catch {
+      setMessage({ type: 'error', text: 'Failed to estimate card total' })
+    } finally {
+      setEstimateLoading(false)
+    }
+  }
+
   // ── Card/CashApp deposit (Pandabase) ──
   async function handleCardDeposit() {
     const numAmount = parseFloat(amount)
     const usdAmount = getUsdAmount()
     if (!usdAmount || usdAmount < 5) {
       setMessage({ type: 'error', text: `Amount must be at least ${currencySymbol}${Math.ceil(minLocal)}` })
+      return
+    }
+    if (!user) {
+      setMessage({ type: 'error', text: 'Preview mode: card total estimation is enabled, but creating a real checkout still requires login.' })
+      return
+    }
+    if (!billingReady()) {
+      setMessage({ type: 'error', text: 'Fill out your billing address before continuing with card.' })
+      return
+    }
+    if (!cardEstimate) {
+      await handleEstimateCardTotal()
       return
     }
     setLoading(true)
@@ -195,7 +321,7 @@ export default function DepositPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         // Send the user's local-currency input; server converts to USD authoritatively.
-        body: JSON.stringify({ amount: numAmount, localCurrency: currency, website: hpField }),
+        body: JSON.stringify({ amount: numAmount, localCurrency: currency, billing, website: hpField }),
       })
       const data = await res.json()
       if (!res.ok) { setMessage({ type: 'error', text: data.error || 'Failed to create deposit' }); return }
@@ -216,7 +342,11 @@ export default function DepositPage() {
         invoice_id: data.sessionId,
         charge_amount: data.chargeAmount,
         processing_fee: data.processingFee,
-        tax_region: taxRegion || undefined,
+        estimated_tax: cardEstimate.tax,
+        estimated_total: cardEstimate.total,
+        crypto_savings: cardEstimate.cryptoSavings,
+        billing_country: billing.country,
+        billing_state: billing.state,
         source: 'client',
       })
 
@@ -267,6 +397,7 @@ export default function DepositPage() {
             })
             setMessage({ type: 'success', text: `${formatPrice(usdAmount)} payment received! Crediting your wallet...` })
             setAmount('')
+            setCardEstimate(null)
             setTimeout(() => { handleVerify(data.depositId); fetchDeposits() }, 2000)
             checkout.destroy()
           },
@@ -295,6 +426,7 @@ export default function DepositPage() {
         setMessage({ type: 'success', text: 'Checkout opened. Complete payment then verify below.' })
       }
       setAmount('')
+      setCardEstimate(null)
       fetchDeposits()
     } catch { setMessage({ type: 'error', text: 'Something went wrong' }) }
     finally { setLoading(false) }
@@ -574,88 +706,14 @@ export default function DepositPage() {
           )}
           {tab === 'crypto' && (
             <p className="text-xs text-center mt-3 text-gray-400">
-              Crypto deposits are processed manually with no fees
+              Crypto deposits are 1:1 with no processing recovery.
             </p>
           )}
-          {tab === 'card' && amount && getUsdAmount() >= 5 && (() => {
-            const wallet = getUsdAmount()
-            const fee = wallet * 0.07 + 0.35
-            const charge = wallet + fee
-            const taxEst = estimateRegionTax(taxRegion, charge)
-            const total = charge + (taxEst?.tax ?? 0)
-            const cryptoSavings = total - wallet
-            return (
-              <div className="text-xs mt-3 space-y-2">
-                <div className="px-4">
-                  {taxRegionDetected && !taxRegionEditing && taxRegion ? (
-                    <div className="flex items-center justify-between gap-2 text-[11px] text-gray-400 bg-dark-800/50 border border-dark-600 rounded px-2 py-1.5">
-                      <span>📍 Detected: <span className="text-white">{REGIONS.find(r => r.code === taxRegion)?.label || taxRegion}</span></span>
-                      <button onClick={() => setTaxRegionEditing(true)} className="text-[10px] text-gray-500 hover:text-accent uppercase tracking-wider">Not me?</button>
-                    </div>
-                  ) : (
-                    <>
-                      <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">Where will you be paying from?</label>
-                      <select
-                        value={taxRegion}
-                        onChange={(e) => setTaxRegion(e.target.value)}
-                        className="w-full bg-dark-800 border border-dark-500 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-accent"
-                      >
-                        <option value="">Select your state / country…</option>
-                        <optgroup label="United States">
-                          {REGIONS.filter(r => r.group === 'us').map(r => <option key={r.code} value={r.code}>{r.label}</option>)}
-                        </optgroup>
-                        <optgroup label="International">
-                          {REGIONS.filter(r => r.group === 'intl').map(r => <option key={r.code} value={r.code}>{r.label}</option>)}
-                        </optgroup>
-                        <option value="OTHER">Other / not listed</option>
-                      </select>
-                      <p className="text-[9px] text-gray-600 mt-1">Pandabase taxes based on your billing address — picking another region here just changes this preview.</p>
-                    </>
-                  )}
-                </div>
-                <div className="space-y-1 text-center">
-                  <div className="flex justify-between text-gray-400 px-4">
-                    <span>Wallet credit</span>
-                    <span>${wallet.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-400 px-4">
-                    <span>Processing fee (7% + $0.35)</span>
-                    <span>+${fee.toFixed(2)}</span>
-                  </div>
-                  {taxRegion === 'OTHER' && (
-                    <div className="flex justify-between text-gray-500 px-4 italic">
-                      <span>+ regional tax (varies)</span>
-                      <span>—</span>
-                    </div>
-                  )}
-                  {taxEst && taxEst.tax > 0 && (
-                    <div className="flex justify-between text-gray-400 px-4">
-                      <span>Estimated tax</span>
-                      <span>+${taxEst.tax.toFixed(2)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-white font-medium px-4 pt-1 border-t border-dark-600">
-                    <span>{taxEst || taxRegion === 'OTHER' ? 'Estimated total' : 'Total charge (before tax)'}</span>
-                    <span>${total.toFixed(2)}</span>
-                  </div>
-                  {taxEst && (
-                    <p className="text-[10px] text-gray-500 mt-2">Estimate. Final tax computed by Pandabase at checkout based on your billing address — usually within a few cents.</p>
-                  )}
-                  {!isUsd && (
-                    <p className="text-[10px] text-gray-500 mt-2">Pandabase will show the final amount in your local currency at checkout.</p>
-                  )}
-                </div>
-                {(taxEst && taxEst.tax > 0) || taxRegion === 'OTHER' || !taxRegion ? (
-                  <button
-                    onClick={() => { setTab('crypto'); posthog.capture('crypto_upsell_clicked', { savings: cryptoSavings, region: taxRegion || 'unselected' }) }}
-                    className="w-full mt-2 px-4 py-2 rounded border border-[#e1ad2d]/40 bg-[#e1ad2d]/10 hover:bg-[#e1ad2d]/20 text-[11px] text-[#e1ad2d] uppercase tracking-wider font-bold transition-colors"
-                  >
-                    💸 Pay ${wallet.toFixed(2)} in crypto — no fee, no tax →
-                  </button>
-                ) : null}
-              </div>
-            )
-          })()}
+          {tab === 'card' && amount && getUsdAmount() >= 5 && (
+            <p className="text-xs text-center mt-3 text-gray-400">
+              Fill billing details below to calculate the exact PandaBase-estimated card total.
+            </p>
+          )}
         </div>
 
         {/* Payment Info Section (card tab) */}
@@ -758,10 +816,101 @@ export default function DepositPage() {
               <input type="text" name="website" value={hpField} onChange={(e) => setHpField(e.target.value)} autoComplete="off" tabIndex={-1} />
             </div>
 
-            <div className="flex flex-col items-center gap-2">
+            <div className="bg-dark-800/50 rounded-xl p-5 mb-6 border border-dark-500">
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-blue-300 font-bold">Billing estimate</p>
+                  <h3 className="text-white font-semibold mt-1">Calculate card total before checkout</h3>
+                </div>
+                <span className="text-[10px] text-gray-500 uppercase tracking-wider">Session only</span>
+              </div>
+              <p className="text-xs text-gray-500 mb-4">
+                We use this once to estimate PandaBase tax and prefill the checkout modal. We do not store your full billing address.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className="block sm:col-span-1">
+                  <span className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">Full name</span>
+                  <input value={billing.name} onChange={(e) => updateBilling('name', e.target.value)} autoComplete="billing name" className="w-full bg-dark-800 border border-dark-500 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-accent" placeholder="Billing name" />
+                </label>
+                <label className="block sm:col-span-1">
+                  <span className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">Email</span>
+                  <input type="email" value={billing.email} onChange={(e) => updateBilling('email', e.target.value)} autoComplete="email" className="w-full bg-dark-800 border border-dark-500 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-accent" placeholder="you@example.com" />
+                </label>
+                <label className="block sm:col-span-2">
+                  <span className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">Address line 1</span>
+                  <input value={billing.line1} onChange={(e) => updateBilling('line1', e.target.value)} autoComplete="billing address-line1" className="w-full bg-dark-800 border border-dark-500 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-accent" placeholder="Street address" />
+                </label>
+                <label className="block sm:col-span-2">
+                  <span className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">Address line 2 <span className="text-gray-700">optional</span></span>
+                  <input value={billing.line2} onChange={(e) => updateBilling('line2', e.target.value)} autoComplete="billing address-line2" className="w-full bg-dark-800 border border-dark-500 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-accent" placeholder="Apartment, suite, etc." />
+                </label>
+                <label className="block">
+                  <span className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">City</span>
+                  <input value={billing.city} onChange={(e) => updateBilling('city', e.target.value)} autoComplete="billing address-level2" className="w-full bg-dark-800 border border-dark-500 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-accent" placeholder="City" />
+                </label>
+                <label className="block">
+                  <span className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">Country</span>
+                  <select value={billing.country} onChange={(e) => updateBilling('country', e.target.value)} autoComplete="billing country" className="w-full bg-dark-800 border border-dark-500 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent">
+                    {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">State / province</span>
+                  {billing.country === 'US' ? (
+                    <select value={billing.state} onChange={(e) => updateBilling('state', e.target.value)} autoComplete="billing address-level1" className="w-full bg-dark-800 border border-dark-500 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent">
+                      <option value="">Select state...</option>
+                      {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  ) : (
+                    <input value={billing.state} onChange={(e) => updateBilling('state', e.target.value)} autoComplete="billing address-level1" className="w-full bg-dark-800 border border-dark-500 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-accent" placeholder="State / province" />
+                  )}
+                </label>
+                <label className="block">
+                  <span className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">ZIP / postal code</span>
+                  <input value={billing.postal_code} onChange={(e) => updateBilling('postal_code', e.target.value)} autoComplete="billing postal-code" className="w-full bg-dark-800 border border-dark-500 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-accent" placeholder="ZIP / postal" />
+                </label>
+              </div>
+
+              <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button
+                  onClick={handleEstimateCardTotal}
+                  disabled={estimateLoading || !amount || getUsdAmount() < 5 || !billingReady()}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-lg border border-blue-400/40 bg-blue-500/10 hover:bg-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed text-blue-200 text-xs uppercase tracking-wider font-bold transition-colors"
+                >
+                  {estimateLoading ? 'Calculating...' : cardEstimate ? 'Recalculate Card Total' : 'Calculate Card Total'}
+                </button>
+                {!billingReady() && amount && getUsdAmount() >= 5 && (
+                  <p className="text-[10px] text-gray-500 text-center">Complete billing details to unlock the card total.</p>
+                )}
+              </div>
+
+              {cardEstimate && (
+                <div className="mt-5 rounded-xl border border-dark-500 bg-dark-900/60 p-4">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between text-gray-400"><span>You receive</span><span className="text-white">${cardEstimate.walletCredit.toFixed(2)}</span></div>
+                    <div className="flex justify-between text-gray-400"><span>Processing recovery</span><span>+${cardEstimate.processingRecovery.toFixed(2)}</span></div>
+                    <div className="flex justify-between text-gray-400"><span>Estimated tax</span><span>+${cardEstimate.tax.toFixed(2)}</span></div>
+                    <div className="flex justify-between text-white font-bold pt-2 border-t border-dark-600"><span>You pay today</span><span>${cardEstimate.total.toFixed(2)}</span></div>
+                  </div>
+                  <div className="mt-4 rounded-lg border border-[#e1ad2d]/30 bg-[#e1ad2d]/10 p-3 text-center">
+                    <p className="text-xs text-[#e1ad2d] font-bold">Crypto would cost ${cardEstimate.walletCredit.toFixed(2)} — save ${cardEstimate.cryptoSavings.toFixed(2)}</p>
+                    <button
+                      onClick={() => { setTab('crypto'); posthog.capture('crypto_upsell_clicked', { savings: cardEstimate.cryptoSavings, source: 'card_estimate_review' }) }}
+                      className="mt-2 text-[10px] uppercase tracking-wider text-[#e1ad2d] hover:underline font-bold"
+                    >
+                      Switch to crypto and save
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-gray-500 mt-3 text-center">PandaBase calculates final tax from your billing address. The modal should be prefilled from the details above.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col items-center gap-2 mb-6">
               <button
                 onClick={handleCardDeposit}
-                disabled={loading || !amount || getUsdAmount() < 5 || !agreedToTerms || !taxRegion}
+                disabled={loading || !amount || getUsdAmount() < 5 || !agreedToTerms || !billingReady() || !cardEstimate}
                 className="relative inline-flex items-center justify-center pixel-btn-press disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <img src="/images/pixel/pngs/asset-59.png" alt="" className="h-[48px] sm:h-[54px] w-auto" style={{ imageRendering: 'pixelated' }} />
@@ -771,11 +920,11 @@ export default function DepositPage() {
                       <span className="w-3.5 h-3.5 border-2 border-dark-900 border-t-transparent rounded-full animate-spin" />
                       Creating...
                     </span>
-                  ) : 'Continue to Payment'}
+                  ) : cardEstimate ? 'Continue with Card' : 'Calculate Total First'}
                 </span>
               </button>
-              {!taxRegion && amount && getUsdAmount() >= 5 && agreedToTerms && (
-                <p className="text-[10px] text-gray-500">Pick your state / country above so we can show you the total before you pay.</p>
+              {!cardEstimate && amount && getUsdAmount() >= 5 && agreedToTerms && (
+                <p className="text-[10px] text-gray-500">Calculate the card total above before opening PandaBase.</p>
               )}
             </div>
           </>
