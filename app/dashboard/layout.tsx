@@ -2,6 +2,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { getUser } from '@/lib/storage'
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar'
 import OutageBanner from '@/components/OutageBanner'
+import { redirect } from 'next/navigation'
 
 export default async function DashboardLayout({
   children,
@@ -9,11 +10,9 @@ export default async function DashboardLayout({
   children: React.ReactNode
 }) {
   const user = await getCurrentUser()
-  // TEMP PREVIEW BYPASS: allow unauthenticated access to dashboard pages on this
-  // rough-draft branch so the deposit checkout UX can be reviewed locally.
-  // Restore the redirect before shipping.
+  if (!user) redirect('/')
 
-  const dbUser = user ? await getUser(user.id) : null
+  const dbUser = await getUser(user.id)
 
   return (
     <div className="min-h-screen bg-dark-900 flex">

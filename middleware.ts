@@ -261,12 +261,6 @@ export async function middleware(request: NextRequest) {
     return new NextResponse(null, { status: 204 })
   }
 
-  // TEMP PREVIEW BYPASS: allow the rough-draft card estimate endpoint from the
-  // local preview port without CSRF noise. Restore normal CSRF before shipping.
-  if (request.nextUrl.pathname === '/api/deposits/estimate-card') {
-    return NextResponse.next()
-  }
-
   // Blacklist check: silently return fake/empty responses for blacklisted IPs
   // Auth endpoints are exempt — never lock users out of logging in
   if (blacklistedIps.has(ip)) {

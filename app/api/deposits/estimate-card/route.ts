@@ -3,6 +3,7 @@ import { getSiteSettings } from '@/lib/storage'
 import { localToUsd, usdToLocal, isSupportedCurrency } from '@/lib/fx'
 import { calculateCardSubtotalCents, estimateCheckout } from '@/lib/pandabase'
 import { logError } from '@/lib/error-log'
+import { getCurrentUser } from '@/lib/auth'
 
 type BillingInput = {
   name?: unknown
@@ -53,8 +54,10 @@ function dollars(cents: number): number {
 
 export async function POST(request: NextRequest) {
   try {
-    // TEMP PREVIEW BYPASS: allow logged-out reviewers to calculate card totals
-    // on the local rough-draft branch. Restore auth before shipping.
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const settings = await getSiteSettings()
     if (settings.depositsDisabled) {

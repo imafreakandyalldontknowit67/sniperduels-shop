@@ -167,9 +167,12 @@ export default function DepositPage() {
       if (user) {
         fetchDeposits()
         fetchCurrencies()
-        // TEMP PREVIEW BYPASS: keep the bot-online banner hidden while iterating
-        // on the deposit checkout UX.
-        setBotOnline(true)
+        fetch('/api/bot/status')
+          .then(res => res.ok ? res.json() : null)
+          .then(data => {
+            if (data && typeof data.online === 'boolean') setBotOnline(data.online)
+          })
+          .catch(() => {})
       }
     }
   }, [isLoading, user, authWalletBalance])
@@ -217,9 +220,6 @@ export default function DepositPage() {
       </div>
     )
   }
-
-  // TEMP PREVIEW BYPASS: keep rendering while logged out so this branch's
-  // deposit UX can be reviewed locally. Payment creation APIs still require auth.
 
   // Convert input amount (in user's currency) to USD
   function getUsdAmount(): number {
