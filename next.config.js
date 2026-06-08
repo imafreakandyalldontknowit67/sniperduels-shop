@@ -8,9 +8,6 @@ const nextConfig = {
   outputFileTracingRoot: __dirname,
   reactStrictMode: true,
   poweredByHeader: false,
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'tr.rbxcdn.com' },

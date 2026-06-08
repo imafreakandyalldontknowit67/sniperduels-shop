@@ -44,7 +44,7 @@ async function lookupRegionByIp(ip: string): Promise<string | null> {
 export async function GET(req: NextRequest) {
   const country = (req.headers.get('cf-ipcountry') || '').toUpperCase()
   let region = (req.headers.get('cf-region-code') || req.headers.get('cf-region') || '').toUpperCase()
-  let source: 'cf' | 'geoip' | null = region ? 'cf' : null
+  let source: 'cf' | 'ipapi' | null = region ? 'cf' : null
 
   // Fallback: server-side IP→region lookup (free CF doesn't pass cf-region-code)
   if (!region) {

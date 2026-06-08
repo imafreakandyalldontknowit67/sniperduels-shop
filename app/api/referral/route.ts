@@ -13,8 +13,8 @@ export async function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://sniperduels.shop'
 
   return NextResponse.json({
-    referralCode: code,
     referralUrl: `${baseUrl}/r/${code}`,
     ...stats,
+    referralCode: code,
   })
 }
