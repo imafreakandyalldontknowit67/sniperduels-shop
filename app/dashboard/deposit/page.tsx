@@ -204,12 +204,6 @@ export default function DepositPage() {
   }, [isLoading, user])
 
   useEffect(() => {
-    if (user && !billingTouched && !billing.name) {
-      setBilling(prev => ({ ...prev, name: user.displayName || user.name || '' }))
-    }
-  }, [user, billingTouched, billing.name])
-
-  useEffect(() => {
     setCardEstimate(null)
   }, [amount, currency, billing.name, billing.email, billing.line1, billing.line2, billing.city, billing.state, billing.postal_code, billing.country])
 
