@@ -110,9 +110,9 @@ export default function DepositPage() {
   const [estimateLoading, setEstimateLoading] = useState(false)
   const [billingTouched, setBillingTouched] = useState(false)
 
-  // Mobile keyboard / viewport detection (Scope 1) — when the on-screen
-  // keyboard pops up on mobile we want to (a) keep the focused input in
-  // view and (b) emit an analytics event if the keyboard is obscuring it.
+  // Mobile keyboard / viewport detection. Only emit analytics when the
+  // keyboard obscures an input; never force-scroll the focused field because
+  // that fights the user's manual scrolling in the billing calculator.
   const amountInputRef = useRef<HTMLInputElement | null>(null)
   const keyboardObscuredFiredRef = useRef(false)
   useEffect(() => {
@@ -136,14 +136,11 @@ export default function DepositPage() {
             input_bottom: Math.round(rect.bottom),
           })
         }
-        try { active.scrollIntoView({ behavior: 'smooth', block: 'center' }) } catch { /* ignore */ }
       }
     }
     vv.addEventListener('resize', handleResize)
-    vv.addEventListener('scroll', handleResize)
     return () => {
       vv.removeEventListener('resize', handleResize)
-      vv.removeEventListener('scroll', handleResize)
     }
   }, [])
 
