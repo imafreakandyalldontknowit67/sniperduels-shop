@@ -1,0 +1,1937 @@
+[
+  {
+    "name": "AWP | ARCTIC RECON",
+    "weapon": "Awp",
+    "skin": "Arctic Recon",
+    "type": "sniper",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-awp-arctic-recon",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-awp-arctic-recon"
+  },
+  {
+    "name": "AWP | BEWITCHED",
+    "weapon": "Awp",
+    "skin": "Bewitched",
+    "type": "sniper",
+    "crate": "Hallows Basket",
+    "slug": "hallows-basket-awp-bewitched",
+    "valuesUrl": "https://sniperduelsvalues.com/item/hallows-basket-awp-bewitched"
+  },
+  {
+    "name": "AWP | BOREALIS",
+    "weapon": "Awp",
+    "skin": "Borealis",
+    "type": "sniper",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-awp-borealis",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-awp-borealis"
+  },
+  {
+    "name": "AWP | BUBBLE GUM",
+    "weapon": "Awp",
+    "skin": "Bubble Gum",
+    "type": "sniper",
+    "crate": "Release Case",
+    "slug": "release-case-awp-bubble-gum",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-awp-bubble-gum"
+  },
+  {
+    "name": "AWP | CELTIC",
+    "weapon": "Awp",
+    "skin": "Celtic",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-awp-celtic",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-awp-celtic"
+  },
+  {
+    "name": "AWP | CERULEAN OZYMANDIAS",
+    "weapon": "Awp",
+    "skin": "Cerulean Ozymandias",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-awp-cerulean-ozymandias",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-awp-cerulean-ozymandias"
+  },
+  {
+    "name": "AWP | CRIMSON OZYMANDIAS",
+    "weapon": "Awp",
+    "skin": "Crimson Ozymandias",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-awp-crimson-ozymandias",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-awp-crimson-ozymandias"
+  },
+  {
+    "name": "AWP | DRIFTER",
+    "weapon": "Awp",
+    "skin": "Drifter",
+    "type": "sniper",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-awp-drifter",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-awp-drifter"
+  },
+  {
+    "name": "AWP | DYNASTY",
+    "weapon": "Awp",
+    "skin": "Dynasty",
+    "type": "sniper",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-awp-dynasty",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-awp-dynasty"
+  },
+  {
+    "name": "AWP | ELEMENTALIST",
+    "weapon": "Awp",
+    "skin": "Elementalist",
+    "type": "sniper",
+    "crate": "Hallows Basket",
+    "slug": "hallows-basket-awp-elementalist",
+    "valuesUrl": "https://sniperduelsvalues.com/item/hallows-basket-awp-elementalist"
+  },
+  {
+    "name": "AWP | EMPYREUS",
+    "weapon": "Awp",
+    "skin": "Empyreus",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-awp-empyreus",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-awp-empyreus"
+  },
+  {
+    "name": "AWP | FANTASY",
+    "weapon": "Awp",
+    "skin": "Fantasy",
+    "type": "sniper",
+    "crate": "V-Day",
+    "slug": "v-day-awp-fantasy",
+    "valuesUrl": "https://sniperduelsvalues.com/item/v-day-awp-fantasy"
+  },
+  {
+    "name": "AWP | FOR HER",
+    "weapon": "Awp",
+    "skin": "For Her",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-awp-for-her",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-awp-for-her"
+  },
+  {
+    "name": "AWP | FOR HIM",
+    "weapon": "Awp",
+    "skin": "For Him",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-awp-for-him",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-awp-for-him"
+  },
+  {
+    "name": "AWP | FRANKENAWPGRAY",
+    "weapon": "Awp",
+    "skin": "Frankenawpgray",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-awp-frankenawpgray",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-awp-frankenawpgray"
+  },
+  {
+    "name": "AWP | FRANKENAWPGREEN",
+    "weapon": "Awp",
+    "skin": "Frankenawpgreen",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-awp-frankenawpgreen",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-awp-frankenawpgreen"
+  },
+  {
+    "name": "AWP | FRIGIDUS",
+    "weapon": "Awp",
+    "skin": "Frigidus",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-awp-frigidus",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-awp-frigidus"
+  },
+  {
+    "name": "AWP | INFERNUS",
+    "weapon": "Awp",
+    "skin": "Infernus",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-awp-infernus",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-awp-infernus"
+  },
+  {
+    "name": "AWP | INVERTED",
+    "weapon": "Awp",
+    "skin": "Inverted",
+    "type": "sniper",
+    "crate": "Release Case",
+    "slug": "release-case-awp-inverted",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-awp-inverted"
+  },
+  {
+    "name": "AWP | JEWEL",
+    "weapon": "Awp",
+    "skin": "Jewel",
+    "type": "sniper",
+    "crate": "V-Day",
+    "slug": "v-day-awp-jewel",
+    "valuesUrl": "https://sniperduelsvalues.com/item/v-day-awp-jewel"
+  },
+  {
+    "name": "AWP | NEW YEARS 2026",
+    "weapon": "Awp",
+    "skin": "New Years 2026",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-awp-new-years-2026",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-awp-new-years-2026"
+  },
+  {
+    "name": "AWP | PEPPERMINT",
+    "weapon": "Awp",
+    "skin": "Peppermint",
+    "type": "sniper",
+    "crate": "Present",
+    "slug": "present-awp-peppermint",
+    "valuesUrl": "https://sniperduelsvalues.com/item/present-awp-peppermint"
+  },
+  {
+    "name": "AWP | RAINBOW RUNNER",
+    "weapon": "Awp",
+    "skin": "Rainbow Runner",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-awp-rainbow-runner",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-awp-rainbow-runner"
+  },
+  {
+    "name": "AWP | RED SPIRAL",
+    "weapon": "Awp",
+    "skin": "Red Spiral",
+    "type": "sniper",
+    "crate": "Hallows Basket",
+    "slug": "hallows-basket-awp-red-spiral",
+    "valuesUrl": "https://sniperduelsvalues.com/item/hallows-basket-awp-red-spiral"
+  },
+  {
+    "name": "AWP | SHOGUN",
+    "weapon": "Awp",
+    "skin": "Shogun",
+    "type": "sniper",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-awp-shogun",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-awp-shogun"
+  },
+  {
+    "name": "AWP | SUNSET RUNNER",
+    "weapon": "Awp",
+    "skin": "Sunset Runner",
+    "type": "sniper",
+    "crate": "Release Case",
+    "slug": "release-case-awp-sunset-runner",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-awp-sunset-runner"
+  },
+  {
+    "name": "AWP | TRUE INVERTED",
+    "weapon": "Awp",
+    "skin": "True Inverted",
+    "type": "sniper",
+    "crate": "Release Case",
+    "slug": "release-case-awp-true-inverted",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-awp-true-inverted"
+  },
+  {
+    "name": "AWP | TRUE PINK",
+    "weapon": "Awp",
+    "skin": "True Pink",
+    "type": "sniper",
+    "crate": "V-Day",
+    "slug": "v-day-awp-true-pink",
+    "valuesUrl": "https://sniperduelsvalues.com/item/v-day-awp-true-pink"
+  },
+  {
+    "name": "AWP | UMBR ELEMENTALIST",
+    "weapon": "Awp",
+    "skin": "Umbr Elementalist",
+    "type": "sniper",
+    "crate": "Hallows Basket",
+    "slug": "hallows-basket-awp-umbr-elementalist",
+    "valuesUrl": "https://sniperduelsvalues.com/item/hallows-basket-awp-umbr-elementalist"
+  },
+  {
+    "name": "AWP | VANILLA",
+    "weapon": "Awp",
+    "skin": "Vanilla",
+    "type": "sniper",
+    "crate": "Release Case",
+    "slug": "release-case-awp-vanilla",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-awp-vanilla"
+  },
+  {
+    "name": "AWP | WHITE SPIRAL",
+    "weapon": "Awp",
+    "skin": "White Spiral",
+    "type": "sniper",
+    "crate": "Hallows Basket",
+    "slug": "hallows-basket-awp-white-spiral",
+    "valuesUrl": "https://sniperduelsvalues.com/item/hallows-basket-awp-white-spiral"
+  },
+  {
+    "name": "BAYONET | ADURITE",
+    "weapon": "Bayonet",
+    "skin": "Adurite",
+    "type": "knife",
+    "crate": "Classic Case",
+    "slug": "classic-case-bayonet-adurite",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-bayonet-adurite"
+  },
+  {
+    "name": "BAYONET | AMETHYST",
+    "weapon": "Bayonet",
+    "skin": "Amethyst",
+    "type": "knife",
+    "crate": "Release Case",
+    "slug": "release-case-bayonet-amethyst",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-bayonet-amethyst"
+  },
+  {
+    "name": "BAYONET | AURORA",
+    "weapon": "Bayonet",
+    "skin": "Aurora",
+    "type": "knife",
+    "crate": "Release Case",
+    "slug": "release-case-bayonet-aurora",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-bayonet-aurora"
+  },
+  {
+    "name": "BAYONET | BAYONET OF DESTINY",
+    "weapon": "Bayonet",
+    "skin": "Bayonet Of Destiny",
+    "type": "knife",
+    "crate": "April Fools Case",
+    "slug": "april-fools-case-bayonet-bayonet-of-destiny",
+    "valuesUrl": "https://sniperduelsvalues.com/item/april-fools-case-bayonet-bayonet-of-destiny"
+  },
+  {
+    "name": "BAYONET | BLACK IRON",
+    "weapon": "Bayonet",
+    "skin": "Black Iron",
+    "type": "knife",
+    "crate": "Classic Case",
+    "slug": "classic-case-bayonet-black-iron",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-bayonet-black-iron"
+  },
+  {
+    "name": "BAYONET | BLUESTEEL",
+    "weapon": "Bayonet",
+    "skin": "Bluesteel",
+    "type": "knife",
+    "crate": "Release Case",
+    "slug": "release-case-bayonet-bluesteel",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-bayonet-bluesteel"
+  },
+  {
+    "name": "BAYONET | BOMBASTIC",
+    "weapon": "Bayonet",
+    "skin": "Bombastic",
+    "type": "knife",
+    "crate": "Classic Case",
+    "slug": "classic-case-bayonet-bombastic",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-bayonet-bombastic"
+  },
+  {
+    "name": "BAYONET | CANDY CORN",
+    "weapon": "Bayonet",
+    "skin": "Candy Corn",
+    "type": "knife",
+    "crate": "Hallows Basket",
+    "slug": "hallows-basket-bayonet-candy-corn",
+    "valuesUrl": "https://sniperduelsvalues.com/item/hallows-basket-bayonet-candy-corn"
+  },
+  {
+    "name": "BAYONET | COOKIE",
+    "weapon": "Bayonet",
+    "skin": "Cookie",
+    "type": "knife",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-bayonet-cookie",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-bayonet-cookie"
+  },
+  {
+    "name": "BAYONET | CULTIST",
+    "weapon": "Bayonet",
+    "skin": "Cultist",
+    "type": "knife",
+    "crate": "Hallows Basket",
+    "slug": "hallows-basket-bayonet-cultist",
+    "valuesUrl": "https://sniperduelsvalues.com/item/hallows-basket-bayonet-cultist"
+  },
+  {
+    "name": "BAYONET | CUPID",
+    "weapon": "Bayonet",
+    "skin": "Cupid",
+    "type": "knife",
+    "crate": "V-Day",
+    "slug": "v-day-bayonet-cupid",
+    "valuesUrl": "https://sniperduelsvalues.com/item/v-day-bayonet-cupid"
+  },
+  {
+    "name": "BAYONET | EMERALD",
+    "weapon": "Bayonet",
+    "skin": "Emerald",
+    "type": "knife",
+    "crate": "Release Case",
+    "slug": "release-case-bayonet-emerald",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-bayonet-emerald"
+  },
+  {
+    "name": "BAYONET | HYPNO",
+    "weapon": "Bayonet",
+    "skin": "Hypno",
+    "type": "knife",
+    "crate": "Release Case",
+    "slug": "release-case-bayonet-hypno",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-bayonet-hypno"
+  },
+  {
+    "name": "BAYONET | OG BLUESTEEL",
+    "weapon": "Bayonet",
+    "skin": "Og Bluesteel",
+    "type": "knife",
+    "crate": "Classic Case",
+    "slug": "classic-case-bayonet-og-bluesteel",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-bayonet-og-bluesteel"
+  },
+  {
+    "name": "BAYONET | ONYX",
+    "weapon": "Bayonet",
+    "skin": "Onyx",
+    "type": "knife",
+    "crate": "Release Case",
+    "slug": "release-case-bayonet-onyx",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-bayonet-onyx"
+  },
+  {
+    "name": "BAYONET | PEPPERMINT",
+    "weapon": "Bayonet",
+    "skin": "Peppermint",
+    "type": "knife",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-bayonet-peppermint",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-bayonet-peppermint"
+  },
+  {
+    "name": "BAYONET | PROTOTYPE",
+    "weapon": "Bayonet",
+    "skin": "Prototype",
+    "type": "knife",
+    "crate": null,
+    "slug": "na-bayonet-prototype",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-bayonet-prototype"
+  },
+  {
+    "name": "BAYONET | ROSE GOLD",
+    "weapon": "Bayonet",
+    "skin": "Rose Gold",
+    "type": "knife",
+    "crate": "V-Day",
+    "slug": "v-day-bayonet-rose-gold",
+    "valuesUrl": "https://sniperduelsvalues.com/item/v-day-bayonet-rose-gold"
+  },
+  {
+    "name": "BAYONET | RUBY",
+    "weapon": "Bayonet",
+    "skin": "Ruby",
+    "type": "knife",
+    "crate": "Release Case",
+    "slug": "release-case-bayonet-ruby",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-bayonet-ruby"
+  },
+  {
+    "name": "BAYONET | SAPPHIRE",
+    "weapon": "Bayonet",
+    "skin": "Sapphire",
+    "type": "knife",
+    "crate": "Release Case",
+    "slug": "release-case-bayonet-sapphire",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-bayonet-sapphire"
+  },
+  {
+    "name": "BAYONET | SUNSET",
+    "weapon": "Bayonet",
+    "skin": "Sunset",
+    "type": "knife",
+    "crate": "Release Case",
+    "slug": "release-case-bayonet-sunset",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-bayonet-sunset"
+  },
+  {
+    "name": "BAYONET | VAMPIRIC",
+    "weapon": "Bayonet",
+    "skin": "Vampiric",
+    "type": "knife",
+    "crate": "Hallows Basket",
+    "slug": "hallows-basket-bayonet-vampiric",
+    "valuesUrl": "https://sniperduelsvalues.com/item/hallows-basket-bayonet-vampiric"
+  },
+  {
+    "name": "BAYONET | VANILLA",
+    "weapon": "Bayonet",
+    "skin": "Vanilla",
+    "type": "knife",
+    "crate": "Release Case",
+    "slug": "release-case-bayonet-vanilla",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-bayonet-vanilla"
+  },
+  {
+    "name": "BAYONET | WANWOOD",
+    "weapon": "Bayonet",
+    "skin": "Wanwood",
+    "type": "knife",
+    "crate": "Classic Case",
+    "slug": "classic-case-bayonet-wanwood",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-bayonet-wanwood"
+  },
+  {
+    "name": "BAYONET | ZOMBIE SLAYER",
+    "weapon": "Bayonet",
+    "skin": "Zombie Slayer",
+    "type": "knife",
+    "crate": "Hallows Basket",
+    "slug": "hallows-basket-bayonet-zombie-slayer",
+    "valuesUrl": "https://sniperduelsvalues.com/item/hallows-basket-bayonet-zombie-slayer"
+  },
+  {
+    "name": "BOMBLINE | KITCHEN",
+    "weapon": "Bombline",
+    "skin": "Kitchen",
+    "type": "knife",
+    "crate": null,
+    "slug": "na-bombline-kitchen",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-bombline-kitchen"
+  },
+  {
+    "name": "BOMBLINE | PIXEL",
+    "weapon": "Bombline",
+    "skin": "Pixel",
+    "type": "knife",
+    "crate": null,
+    "slug": "na-bombline-pixel",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-bombline-pixel"
+  },
+  {
+    "name": "BUTTERFLY | ADURITE",
+    "weapon": "Butterfly",
+    "skin": "Adurite",
+    "type": "knife",
+    "crate": "Classic Case",
+    "slug": "classic-case-butterfly-adurite",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-butterfly-adurite"
+  },
+  {
+    "name": "BUTTERFLY | BLACK IRON",
+    "weapon": "Butterfly",
+    "skin": "Black Iron",
+    "type": "knife",
+    "crate": "Classic Case",
+    "slug": "classic-case-butterfly-black-iron",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-butterfly-black-iron"
+  },
+  {
+    "name": "BUTTERFLY | BOMBASTIC",
+    "weapon": "Butterfly",
+    "skin": "Bombastic",
+    "type": "knife",
+    "crate": "Classic Case",
+    "slug": "classic-case-butterfly-bombastic",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-butterfly-bombastic"
+  },
+  {
+    "name": "BUTTERFLY | BUTTERFLY OF DESTINY",
+    "weapon": "Butterfly",
+    "skin": "Butterfly Of Destiny",
+    "type": "knife",
+    "crate": "April Fools Case",
+    "slug": "april-fools-case-butterfly-butterfly-of-destiny",
+    "valuesUrl": "https://sniperduelsvalues.com/item/april-fools-case-butterfly-butterfly-of-destiny"
+  },
+  {
+    "name": "BUTTERFLY | CHERRY",
+    "weapon": "Butterfly",
+    "skin": "Cherry",
+    "type": "knife",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-butterfly-cherry",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-butterfly-cherry"
+  },
+  {
+    "name": "BUTTERFLY | COOKIE",
+    "weapon": "Butterfly",
+    "skin": "Cookie",
+    "type": "knife",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-butterfly-cookie",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-butterfly-cookie"
+  },
+  {
+    "name": "BUTTERFLY | DAMASCUS",
+    "weapon": "Butterfly",
+    "skin": "Damascus",
+    "type": "knife",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-butterfly-damascus",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-butterfly-damascus"
+  },
+  {
+    "name": "BUTTERFLY | DARKSTEEL",
+    "weapon": "Butterfly",
+    "skin": "Darksteel",
+    "type": "knife",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-butterfly-darksteel",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-butterfly-darksteel"
+  },
+  {
+    "name": "BUTTERFLY | FROSTBITE",
+    "weapon": "Butterfly",
+    "skin": "Frostbite",
+    "type": "knife",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-butterfly-frostbite",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-butterfly-frostbite"
+  },
+  {
+    "name": "BUTTERFLY | OG BLUESTEEL",
+    "weapon": "Butterfly",
+    "skin": "Og Bluesteel",
+    "type": "knife",
+    "crate": "Classic Case",
+    "slug": "classic-case-butterfly-og-bluesteel",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-butterfly-og-bluesteel"
+  },
+  {
+    "name": "BUTTERFLY | PEPPERMINT",
+    "weapon": "Butterfly",
+    "skin": "Peppermint",
+    "type": "knife",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-butterfly-peppermint",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-butterfly-peppermint"
+  },
+  {
+    "name": "BUTTERFLY | VANILLA",
+    "weapon": "Butterfly",
+    "skin": "Vanilla",
+    "type": "knife",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-butterfly-vanilla",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-butterfly-vanilla"
+  },
+  {
+    "name": "BUTTERFLY | VELVET",
+    "weapon": "Butterfly",
+    "skin": "Velvet",
+    "type": "knife",
+    "crate": "V-Day",
+    "slug": "v-day-butterfly-velvet",
+    "valuesUrl": "https://sniperduelsvalues.com/item/v-day-butterfly-velvet"
+  },
+  {
+    "name": "BUTTERFLY | VENOM",
+    "weapon": "Butterfly",
+    "skin": "Venom",
+    "type": "knife",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-butterfly-venom",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-butterfly-venom"
+  },
+  {
+    "name": "BUTTERFLY | WANWOOD",
+    "weapon": "Butterfly",
+    "skin": "Wanwood",
+    "type": "knife",
+    "crate": "Classic Case",
+    "slug": "classic-case-butterfly-wanwood",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-butterfly-wanwood"
+  },
+  {
+    "name": "CANDY CANE | BLUEBERRY",
+    "weapon": "Candy Cane",
+    "skin": "Blueberry",
+    "type": "knife",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-candy-cane-blueberry",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-candy-cane-blueberry"
+  },
+  {
+    "name": "CANDY CANE | PEPPERMINT",
+    "weapon": "Candy Cane",
+    "skin": "Peppermint",
+    "type": "knife",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-candy-cane-peppermint",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-candy-cane-peppermint"
+  },
+  {
+    "name": "CANDY CANE | TUTTI FRUTTI",
+    "weapon": "Candy Cane",
+    "skin": "Tutti Frutti",
+    "type": "knife",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-candy-cane-tutti-frutti",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-candy-cane-tutti-frutti"
+  },
+  {
+    "name": "CANDY CANE | WINTERGREEN",
+    "weapon": "Candy Cane",
+    "skin": "Wintergreen",
+    "type": "knife",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-candy-cane-wintergreen",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-candy-cane-wintergreen"
+  },
+  {
+    "name": "CASH MONEY | TOP 1",
+    "weapon": "Cash Money",
+    "skin": "Top 1",
+    "type": "knife",
+    "crate": null,
+    "slug": "na-cash-money-top-1",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-cash-money-top-1"
+  },
+  {
+    "name": "CASH MONEY | TOP 2",
+    "weapon": "Cash Money",
+    "skin": "Top 2",
+    "type": "knife",
+    "crate": null,
+    "slug": "na-cash-money-top-2",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-cash-money-top-2"
+  },
+  {
+    "name": "CASH MONEY | TOP 3",
+    "weapon": "Cash Money",
+    "skin": "Top 3",
+    "type": "knife",
+    "crate": null,
+    "slug": "na-cash-money-top-3",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-cash-money-top-3"
+  },
+  {
+    "name": "CASH MONEY | TOP 4 10",
+    "weapon": "Cash Money",
+    "skin": "Top 4 10",
+    "type": "knife",
+    "crate": null,
+    "slug": "na-cash-money-top-4-10",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-cash-money-top-4-10"
+  },
+  {
+    "name": "CLASSIC | RAINBOWRETROSLOP",
+    "weapon": "Classic",
+    "skin": "Rainbowretroslop",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-classic-rainbowretroslop",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-classic-rainbowretroslop"
+  },
+  {
+    "name": "CLASSIC | RETROSLOP GRAY",
+    "weapon": "Classic",
+    "skin": "Retroslop Gray",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-classic-retroslop-gray",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-classic-retroslop-gray"
+  },
+  {
+    "name": "CLASSIC | RETROSLOP GREEN",
+    "weapon": "Classic",
+    "skin": "Retroslop Green",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-classic-retroslop-green",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-classic-retroslop-green"
+  },
+  {
+    "name": "CLASSIC | RETROSLOP PINK",
+    "weapon": "Classic",
+    "skin": "Retroslop Pink",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-classic-retroslop-pink",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-classic-retroslop-pink"
+  },
+  {
+    "name": "CLASSIC | RETROSLOP RED",
+    "weapon": "Classic",
+    "skin": "Retroslop Red",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-classic-retroslop-red",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-classic-retroslop-red"
+  },
+  {
+    "name": "CLASSIC | RETROSLOP YELLOW",
+    "weapon": "Classic",
+    "skin": "Retroslop Yellow",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-classic-retroslop-yellow",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-classic-retroslop-yellow"
+  },
+  {
+    "name": "CLASSIC | RETROSLOPBLUE",
+    "weapon": "Classic",
+    "skin": "Retroslopblue",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-classic-retroslopblue",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-classic-retroslopblue"
+  },
+  {
+    "name": "DEAGLE | CASE HARDENED",
+    "weapon": "Deagle",
+    "skin": "Case Hardened",
+    "type": "sniper",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-deagle-case-hardened",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-deagle-case-hardened"
+  },
+  {
+    "name": "DEAGLE | CELTIC",
+    "weapon": "Deagle",
+    "skin": "Celtic",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-deagle-celtic",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-deagle-celtic"
+  },
+  {
+    "name": "DEAGLE | CUPID",
+    "weapon": "Deagle",
+    "skin": "Cupid",
+    "type": "sniper",
+    "crate": "V-Day",
+    "slug": "v-day-deagle-cupid",
+    "valuesUrl": "https://sniperduelsvalues.com/item/v-day-deagle-cupid"
+  },
+  {
+    "name": "DEAGLE | INVERTED",
+    "weapon": "Deagle",
+    "skin": "Inverted",
+    "type": "sniper",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-deagle-inverted",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-deagle-inverted"
+  },
+  {
+    "name": "DEAGLE | SNOWFLAKE",
+    "weapon": "Deagle",
+    "skin": "Snowflake",
+    "type": "sniper",
+    "crate": "Present",
+    "slug": "present-deagle-snowflake",
+    "valuesUrl": "https://sniperduelsvalues.com/item/present-deagle-snowflake"
+  },
+  {
+    "name": "DEAGLE | TIGER STRIPE",
+    "weapon": "Deagle",
+    "skin": "Tiger Stripe",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-deagle-tiger-stripe",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-deagle-tiger-stripe"
+  },
+  {
+    "name": "DEAGLE | TRUE INVERTED",
+    "weapon": "Deagle",
+    "skin": "True Inverted",
+    "type": "sniper",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-deagle-true-inverted",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-deagle-true-inverted"
+  },
+  {
+    "name": "DEAGLE | VANILLA",
+    "weapon": "Deagle",
+    "skin": "Vanilla",
+    "type": "sniper",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-deagle-vanilla",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-deagle-vanilla"
+  },
+  {
+    "name": "DEFAULT | ABYSS",
+    "weapon": "Default",
+    "skin": "Abyss",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-default-abyss",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-default-abyss"
+  },
+  {
+    "name": "DEFAULT | ADURITE",
+    "weapon": "Default",
+    "skin": "Adurite",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-default-adurite",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-default-adurite"
+  },
+  {
+    "name": "DEFAULT | BLACK IRON",
+    "weapon": "Default",
+    "skin": "Black Iron",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-default-black-iron",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-default-black-iron"
+  },
+  {
+    "name": "DEFAULT | BOMBASTIC",
+    "weapon": "Default",
+    "skin": "Bombastic",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-dfault-bombastic",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-dfault-bombastic"
+  },
+  {
+    "name": "DEFAULT | CAULDRON",
+    "weapon": "Default",
+    "skin": "Cauldron",
+    "type": "sniper",
+    "crate": "Hallows Basket",
+    "slug": "hallows-basket-default-cauldron",
+    "valuesUrl": "https://sniperduelsvalues.com/item/hallows-basket-default-cauldron"
+  },
+  {
+    "name": "DEFAULT | CHERRY WOOD",
+    "weapon": "Default",
+    "skin": "Cherry Wood",
+    "type": "sniper",
+    "crate": "V-Day",
+    "slug": "v-day-default-cherry-wood",
+    "valuesUrl": "https://sniperduelsvalues.com/item/v-day-default-cherry-wood"
+  },
+  {
+    "name": "DEFAULT | CRIME SCENE",
+    "weapon": "Default",
+    "skin": "Crime Scene",
+    "type": "sniper",
+    "crate": "Release Case",
+    "slug": "release-case-default-crime-scene",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-default-crime-scene"
+  },
+  {
+    "name": "DEFAULT | CRIMSON CATSEYE",
+    "weapon": "Default",
+    "skin": "Crimson Catseye",
+    "type": "sniper",
+    "crate": "Hallows Basket",
+    "slug": "hallows-basket-default-crimson-catseye",
+    "valuesUrl": "https://sniperduelsvalues.com/item/hallows-basket-default-crimson-catseye"
+  },
+  {
+    "name": "DEFAULT | DANCE DANCE",
+    "weapon": "Default",
+    "skin": "Dance Dance",
+    "type": "sniper",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-default-dance-dance",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-default-dance-dance"
+  },
+  {
+    "name": "DEFAULT | FLAMES",
+    "weapon": "Default",
+    "skin": "Flames",
+    "type": "sniper",
+    "crate": "Release Case",
+    "slug": "release-case-default-flames",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-default-flames"
+  },
+  {
+    "name": "DEFAULT | FLEUR DE AMOUR",
+    "weapon": "Default",
+    "skin": "Fleur De Amour",
+    "type": "sniper",
+    "crate": "V-Day",
+    "slug": "v-day-default-fleur-de-amour",
+    "valuesUrl": "https://sniperduelsvalues.com/item/v-day-default-fleur-de-amour"
+  },
+  {
+    "name": "DEFAULT | FLEUR DE NOEL",
+    "weapon": "Default",
+    "skin": "Fleur De Noel",
+    "type": "sniper",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-default-fleur-de-noel",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-default-fleur-de-noel"
+  },
+  {
+    "name": "DEFAULT | GLACIAL",
+    "weapon": "Default",
+    "skin": "Glacial",
+    "type": "sniper",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-default-glacial",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-default-glacial"
+  },
+  {
+    "name": "DEFAULT | GREEN STREAM",
+    "weapon": "Default",
+    "skin": "Green Stream",
+    "type": "sniper",
+    "crate": "Release Case",
+    "slug": "release-case-default-green-stream",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-default-green-stream"
+  },
+  {
+    "name": "DEFAULT | HEARTS",
+    "weapon": "Default",
+    "skin": "Hearts",
+    "type": "sniper",
+    "crate": "V-Day",
+    "slug": "v-day-default-hearts",
+    "valuesUrl": "https://sniperduelsvalues.com/item/v-day-default-hearts"
+  },
+  {
+    "name": "DEFAULT | INDUSTRIAL",
+    "weapon": "Default",
+    "skin": "Industrial",
+    "type": "sniper",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-default-industrial",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-default-industrial"
+  },
+  {
+    "name": "DEFAULT | INVERTED",
+    "weapon": "Default",
+    "skin": "Inverted",
+    "type": "sniper",
+    "crate": "Release Case",
+    "slug": "release-case-default-inverted",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-default-inverted"
+  },
+  {
+    "name": "DEFAULT | LIGHTNING",
+    "weapon": "Default",
+    "skin": "Lightning",
+    "type": "sniper",
+    "crate": "Release Case",
+    "slug": "release-case-default-lightning",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-default-lightning"
+  },
+  {
+    "name": "DEFAULT | MUMMY",
+    "weapon": "Default",
+    "skin": "Mummy",
+    "type": "sniper",
+    "crate": "Hallows Basket",
+    "slug": "hallows-basket-default-mummy",
+    "valuesUrl": "https://sniperduelsvalues.com/item/hallows-basket-default-mummy"
+  },
+  {
+    "name": "DEFAULT | NAUGHTY PRESENT",
+    "weapon": "Default",
+    "skin": "Naughty Present",
+    "type": "sniper",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-default-naughty-present",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-default-naughty-present"
+  },
+  {
+    "name": "DEFAULT | NICE PRESENT",
+    "weapon": "Default",
+    "skin": "Nice Present",
+    "type": "sniper",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-default-nice-present",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-default-nice-present"
+  },
+  {
+    "name": "DEFAULT | OF DESTINY",
+    "weapon": "Default",
+    "skin": "Of Destiny",
+    "type": "sniper",
+    "crate": "April Fools Case Dfault",
+    "slug": "april-fools-case-dfault-default-of-destiny",
+    "valuesUrl": "https://sniperduelsvalues.com/item/april-fools-case-dfault-default-of-destiny"
+  },
+  {
+    "name": "DEFAULT | OG BLUESTEEL",
+    "weapon": "Default",
+    "skin": "Og Bluesteel",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-default-og-bluesteel",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-default-og-bluesteel"
+  },
+  {
+    "name": "DEFAULT | PEPPERMINT",
+    "weapon": "Default",
+    "skin": "Peppermint",
+    "type": "sniper",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-default-peppermint",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-default-peppermint"
+  },
+  {
+    "name": "DEFAULT | PINK CAMO",
+    "weapon": "Default",
+    "skin": "Pink Camo",
+    "type": "sniper",
+    "crate": "V-Day",
+    "slug": "v-day-default-pink-camo",
+    "valuesUrl": "https://sniperduelsvalues.com/item/v-day-default-pink-camo"
+  },
+  {
+    "name": "DEFAULT | REINDEER",
+    "weapon": "Default",
+    "skin": "Reindeer",
+    "type": "sniper",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-default-reindeer",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-default-reindeer"
+  },
+  {
+    "name": "DEFAULT | RING OF FIRE",
+    "weapon": "Default",
+    "skin": "Ring Of Fire",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-default-ring-of-fire",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-default-ring-of-fire"
+  },
+  {
+    "name": "DEFAULT | ROSE",
+    "weapon": "Default",
+    "skin": "Rose",
+    "type": "sniper",
+    "crate": "V-Day",
+    "slug": "v-day-default-rose",
+    "valuesUrl": "https://sniperduelsvalues.com/item/v-day-default-rose"
+  },
+  {
+    "name": "DEFAULT | SNAKE SKIN",
+    "weapon": "Default",
+    "skin": "Snake Skin",
+    "type": "sniper",
+    "crate": "Release Case",
+    "slug": "release-case-default-snake-skin",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-default-snake-skin"
+  },
+  {
+    "name": "DEFAULT | STALKER",
+    "weapon": "Default",
+    "skin": "Stalker",
+    "type": "sniper",
+    "crate": "Hallows Basket",
+    "slug": "hallows-basket-default-stalker",
+    "valuesUrl": "https://sniperduelsvalues.com/item/hallows-basket-default-stalker"
+  },
+  {
+    "name": "DEFAULT | TIDAL",
+    "weapon": "Default",
+    "skin": "Tidal",
+    "type": "sniper",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-default-tidal",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-default-tidal"
+  },
+  {
+    "name": "DEFAULT | TRIBAL",
+    "weapon": "Default",
+    "skin": "Tribal",
+    "type": "sniper",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-default-tribal",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-default-tribal"
+  },
+  {
+    "name": "DEFAULT | TRUE BLACK",
+    "weapon": "Default",
+    "skin": "True Black",
+    "type": "sniper",
+    "crate": "Release Case",
+    "slug": "release-case-default-true-black",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-default-true-black"
+  },
+  {
+    "name": "DEFAULT | TRUE INVERTED",
+    "weapon": "Default",
+    "skin": "True Inverted",
+    "type": "sniper",
+    "crate": "Release Case",
+    "slug": "release-case-default-true-inverted",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-default-true-inverted"
+  },
+  {
+    "name": "DEFAULT | TRUE PINK",
+    "weapon": "Default",
+    "skin": "True Pink",
+    "type": "sniper",
+    "crate": "V-Day",
+    "slug": "v-day-default-true-pink",
+    "valuesUrl": "https://sniperduelsvalues.com/item/v-day-default-true-pink"
+  },
+  {
+    "name": "DEFAULT | TRUE WHITE",
+    "weapon": "Default",
+    "skin": "True White",
+    "type": "sniper",
+    "crate": "Release Case",
+    "slug": "release-case-default-true-white",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-default-true-white"
+  },
+  {
+    "name": "DEFAULT | VAMPIRE HUNTER",
+    "weapon": "Default",
+    "skin": "Vampire Hunter",
+    "type": "sniper",
+    "crate": "Hallows Basket",
+    "slug": "hallows-basket-default-vampire-hunter",
+    "valuesUrl": "https://sniperduelsvalues.com/item/hallows-basket-default-vampire-hunter"
+  },
+  {
+    "name": "DEFAULT | VELVET",
+    "weapon": "Default",
+    "skin": "Velvet",
+    "type": "sniper",
+    "crate": "V-Day",
+    "slug": "v-day-default-velvet",
+    "valuesUrl": "https://sniperduelsvalues.com/item/v-day-default-velvet"
+  },
+  {
+    "name": "DEFAULT | VIRIDIAN",
+    "weapon": "Default",
+    "skin": "Viridian",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-default-viridian",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-default-viridian"
+  },
+  {
+    "name": "DEFAULT | WANWOOD",
+    "weapon": "Default",
+    "skin": "Wanwood",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-dfault-wanwood",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-dfault-wanwood"
+  },
+  {
+    "name": "DEFAULT | WOOD",
+    "weapon": "Default",
+    "skin": "Wood",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-default-wood",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-default-wood"
+  },
+  {
+    "name": "DEFAULT | ZOMBIE",
+    "weapon": "Default",
+    "skin": "Zombie",
+    "type": "sniper",
+    "crate": "Hallows Basket",
+    "slug": "hallows-basket-default-zombie",
+    "valuesUrl": "https://sniperduelsvalues.com/item/hallows-basket-default-zombie"
+  },
+  {
+    "name": "EXECUTIONER | ASCII WHITE",
+    "weapon": "Executioner",
+    "skin": "Ascii White",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-executioner-ascii-white",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-executioner-ascii-white"
+  },
+  {
+    "name": "EXECUTIONER | FROSTBITE",
+    "weapon": "Executioner",
+    "skin": "Frostbite",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-executioner-frostbite",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-executioner-frostbite"
+  },
+  {
+    "name": "EXECUTIONER | LOVES CREST",
+    "weapon": "Executioner",
+    "skin": "Loves Crest",
+    "type": "sniper",
+    "crate": "V-Day",
+    "slug": "v-day-executioner-loves-crest",
+    "valuesUrl": "https://sniperduelsvalues.com/item/v-day-executioner-loves-crest"
+  },
+  {
+    "name": "INTERVENTION | ANGELIC",
+    "weapon": "Intervention",
+    "skin": "Angelic",
+    "type": "sniper",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-intervention-angelic",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-intervention-angelic"
+  },
+  {
+    "name": "INTERVENTION | APEX",
+    "weapon": "Intervention",
+    "skin": "Apex",
+    "type": "sniper",
+    "crate": "Release Case",
+    "slug": "release-case-intervention-apex",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-intervention-apex"
+  },
+  {
+    "name": "INTERVENTION | BLACK VALK",
+    "weapon": "Intervention",
+    "skin": "Black Valk",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-intervention-black-valk",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-intervention-black-valk"
+  },
+  {
+    "name": "INTERVENTION | BLACKKNIGHT",
+    "weapon": "Intervention",
+    "skin": "Blackknight",
+    "type": "sniper",
+    "crate": "Hallows Basket",
+    "slug": "hallows-basket-intervention-blackknight",
+    "valuesUrl": "https://sniperduelsvalues.com/item/hallows-basket-intervention-blackknight"
+  },
+  {
+    "name": "INTERVENTION | BLOSSOM",
+    "weapon": "Intervention",
+    "skin": "Blossom",
+    "type": "sniper",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-intervention-blossom",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-intervention-blossom"
+  },
+  {
+    "name": "INTERVENTION | EVERGREEN WINTER",
+    "weapon": "Intervention",
+    "skin": "Evergreen Winter",
+    "type": "sniper",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-intervention-evergreen-winter",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-intervention-evergreen-winter"
+  },
+  {
+    "name": "INTERVENTION | GINGERBREAD",
+    "weapon": "Intervention",
+    "skin": "Gingerbread",
+    "type": "sniper",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-intervention-gingerbread",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-intervention-gingerbread"
+  },
+  {
+    "name": "INTERVENTION | HALLOWSPUNISHERORANGE",
+    "weapon": "Intervention",
+    "skin": "Hallowspunisherorange",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-intervention-hallowspunisherorange",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-intervention-hallowspunisherorange"
+  },
+  {
+    "name": "INTERVENTION | HALLOWSPUNISHERPURPLE",
+    "weapon": "Intervention",
+    "skin": "Hallowspunisherpurple",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-intervention-hallowspunisherpurple",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-intervention-hallowspunisherpurple"
+  },
+  {
+    "name": "INTERVENTION | HEARTBREAK",
+    "weapon": "Intervention",
+    "skin": "Heartbreak",
+    "type": "sniper",
+    "crate": "V-Day",
+    "slug": "v-day-intervention-heartbreak",
+    "valuesUrl": "https://sniperduelsvalues.com/item/v-day-intervention-heartbreak"
+  },
+  {
+    "name": "INTERVENTION | INVERTED",
+    "weapon": "Intervention",
+    "skin": "Inverted",
+    "type": "sniper",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-intervention-inverted",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-intervention-inverted"
+  },
+  {
+    "name": "INTERVENTION | LONELY STAR",
+    "weapon": "Intervention",
+    "skin": "Lonely Star",
+    "type": "sniper",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-intervention-lonely-star",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-intervention-lonely-star"
+  },
+  {
+    "name": "INTERVENTION | NEW YEARS 2026",
+    "weapon": "Intervention",
+    "skin": "New Years 2026",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-intervention-new-years-2026",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-intervention-new-years-2026"
+  },
+  {
+    "name": "INTERVENTION | NORTH STAR",
+    "weapon": "Intervention",
+    "skin": "North Star",
+    "type": "sniper",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-intervention-north-star",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-intervention-north-star"
+  },
+  {
+    "name": "INTERVENTION | PEPPERMINT",
+    "weapon": "Intervention",
+    "skin": "Peppermint",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-intervention-peppermint",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-intervention-peppermint"
+  },
+  {
+    "name": "INTERVENTION | REAPER",
+    "weapon": "Intervention",
+    "skin": "Reaper",
+    "type": "sniper",
+    "crate": "Hallows Basket",
+    "slug": "hallows-basket-intervention-reaper",
+    "valuesUrl": "https://sniperduelsvalues.com/item/hallows-basket-intervention-reaper"
+  },
+  {
+    "name": "INTERVENTION | TRUE INVERTED",
+    "weapon": "Intervention",
+    "skin": "True Inverted",
+    "type": "sniper",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-intervention-true-inverted",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-intervention-true-inverted"
+  },
+  {
+    "name": "INTERVENTION | TRUE PINK",
+    "weapon": "Intervention",
+    "skin": "True Pink",
+    "type": "sniper",
+    "crate": "V-Day",
+    "slug": "v-day-intervention-true-pink",
+    "valuesUrl": "https://sniperduelsvalues.com/item/v-day-intervention-true-pink"
+  },
+  {
+    "name": "INTERVENTION | VALK",
+    "weapon": "Intervention",
+    "skin": "Valk",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-intervention-valk",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-intervention-valk"
+  },
+  {
+    "name": "INTERVENTION | VANILLA",
+    "weapon": "Intervention",
+    "skin": "Vanilla",
+    "type": "sniper",
+    "crate": "Release Case",
+    "slug": "release-case-intervention-vanilla",
+    "valuesUrl": "https://sniperduelsvalues.com/item/release-case-intervention-vanilla"
+  },
+  {
+    "name": "INTERVENTION | VAPORWAVE",
+    "weapon": "Intervention",
+    "skin": "Vaporwave",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-intervention-vaporwave",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-intervention-vaporwave"
+  },
+  {
+    "name": "INTERVENTION | VAPORWAVE GREEN",
+    "weapon": "Intervention",
+    "skin": "Vaporwave Green",
+    "type": "sniper",
+    "crate": null,
+    "slug": "na-intervention-vaporwave-green",
+    "valuesUrl": "https://sniperduelsvalues.com/item/na-intervention-vaporwave-green"
+  },
+  {
+    "name": "KARAMBIT | ADURITE",
+    "weapon": "Karambit",
+    "skin": "Adurite",
+    "type": "knife",
+    "crate": "Classic Case",
+    "slug": "classic-case-karambit-adurite",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-karambit-adurite"
+  },
+  {
+    "name": "KARAMBIT | AURORA",
+    "weapon": "Karambit",
+    "skin": "Aurora",
+    "type": "knife",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-karambit-aurora",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-karambit-aurora"
+  },
+  {
+    "name": "KARAMBIT | BLACK IRON",
+    "weapon": "Karambit",
+    "skin": "Black Iron",
+    "type": "knife",
+    "crate": "Classic Case",
+    "slug": "classic-case-karambit-black-iron",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-karambit-black-iron"
+  },
+  {
+    "name": "KARAMBIT | BOMBASTIC",
+    "weapon": "Karambit",
+    "skin": "Bombastic",
+    "type": "knife",
+    "crate": "Classic Case",
+    "slug": "classic-case-karambit-bombastic",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-karambit-bombastic"
+  },
+  {
+    "name": "KARAMBIT | CASE HARDENED",
+    "weapon": "Karambit",
+    "skin": "Case Hardened",
+    "type": "knife",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-karambit-case-hardened",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-karambit-case-hardened"
+  },
+  {
+    "name": "KARAMBIT | COOKIE",
+    "weapon": "Karambit",
+    "skin": "Cookie",
+    "type": "knife",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-karambit-cookie",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-karambit-cookie"
+  },
+  {
+    "name": "KARAMBIT | KARAMBIT OF DESTINY",
+    "weapon": "Karambit",
+    "skin": "Karambit Of Destiny",
+    "type": "knife",
+    "crate": "April Fools Case",
+    "slug": "april-fools-case-karambit-karambit-of-destiny",
+    "valuesUrl": "https://sniperduelsvalues.com/item/april-fools-case-karambit-karambit-of-destiny"
+  },
+  {
+    "name": "KARAMBIT | KOI",
+    "weapon": "Karambit",
+    "skin": "Koi",
+    "type": "knife",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-karambit-koi",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-karambit-koi"
+  },
+  {
+    "name": "KARAMBIT | NEBULEUM",
+    "weapon": "Karambit",
+    "skin": "Nebuleum",
+    "type": "knife",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-karambit-nebuleum",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-karambit-nebuleum"
+  },
+  {
+    "name": "KARAMBIT | OG BLUESTEEL",
+    "weapon": "Karambit",
+    "skin": "Og Bluesteel",
+    "type": "knife",
+    "crate": "Classic Case",
+    "slug": "classic-case-karambit-og-bluesteel",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-karambit-og-bluesteel"
+  },
+  {
+    "name": "KARAMBIT | PEPPERMINT",
+    "weapon": "Karambit",
+    "skin": "Peppermint",
+    "type": "knife",
+    "crate": "Present",
+    "slug": "present-karambit-peppermint",
+    "valuesUrl": "https://sniperduelsvalues.com/item/present-karambit-peppermint"
+  },
+  {
+    "name": "KARAMBIT | ROSE FADE",
+    "weapon": "Karambit",
+    "skin": "Rose Fade",
+    "type": "knife",
+    "crate": "V-Day",
+    "slug": "v-day-karambit-rose-fade",
+    "valuesUrl": "https://sniperduelsvalues.com/item/v-day-karambit-rose-fade"
+  },
+  {
+    "name": "KARAMBIT | SAKURA",
+    "weapon": "Karambit",
+    "skin": "Sakura",
+    "type": "knife",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-karambit-sakura",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-karambit-sakura"
+  },
+  {
+    "name": "KARAMBIT | SUNSET",
+    "weapon": "Karambit",
+    "skin": "Sunset",
+    "type": "knife",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-karambit-sunset",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-karambit-sunset"
+  },
+  {
+    "name": "KARAMBIT | VANILLA",
+    "weapon": "Karambit",
+    "skin": "Vanilla",
+    "type": "knife",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-karambit-vanilla",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-karambit-vanilla"
+  },
+  {
+    "name": "KARAMBIT | VIPER",
+    "weapon": "Karambit",
+    "skin": "Viper",
+    "type": "knife",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-karambit-viper",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-karambit-viper"
+  },
+  {
+    "name": "KARAMBIT | WANWOOD",
+    "weapon": "Karambit",
+    "skin": "Wanwood",
+    "type": "knife",
+    "crate": "Classic Case",
+    "slug": "classic-case-karambit-wanwood",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-karambit-wanwood"
+  },
+  {
+    "name": "KATANA | ADURITE",
+    "weapon": "Katana",
+    "skin": "Adurite",
+    "type": "knife",
+    "crate": "Classic Case",
+    "slug": "classic-case-katana-adurite",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-katana-adurite"
+  },
+  {
+    "name": "KATANA | BLACK IRON",
+    "weapon": "Katana",
+    "skin": "Black Iron",
+    "type": "knife",
+    "crate": "Classic Case",
+    "slug": "classic-case-katana-black-iron",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-katana-black-iron"
+  },
+  {
+    "name": "KATANA | BLACKSTEEL",
+    "weapon": "Katana",
+    "skin": "Blacksteel",
+    "type": "knife",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-katana-blacksteel",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-katana-blacksteel"
+  },
+  {
+    "name": "KATANA | BOMBASTIC",
+    "weapon": "Katana",
+    "skin": "Bombastic",
+    "type": "knife",
+    "crate": "Classic Case",
+    "slug": "classic-case-katana-bombastic",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-katana-bombastic"
+  },
+  {
+    "name": "KATANA | CHERRY",
+    "weapon": "Katana",
+    "skin": "Cherry",
+    "type": "knife",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-katana-cherry",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-katana-cherry"
+  },
+  {
+    "name": "KATANA | COOKIE",
+    "weapon": "Katana",
+    "skin": "Cookie",
+    "type": "knife",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-katana-cookie",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-katana-cookie"
+  },
+  {
+    "name": "KATANA | FROSTBORN",
+    "weapon": "Katana",
+    "skin": "Frostborn",
+    "type": "knife",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-katana-frostborn",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-katana-frostborn"
+  },
+  {
+    "name": "KATANA | KATANA OF DESTINY",
+    "weapon": "Katana",
+    "skin": "Katana Of Destiny",
+    "type": "knife",
+    "crate": "April Fools Case",
+    "slug": "april-fools-case-katana-katana-of-destiny",
+    "valuesUrl": "https://sniperduelsvalues.com/item/april-fools-case-katana-katana-of-destiny"
+  },
+  {
+    "name": "KATANA | NEBULEUM",
+    "weapon": "Katana",
+    "skin": "Nebuleum",
+    "type": "knife",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-katana-nebuleum",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-katana-nebuleum"
+  },
+  {
+    "name": "KATANA | OG BLUESTEEL",
+    "weapon": "Katana",
+    "skin": "Og Bluesteel",
+    "type": "knife",
+    "crate": "Classic Case",
+    "slug": "classic-case-katana-og-bluesteel",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-katana-og-bluesteel"
+  },
+  {
+    "name": "KATANA | PEPPERMINT",
+    "weapon": "Katana",
+    "skin": "Peppermint",
+    "type": "knife",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-katana-peppermint",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-katana-peppermint"
+  },
+  {
+    "name": "KATANA | SHOGUN",
+    "weapon": "Katana",
+    "skin": "Shogun",
+    "type": "knife",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-katana-shogun",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-katana-shogun"
+  },
+  {
+    "name": "KATANA | TRUE BLACK",
+    "weapon": "Katana",
+    "skin": "True Black",
+    "type": "knife",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-katana-true-black",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-katana-true-black"
+  },
+  {
+    "name": "KATANA | TRUE WHITE",
+    "weapon": "Katana",
+    "skin": "True White",
+    "type": "knife",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-katana-true-white",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-katana-true-white"
+  },
+  {
+    "name": "KATANA | VANILLA",
+    "weapon": "Katana",
+    "skin": "Vanilla",
+    "type": "knife",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-katana-vanilla",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-katana-vanilla"
+  },
+  {
+    "name": "KATANA | WANWOOD",
+    "weapon": "Katana",
+    "skin": "Wanwood",
+    "type": "knife",
+    "crate": "Classic Case",
+    "slug": "classic-case-katana-wanwood",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-katana-wanwood"
+  },
+  {
+    "name": "PAN | GOLDEN PAN",
+    "weapon": "Pan",
+    "skin": "Golden Pan",
+    "type": "knife",
+    "crate": "April Fools Case",
+    "slug": "april-fools-case-pan-golden-pan",
+    "valuesUrl": "https://sniperduelsvalues.com/item/april-fools-case-pan-golden-pan"
+  },
+  {
+    "name": "SHOTGUN | EPIC FACE",
+    "weapon": "Shotgun",
+    "skin": "Epic Face",
+    "type": "sniper",
+    "crate": "April Fools Case",
+    "slug": "april-fools-case-shotgun-epic-face",
+    "valuesUrl": "https://sniperduelsvalues.com/item/april-fools-case-shotgun-epic-face"
+  },
+  {
+    "name": "SHOTGUN | GEMS ARE INFINITE",
+    "weapon": "Shotgun",
+    "skin": "Gems Are Infinite",
+    "type": "sniper",
+    "crate": "April Fools Case",
+    "slug": "april-fools-case-shotgun-gems-are-infinite",
+    "valuesUrl": "https://sniperduelsvalues.com/item/april-fools-case-shotgun-gems-are-infinite"
+  },
+  {
+    "name": "SHOTGUN | MLG",
+    "weapon": "Shotgun",
+    "skin": "Mlg",
+    "type": "sniper",
+    "crate": "April Fools Case",
+    "slug": "april-fools-case-shotgun-mlg",
+    "valuesUrl": "https://sniperduelsvalues.com/item/april-fools-case-shotgun-mlg"
+  },
+  {
+    "name": "SHOTGUN | ROYAL",
+    "weapon": "Shotgun",
+    "skin": "Royal",
+    "type": "sniper",
+    "crate": "V-Day",
+    "slug": "v-day-shotgun-royal",
+    "valuesUrl": "https://sniperduelsvalues.com/item/v-day-shotgun-royal"
+  },
+  {
+    "name": "SHOTGUN | SHOTGUN OF DESTINY",
+    "weapon": "Shotgun",
+    "skin": "Shotgun Of Destiny",
+    "type": "sniper",
+    "crate": "April Fools Case",
+    "slug": "april-fools-case-shotgun-shotgun-of-destiny",
+    "valuesUrl": "https://sniperduelsvalues.com/item/april-fools-case-shotgun-shotgun-of-destiny"
+  },
+  {
+    "name": "SHOTGUN | TRANSPARENT",
+    "weapon": "Shotgun",
+    "skin": "Transparent",
+    "type": "sniper",
+    "crate": "April Fools Case",
+    "slug": "april-fools-case-shotgun-transparent",
+    "valuesUrl": "https://sniperduelsvalues.com/item/april-fools-case-shotgun-transparent"
+  },
+  {
+    "name": "SHOTGUN | WANWOOD",
+    "weapon": "Shotgun",
+    "skin": "Wanwood",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-shotgun-wanwood",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-shotgun-wanwood"
+  },
+  {
+    "name": "SURVIVOR | ADURITE",
+    "weapon": "Survivor",
+    "skin": "Adurite",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-survivor-adurite",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-survivor-adurite"
+  },
+  {
+    "name": "SURVIVOR | BLACK IRON",
+    "weapon": "Survivor",
+    "skin": "Black Iron",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-survivor-black-iron",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-survivor-black-iron"
+  },
+  {
+    "name": "SURVIVOR | BLUESTEEL",
+    "weapon": "Survivor",
+    "skin": "Bluesteel",
+    "type": "sniper",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-survivor-bluesteel",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-survivor-bluesteel"
+  },
+  {
+    "name": "SURVIVOR | BOMBASTIC",
+    "weapon": "Survivor",
+    "skin": "Bombastic",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-survivor-bombastic",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-survivor-bombastic"
+  },
+  {
+    "name": "SURVIVOR | COOKIE",
+    "weapon": "Survivor",
+    "skin": "Cookie",
+    "type": "sniper",
+    "crate": "Christmas Present",
+    "slug": "christmas-present-survivor-cookie",
+    "valuesUrl": "https://sniperduelsvalues.com/item/christmas-present-survivor-cookie"
+  },
+  {
+    "name": "SURVIVOR | HEARTBREAK",
+    "weapon": "Survivor",
+    "skin": "Heartbreak",
+    "type": "sniper",
+    "crate": "V-Day",
+    "slug": "v-day-survivor-heartbreak",
+    "valuesUrl": "https://sniperduelsvalues.com/item/v-day-survivor-heartbreak"
+  },
+  {
+    "name": "SURVIVOR | OG BLUESTEEL",
+    "weapon": "Survivor",
+    "skin": "Og Bluesteel",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-survivor-og-bluesteel",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-survivor-og-bluesteel"
+  },
+  {
+    "name": "SURVIVOR | PEPPERMINT",
+    "weapon": "Survivor",
+    "skin": "Peppermint",
+    "type": "sniper",
+    "crate": "Present",
+    "slug": "present-survivor-peppermint",
+    "valuesUrl": "https://sniperduelsvalues.com/item/present-survivor-peppermint"
+  },
+  {
+    "name": "SURVIVOR | SURVIVOR OF DESTINY",
+    "weapon": "Survivor",
+    "skin": "Survivor Of Destiny",
+    "type": "sniper",
+    "crate": "April Fools Case",
+    "slug": "april-fools-case-survivor-survivor-of-destiny",
+    "valuesUrl": "https://sniperduelsvalues.com/item/april-fools-case-survivor-survivor-of-destiny"
+  },
+  {
+    "name": "SURVIVOR | VANILLA",
+    "weapon": "Survivor",
+    "skin": "Vanilla",
+    "type": "sniper",
+    "crate": "Skin Case #1",
+    "slug": "skin-case-1-survivor-vanilla",
+    "valuesUrl": "https://sniperduelsvalues.com/item/skin-case-1-survivor-vanilla"
+  },
+  {
+    "name": "SURVIVOR | WANWOOD",
+    "weapon": "Survivor",
+    "skin": "Wanwood",
+    "type": "sniper",
+    "crate": "Classic Case",
+    "slug": "classic-case-survivor-wanwood",
+    "valuesUrl": "https://sniperduelsvalues.com/item/classic-case-survivor-wanwood"
+  }
+]

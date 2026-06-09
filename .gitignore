@@ -30,8 +30,11 @@ yarn-error.log*
 .env*.local
 .env
 
-# Data storage
-/data
+# Data storage (legacy file-store + PII stay ignored)
+/data/*
+# ...except the static marketplace data the app imports at build time
+!/data/item-catalog.json
+!/data/item-icons.json
 
 # Vercel
 .vercel
