@@ -2,7 +2,7 @@
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 
-const BASE = 'http://localhost:3010';
+const BASE = process.env.BASE_URL || 'http://localhost:3010';
 const browser = await chromium.launch({ headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 
@@ -56,11 +56,12 @@ await testForm('/gems', 'gems-amount-input', async (page) => {
   return filled;
 });
 
-// /shop search/filter (if any)
-await testForm('/shop', 'shop-search', async (page) => {
+// /marketplace search/filter (only present when unlocked; use demo so the
+// storefront renders even while items are coming-soon)
+await testForm('/marketplace?demo=1', 'marketplace-search', async (page) => {
   // Probe for any input or interactive element
   const inputs = await page.$$('input');
-  if (inputs.length === 0) return 'no-inputs-on-shop';
+  if (inputs.length === 0) return 'no-inputs-on-marketplace';
   let interacted = false;
   for (const input of inputs.slice(0, 3)) {
     try {

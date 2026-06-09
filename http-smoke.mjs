@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const BASE = 'http://localhost:3010';
+const BASE = process.env.BASE_URL || 'http://localhost:3010';
 const OUT_DIR = './upgrade-snapshots/http-bodies';
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
@@ -15,7 +15,7 @@ const pageRoutes = [
   { path: '/privacy', expect: '2xx', kind: 'public' },
   { path: '/refunds', expect: '2xx', kind: 'public' },
   { path: '/terms', expect: '2xx', kind: 'public' },
-  { path: '/shop', expect: '2xx', kind: 'public' },
+  { path: '/marketplace', expect: '2xx', kind: 'public' },
   { path: '/gems', expect: '2xx', kind: 'public' },
   { path: '/login-success', expect: 'any', kind: 'public' },
   { path: '/dev/checkout-success', expect: 'any', kind: 'dev' },

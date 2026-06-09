@@ -3,14 +3,14 @@ import { chromium } from 'playwright';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const BASE = 'http://localhost:3010';
+const BASE = process.env.BASE_URL || 'http://localhost:3010';
 const SHOTS_DIR = './upgrade-snapshots/upgraded';
 fs.mkdirSync(SHOTS_DIR, { recursive: true });
 
 // Page routes only (skip API)
 const routes = [
   { path: '/', slug: 'home' },
-  { path: '/shop', slug: 'shop' },
+  { path: '/marketplace', slug: 'marketplace' },
   { path: '/gems', slug: 'gems' },
   { path: '/about', slug: 'about' },
   { path: '/faq', slug: 'faq' },
