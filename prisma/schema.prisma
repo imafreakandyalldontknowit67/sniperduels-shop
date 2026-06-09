@@ -54,6 +54,12 @@ model User {
   vendorPayouts     VendorPayout[]
   creatorProfile    CreatorProfile?
   pendingBuyIntents PendingBuyIntent[]
+
+  // Item marketplace
+  vaultItems          VaultItem[]
+  itemDepositSessions ItemDepositSession[]
+  itemDeliveryJobs    ItemDeliveryJob[]
+  itemWithdrawalJobs  ItemWithdrawalJob[]
 }
 
 // ─── Orders ──────────────────────────────────────────────────────────────────
@@ -89,11 +95,13 @@ model Order {
   reachedFrontAt  String?
   notes           String?
   vendorListingId String?
+  vaultListingId  String?
 
   user User @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([status])
+  @@index([vaultListingId])
 }
 
 // ─── Deposits ────────────────────────────────────────────────────────────────
@@ -401,4 +409,220 @@ model OutageEvent {
   durationSeconds Int?      // computed on close: (endedAt - startedAt) in seconds
 
   @@index([startedAt])
+}
+
+// ─── Item Marketplace ──────────────────────────────────────────────────────
+// Models mirror the raw-SQL migrations prisma/migrations/20260531*. They were
+// never added to this schema, so the generated client lacked these accessors
+// and every bot/v1 + marketplace DB route 500'd. Added 2026-06-04.
+
+enum ItemCatalogSource {
+  manual
+  sniperduelsvalues
+  bot_observed
+  sweep
+}
+
+enum ItemCatalogType {
+  sniper
+  knife
+}
+
+enum CatalogCandidateStatus {
+  pending
+  approved
+  rejected
+  duplicate
+}
+
+enum VaultItemStatus {
+  deposited
+  listed
+  reserved
+  sold
+  withdrawing
+  withdrawn
+}
+
+enum ItemDepositSessionStatus {
+  pending
+  bot_in_trade
+  awaiting_confirm
+  completed
+  cancelled
+  expired
+}
+
+enum ItemDepositMode {
+  auto_detect
+  declared
+}
+
+enum ItemDeliveryStatus {
+  queued
+  bot_in_trade
+  completed
+  failed
+}
+
+enum ItemWithdrawalStatus {
+  queued
+  bot_in_trade
+  completed
+  failed
+}
+
+model ItemCatalog {
+  id          String            @id @default(cuid())
+  name        String            @unique
+  weapon      String
+  skin        String
+  type        ItemCatalogType
+  crate       String?
+  slug        String?
+  source      ItemCatalogSource @default(manual)
+  active      Boolean           @default(true)
+  firstSeenAt DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  vaultItems VaultItem[]
+  candidates CatalogCandidate[]
+
+  @@index([weapon])
+  @@index([type, active])
+}
+
+model CatalogCandidate {
+  id            String                 @id @default(cuid())
+  ocrName       String                 @unique
+  weapon        String?
+  skin          String?
+  rarity        String?
+  condition     String?
+  fragtrakr     Boolean                @default(false)
+  fx            String?
+  crate         String?
+  observedCount Int                    @default(1)
+  firstSeenAt   DateTime               @default(now())
+  lastSeenAt    DateTime               @default(now())
+  screenshotUrl String?
+  status        CatalogCandidateStatus @default(pending)
+  approvedAsId  String?
+  notes         String?
+
+  approvedAs ItemCatalog? @relation(fields: [approvedAsId], references: [id], onDelete: SetNull)
+
+  @@index([status, lastSeenAt])
+  @@index([weapon, skin])
+}
+
+model VaultItem {
+  id            String          @id @default(cuid())
+  ownerId       String
+  catalogId     String
+  fingerprint   Json
+  status        VaultItemStatus @default(deposited)
+  depositedAt   DateTime        @default(now())
+  listedAt      DateTime?
+  soldAt        DateTime?
+  withdrawnAt   DateTime?
+  lastCellHint  Json?
+  updatedAt     DateTime        @updatedAt
+
+  owner      User               @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  catalog    ItemCatalog        @relation(fields: [catalogId], references: [id], onDelete: Restrict)
+  listing    VendorItemListing?
+  delivery   ItemDeliveryJob?
+  withdrawal ItemWithdrawalJob?
+
+  @@index([ownerId, status])
+  @@index([status, depositedAt])
+  @@index([catalogId, status])
+}
+
+model VendorItemListing {
+  id          String   @id @default(cuid())
+  vaultItemId String   @unique
+  priceUsd    Decimal  @db.Decimal(12, 2)
+  minOfferUsd Decimal? @db.Decimal(12, 2)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  vaultItem VaultItem @relation(fields: [vaultItemId], references: [id], onDelete: Cascade)
+
+  @@index([active, priceUsd])
+  @@index([active, createdAt])
+}
+
+model ItemDepositSession {
+  id            String                   @id @default(cuid())
+  userId        String
+  mode          ItemDepositMode          @default(auto_detect)
+  status        ItemDepositSessionStatus @default(pending)
+  declaredItems Json?
+  detectedItems Json?
+  createdAt     DateTime                 @default(now())
+  expiresAt     DateTime
+  completedAt   DateTime?
+  cancelledAt   DateTime?
+  cancelReason  String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([status, expiresAt])
+}
+
+model ItemDeliveryJob {
+  id                  String             @id @default(cuid())
+  vaultItemId         String             @unique
+  orderId             String             @unique
+  buyerUserId         String
+  buyerRobloxName     String
+  status              ItemDeliveryStatus @default(queued)
+  attempts            Int                @default(0)
+  lastError           String?
+  createdAt           DateTime           @default(now())
+  startedAt           DateTime?
+  completedAt         DateTime?
+  expectedFingerprint Json
+
+  vaultItem VaultItem @relation(fields: [vaultItemId], references: [id], onDelete: Restrict)
+  buyer     User      @relation(fields: [buyerUserId], references: [id], onDelete: Restrict)
+
+  @@index([status, createdAt])
+  @@index([buyerUserId])
+}
+
+model ItemWithdrawalJob {
+  id             String               @id @default(cuid())
+  vaultItemId    String               @unique
+  userId         String
+  userRobloxName String
+  status         ItemWithdrawalStatus @default(queued)
+  attempts       Int                  @default(0)
+  lastError      String?
+  createdAt      DateTime             @default(now())
+  startedAt      DateTime?
+  completedAt    DateTime?
+
+  vaultItem VaultItem @relation(fields: [vaultItemId], references: [id], onDelete: Restrict)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([status, createdAt])
+  @@index([userId])
+}
+
+model ItemStateLog {
+  id          String   @id @default(cuid())
+  vaultItemId String
+  fromStatus  String?
+  toStatus    String
+  reason      String?
+  triggeredBy String?
+  createdAt   DateTime @default(now())
+
+  @@index([vaultItemId, createdAt])
+  @@index([createdAt])
 }
