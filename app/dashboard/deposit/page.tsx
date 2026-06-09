@@ -1128,9 +1128,9 @@ export default function DepositPage() {
                     <p className="text-xs text-[#e1ad2d] font-bold">Crypto would cost ${cardEstimate.walletCredit.toFixed(2)} â€” save ${cardEstimate.cryptoSavings.toFixed(2)}</p>
                     <button
                       onClick={() => { setTab('crypto'); posthog.capture('crypto_upsell_clicked', { savings: cardEstimate.cryptoSavings, source: 'card_estimate_review' }) }}
-                      className="mt-2 text-[10px] uppercase tracking-wider text-[#e1ad2d] hover:underline font-bold"
+                      className="mt-2 text-[10px] uppercase tracking-wider text-gray-400 hover:text-[#e1ad2d] hover:underline"
                     >
-                      Switch to crypto and save
+                      Prefer crypto instead? Switch &amp; save
                     </button>
                   </div>
                   <p className="text-[10px] text-gray-500 mt-3 text-center">PandaBase calculates final tax from your billing address. The modal should be prefilled from the details above.</p>
@@ -1154,6 +1154,12 @@ export default function DepositPage() {
                   ) : cardEstimate ? 'Continue with Card' : 'Calculate Total First'}
                 </span>
               </button>
+              {cardEstimate && !agreedToTerms && (
+                <p className="text-[10px] text-amber-400/80">Check the box above to agree to the terms, then press Continue with Card.</p>
+              )}
+              {cardEstimate && agreedToTerms && !billingReady() && (
+                <p className="text-[10px] text-amber-400/80">Complete your billing details above to continue with card.</p>
+              )}
               {!cardEstimate && amount && getUsdAmount() >= 5 && agreedToTerms && (
                 <p className="text-[10px] text-gray-500">Calculate the card total above before opening PandaBase.</p>
               )}
