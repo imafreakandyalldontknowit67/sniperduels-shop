@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getSiteSettings } from '@/lib/storage'
 
 const MIN_PRICE_USD = 0.10
 const MAX_PRICE_USD = 50_000
@@ -15,6 +16,12 @@ export async function POST(
 ) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Marketplace locked: block new listings while items are coming soon.
+  const settings = await getSiteSettings()
+  if (settings.itemsComingSoon) {
+    return NextResponse.json({ error: 'Listing items is not yet available' }, { status: 403 })
+  }
 
   const { id } = await params
   let body: any

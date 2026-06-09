@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getSiteSettings } from '@/lib/storage'
 
 export async function POST(
   _request: NextRequest,
@@ -13,6 +14,12 @@ export async function POST(
 ) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Marketplace locked: block while items are coming soon.
+  const settings = await getSiteSettings()
+  if (settings.itemsComingSoon) {
+    return NextResponse.json({ error: 'Item withdrawals are not yet available' }, { status: 403 })
+  }
 
   const { id } = await params
   const item = await prisma.vaultItem.findUnique({

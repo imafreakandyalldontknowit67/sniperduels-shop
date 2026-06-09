@@ -152,7 +152,7 @@ export function DashboardSidebar({ isVendor = false }: { isVendor?: boolean }) {
             className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-dark-700 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
-            Back to Shop
+            Back to Site
           </Link>
         </div>
       </aside>

@@ -22,12 +22,16 @@ import {
   Share2,
   Banknote,
   Scale,
+  Boxes,
+  Tags,
 } from 'lucide-react'
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/gems', label: 'Gems', icon: Gem },
   { href: '/admin/stock', label: 'Stock', icon: Package },
+  { href: '/admin/marketplace/dashboard', label: 'Marketplace', icon: Tags },
+  { href: '/admin/catalog', label: 'Item Catalog', icon: Boxes },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/vendors', label: 'Vendors', icon: Store },

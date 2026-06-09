@@ -72,6 +72,16 @@ function ListingDetailInner() {
 
   useEffect(() => { if (user) setRobloxName(user.name) }, [user])
 
+  // Marketplace lock: while items are coming soon, bounce detail views back to
+  // /marketplace (which renders the Coming Soon panel). Demo mode bypasses.
+  useEffect(() => {
+    if (demo) return
+    fetch('/api/settings')
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d?.itemsComingSoon) router.replace('/marketplace') })
+      .catch(() => {})
+  }, [demo, router])
+
   async function buy(method: 'wallet' | 'pandabase') {
     if (!user) { login(); return }
     if (!listing) return

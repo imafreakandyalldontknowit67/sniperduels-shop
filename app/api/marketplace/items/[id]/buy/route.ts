@@ -15,6 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { purchaseListing, MarketplaceError } from '@/lib/marketplace'
+import { getSiteSettings } from '@/lib/storage'
 
 export async function POST(
   request: NextRequest,
@@ -22,6 +23,12 @@ export async function POST(
 ) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Marketplace locked: block purchases while items are coming soon.
+  const settings = await getSiteSettings()
+  if (settings.itemsComingSoon) {
+    return NextResponse.json({ error: 'Item purchases are not yet available' }, { status: 403 })
+  }
 
   const { id } = await params
   let body: any

@@ -22,6 +22,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import { prisma } from '@/lib/prisma'
 import { rateLimitOr429 } from '@/lib/rate-limit'
+import { getSiteSettings } from '@/lib/storage'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,6 +48,15 @@ export async function GET(request: NextRequest) {
   const limited = rateLimitOr429(`bot-poll:${request.headers.get('x-bot-api-key')?.slice(0, 8) ?? 'anon'}`,
     { limit: 30, windowMs: 60_000 })
   if (limited) return limited
+
+  // Marketplace locked: while items are coming soon, hand the bot nothing so
+  // it stays idle even if the daemon is running. (Belt-and-suspenders — the
+  // user-facing deposit/buy/withdraw endpoints are also gated, so the queue
+  // stays empty anyway.)
+  const settings = await getSiteSettings()
+  if (settings.itemsComingSoon) {
+    return NextResponse.json({ kind: null, job: null })
+  }
 
   // 1. Deposit sessions — user has joined, waiting for trade request.
   // Atomic claim: pending → bot_in_trade in one updateMany call.

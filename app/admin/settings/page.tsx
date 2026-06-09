@@ -59,8 +59,8 @@ export default function SettingsPage() {
         <div className="flex items-center gap-4 mb-6">
           <Settings className="w-8 h-8 text-accent" />
           <div>
-            <h2 className="text-xl font-semibold text-white">Shop Settings</h2>
-            <p className="text-gray-400">Configure your shop settings</p>
+            <h2 className="text-xl font-semibold text-white">Marketplace Settings</h2>
+            <p className="text-gray-400">Configure your marketplace settings</p>
           </div>
         </div>
 

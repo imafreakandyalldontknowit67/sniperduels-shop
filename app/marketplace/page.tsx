@@ -52,6 +52,20 @@ function MarketplaceInner() {
   const [search, setSearch] = useState('')
   const [showFilters, setShowFilters] = useState(false)
   const [sort, setSort] = useState<'price-asc' | 'price-desc' | 'rarity'>('price-asc')
+  // Marketplace lock: while items are coming soon the storefront is hidden
+  // behind a Coming Soon panel. Demo mode (?demo=1 / NEXT_PUBLIC_DEMO_MARKETPLACE)
+  // bypasses the lock so the designer preview can still show the UX.
+  const [comingSoon, setComingSoon] = useState(false)
+  const [settingsLoaded, setSettingsLoaded] = useState(false)
+  const locked = comingSoon && !demo
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d) setComingSoon(!!d.itemsComingSoon) })
+      .catch(() => {})
+      .finally(() => setSettingsLoaded(true))
+  }, [])
 
   async function fetchListings() {
     setLoading(true)
@@ -67,7 +81,7 @@ function MarketplaceInner() {
     setLoading(false)
   }
 
-  useEffect(() => { fetchListings() }, [type, rarity, maxUsd])
+  useEffect(() => { if (!locked) fetchListings() }, [type, rarity, maxUsd, locked])
 
   const filtered = useMemo(() => {
     let list = listings
@@ -95,6 +109,15 @@ function MarketplaceInner() {
     liveCount === 0 ? 'border-red-500/40 text-red-300' :
     liveCount < 8 ? 'border-amber-500/40 text-amber-300' :
     'border-emerald-500/40 text-emerald-300'
+
+  // Wait for the lock state before painting (demo skips the wait) so we never
+  // flash the storefront before flipping to Coming Soon.
+  if (!demo && !settingsLoaded) {
+    return <div className="min-h-screen bg-gradient-to-b from-zinc-950 to-black" />
+  }
+  if (locked) {
+    return <MarketplaceComingSoon />
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-950 to-black">
@@ -227,6 +250,36 @@ function MarketplaceInner() {
             {filtered.map(l => <ItemCard key={l.id} listing={l} demo={demo} />)}
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+function MarketplaceComingSoon() {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-zinc-950 to-black">
+      <div className="max-w-2xl mx-auto px-4 py-24 text-center">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-accent mb-4 uppercase">
+          Marketplace
+        </h1>
+        <div className="inline-flex items-center gap-2 border border-amber-500/40 text-amber-300 rounded-full px-3 py-1.5 text-xs sm:text-sm font-semibold mb-8">
+          <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
+          <span>Coming Soon</span>
+        </div>
+        <p className="text-zinc-400 max-w-md mx-auto mb-8 text-sm">
+          The item marketplace — deposit, list, and trade Sniper Duels snipers &amp; knives —
+          is being prepared. In the meantime, our gems store is live.
+        </p>
+        <Link
+          href="/gems"
+          className="relative inline-flex items-center justify-center"
+          style={{ textDecoration: 'none' }}
+        >
+          <img src="/images/pixel/pngs/asset-59.png" alt="" className="h-[56px] sm:h-[62px] w-auto" />
+          <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-xs sm:text-sm uppercase tracking-wider">
+            Browse Gems
+          </span>
+        </Link>
       </div>
     </div>
   )

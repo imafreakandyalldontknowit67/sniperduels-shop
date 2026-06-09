@@ -670,10 +670,10 @@ export default function OrderTrackingPage() {
 
           <div className="flex gap-3 mt-8">
             <Link
-              href={isVendorDeposit ? '/dashboard/vendor/deposit' : isVendorWithdrawal ? '/dashboard/vendor/withdraw' : '/shop'}
+              href={isVendorDeposit ? '/dashboard/vendor/deposit' : isVendorWithdrawal ? '/dashboard/vendor/withdraw' : '/marketplace'}
               className="flex-1 py-3 bg-accent hover:bg-accent-light text-white font-medium rounded-xl text-center transition-colors"
             >
-              {isVendorDeposit ? 'Back to Deposits' : isVendorWithdrawal ? 'Back to Withdrawals' : 'Back to Shop'}
+              {isVendorDeposit ? 'Back to Deposits' : isVendorWithdrawal ? 'Back to Withdrawals' : 'Back to Marketplace'}
             </Link>
             <Link
               href={isVendorOp ? '/dashboard/vendor' : '/dashboard/orders'}
@@ -715,10 +715,10 @@ export default function OrderTrackingPage() {
 
           <div className="flex gap-3 mt-8">
             <Link
-              href={isVendorDeposit ? '/dashboard/vendor/deposit' : isVendorWithdrawal ? '/dashboard/vendor/withdraw' : '/shop'}
+              href={isVendorDeposit ? '/dashboard/vendor/deposit' : isVendorWithdrawal ? '/dashboard/vendor/withdraw' : '/marketplace'}
               className="flex-1 py-3 bg-accent hover:bg-accent-light text-white font-medium rounded-xl text-center transition-colors"
             >
-              {isVendorDeposit ? 'Back to Deposits' : isVendorWithdrawal ? 'Back to Withdrawals' : 'Back to Shop'}
+              {isVendorDeposit ? 'Back to Deposits' : isVendorWithdrawal ? 'Back to Withdrawals' : 'Back to Marketplace'}
             </Link>
             <Link
               href={isVendorOp ? '/dashboard/vendor' : '/dashboard/orders'}

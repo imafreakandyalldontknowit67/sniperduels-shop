@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { rateLimitOr429 } from '@/lib/rate-limit'
+import { getSiteSettings } from '@/lib/storage'
 
 const SESSION_TTL_MS = 10 * 60_000  // 10 minutes
 
@@ -21,6 +22,12 @@ export async function POST(request: NextRequest) {
   const user = await getCurrentUser()
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Marketplace locked: block new item deposits while items are coming soon.
+  const settings = await getSiteSettings()
+  if (settings.itemsComingSoon) {
+    return NextResponse.json({ error: 'Item deposits are not yet available' }, { status: 403 })
   }
 
   // Hardening 11.4: cap deposit-session creations per user — 3 per hour.

@@ -39,6 +39,16 @@ export default function VaultPage() {
   const [session, setSession] = useState<DepositSession | null>(null)
   const [pricing, setPricing] = useState<string | null>(null) // id being priced
   const [priceInput, setPriceInput] = useState('')
+  const [comingSoon, setComingSoon] = useState(false)
+  const [settingsLoaded, setSettingsLoaded] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d) setComingSoon(!!d.itemsComingSoon) })
+      .catch(() => {})
+      .finally(() => setSettingsLoaded(true))
+  }, [])
 
   async function fetchVault() {
     setLoading(true)
@@ -102,6 +112,20 @@ export default function VaultPage() {
     return (
       <div className="p-8 text-center">
         <p className="text-gray-300">Log in to access your vault.</p>
+      </div>
+    )
+  }
+
+  // Marketplace locked: hide the vault (deposit/list/withdraw all gated server-side).
+  if (settingsLoaded && comingSoon) {
+    return (
+      <div className="max-w-2xl mx-auto p-8 text-center">
+        <Package className="w-12 h-12 text-accent mx-auto mb-4" />
+        <h1 className="text-2xl font-bold text-white mb-3 uppercase">Coming Soon</h1>
+        <p className="text-gray-400 mb-8">
+          The item vault and marketplace are being prepared. Our gems store is live in the meantime.
+        </p>
+        <Button href="/gems">Browse Gems</Button>
       </div>
     )
   }
