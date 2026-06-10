@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
       prisma.deposit.findMany({
         where: { pandabaseInvoiceId: { startsWith: 'crypto_' }, ...(since ? { createdAt: { gte: since } } : {}) },
         orderBy: { createdAt: 'desc' },
-        take: 100,
+        take: 20, // display list only; totals are aggregated separately over ALL rows
         select: { id: true, amount: true, pandabaseRefId: true, status: true, createdAt: true },
       }).catch(() => []),
       // Sum deposits from our DB (what users actually deposited + processing fees)
@@ -128,11 +128,21 @@ export async function GET(request: NextRequest) {
     // from our own Deposit table (see the findMany above), not an external
     // provider API, so it always reflects real deposits regardless of which
     // crypto provider (NOWPayments) processed them.
-    const cryptoCompleted = cryptoDeposits.filter(r => r.status === 'completed')
+    // Totals aggregate over ALL completed crypto deposits (not just the recent
+    // display window) so completedCount / totalDeposited are accurate.
+    const cryptoStats = await prisma.deposit.aggregate({
+      where: {
+        pandabaseInvoiceId: { startsWith: 'crypto_' },
+        status: 'completed',
+        ...(since ? { createdAt: { gte: since } } : {}),
+      },
+      _sum: { amount: true },
+      _count: true,
+    })
     const crypto = {
-      totalDeposited: Math.round(cryptoCompleted.reduce((s, r) => s + d(r.amount), 0) * 100) / 100,
-      completedCount: cryptoCompleted.length,
-      payments: cryptoDeposits.slice(0, 20).map(r => ({
+      totalDeposited: Math.round(d(cryptoStats._sum.amount) * 100) / 100,
+      completedCount: cryptoStats._count,
+      payments: cryptoDeposits.map(r => ({
         id: r.id,
         amount: d(r.amount),
         currency: r.pandabaseRefId ?? '',
