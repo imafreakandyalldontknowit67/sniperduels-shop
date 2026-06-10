@@ -1,5 +1,6 @@
 import { prisma } from './prisma'
 import { Prisma } from './generated/prisma/client'
+import { effectiveFeeRate, recomputeVendorTier } from './vendor-fees'
 
 type Decimal = Prisma.Decimal
 import { RARITIES, FX_EFFECTS, FRAGTRAK_TYPES } from './constants'
@@ -957,6 +958,9 @@ export interface VendorGemListing {
   stockK: number
   bulkTiers: Array<{ minK: number; pricePerK: number }> | null
   platformFeeRate: number | null
+  autoFeeRate: number | null
+  feeTierBelowSince: string | null
+  rolling7dVolumeK: number
   active: boolean
   createdAt: string
   updatedAt: string
@@ -971,6 +975,9 @@ function toVendorGemListing(row: {
   stockK: number
   bulkTiers: string | null
   platformFeeRate: Decimal | null
+  autoFeeRate?: Decimal | null
+  feeTierBelowSince?: Date | null
+  rolling7dVolumeK?: number
   active: boolean
   createdAt: string
   updatedAt: string
@@ -988,6 +995,9 @@ function toVendorGemListing(row: {
     stockK: row.stockK,
     bulkTiers,
     platformFeeRate: row.platformFeeRate != null ? d(row.platformFeeRate) : null,
+    autoFeeRate: row.autoFeeRate != null ? d(row.autoFeeRate) : null,
+    feeTierBelowSince: row.feeTierBelowSince ? row.feeTierBelowSince.toISOString() : null,
+    rolling7dVolumeK: row.rolling7dVolumeK ?? 0,
     active: row.active,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -1253,15 +1263,18 @@ function toVendorEarning(row: {
   }
 }
 
-const PLATFORM_FEE_RATE = 0.03 // 3%
-
 export async function createVendorEarning(
   vendorId: string,
   orderId: string,
   saleAmount: number
 ): Promise<VendorEarningRecord> {
-  const listing = await prisma.vendorGemListing.findUnique({ where: { vendorId }, select: { platformFeeRate: true } })
-  const feeRate = listing?.platformFeeRate != null ? Number(listing.platformFeeRate) : PLATFORM_FEE_RATE
+  // Effective fee: manual override (platformFeeRate) > auto volume tier
+  // (autoFeeRate) > default 3%. See lib/vendor-fees.ts.
+  const listing = await prisma.vendorGemListing.findUnique({
+    where: { vendorId },
+    select: { platformFeeRate: true, autoFeeRate: true },
+  })
+  const feeRate = effectiveFeeRate(listing)
   const platformFee = Math.round(saleAmount * feeRate * 100) / 100
   const netAmount = Math.round((saleAmount - platformFee) * 100) / 100
   const now = new Date().toISOString()
@@ -1276,6 +1289,14 @@ export async function createVendorEarning(
   })
   if (!credited) {
     console.error(`CRITICAL: Vendor wallet credit failed for ${vendorId}, amount $${netAmount}. Wallet at max.`)
+  }
+  // This vendor just sold — recompute their volume tier so a 650k/wk crossing
+  // grants the 1.5% break immediately on their next sale. Best-effort: a tier
+  // recompute failure must never break the sale itself.
+  try {
+    await recomputeVendorTier(vendorId)
+  } catch (e) {
+    console.error(`[fee-tiers] post-sale recompute failed for ${vendorId}:`, e)
   }
   return toVendorEarning(row)
 }

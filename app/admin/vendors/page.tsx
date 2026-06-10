@@ -13,6 +13,9 @@ interface Vendor {
     stockK: number
     active: boolean
     platformFeeRate: number | null
+    autoFeeRate?: number | null
+    rolling7dVolumeK?: number
+    feeTierBelowSince?: string | null
   } | null
   earnings: {
     totalSales: number
@@ -323,10 +326,29 @@ export default function AdminVendorsPage() {
                         ) : (
                           <button
                             onClick={() => { setEditingFee(vendor.id); setFeeInput(vendor.listing?.platformFeeRate != null ? String(vendor.listing.platformFeeRate * 100) : '') }}
-                            className="flex items-center gap-1 text-xs text-gray-400 hover:text-white transition-colors"
+                            className="flex flex-col items-end gap-0.5 text-xs text-gray-400 hover:text-white transition-colors"
+                            title="Click to set a manual override (blank = auto volume tier)"
                           >
-                            <Percent className="w-3 h-3" />
-                            {vendor.listing?.platformFeeRate != null ? `${(vendor.listing.platformFeeRate * 100).toFixed(1)}%` : '3%'} fee
+                            {(() => {
+                              const l = vendor.listing
+                              const manual = l?.platformFeeRate != null
+                              const rate = manual ? l!.platformFeeRate! : (l?.autoFeeRate ?? 0.03)
+                              const vol = l?.rolling7dVolumeK ?? 0
+                              const inGrace = !manual && (l?.autoFeeRate ?? 0.03) <= 0.015 && vol < 650 && !!l?.feeTierBelowSince
+                              return (
+                                <>
+                                  <span className="flex items-center gap-1">
+                                    <Percent className="w-3 h-3" />
+                                    {(rate * 100).toFixed(1)}% {manual ? 'manual' : 'auto'}
+                                  </span>
+                                  {!manual && (
+                                    <span className={`text-[10px] ${inGrace ? 'text-amber-400' : 'text-gray-500'}`}>
+                                      {vol}k/wk{inGrace ? ' · grace' : ''}
+                                    </span>
+                                  )}
+                                </>
+                              )
+                            })()}
                           </button>
                         )}
                       </div>

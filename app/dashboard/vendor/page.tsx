@@ -25,11 +25,25 @@ interface Summary {
   count: number
 }
 
+interface FeeStatus {
+  effectiveRate: number
+  source: 'manual' | 'auto'
+  volume7dK: number
+  thresholdK: number
+  discountRate: number
+  defaultRate: number
+  qualifies: boolean
+  remainingToThresholdK: number
+  inGrace: boolean
+  graceEndsAt: string | null
+}
+
 export default function VendorDashboard() {
   const [listing, setListing] = useState<Listing | null>(null)
   const [summary, setSummary] = useState<Summary | null>(null)
   const [monthlyRank, setMonthlyRank] = useState<number | null>(null)
   const [totalVendors, setTotalVendors] = useState(0)
+  const [feeStatus, setFeeStatus] = useState<FeeStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -43,8 +57,15 @@ export default function VendorDashboard() {
   const [bulkTiers, setBulkTiers] = useState<Array<{ minK: string; pricePerK: string }>>([])
 
   useEffect(() => {
-    Promise.all([fetchListing(), fetchEarnings()]).finally(() => setLoading(false))
+    Promise.all([fetchListing(), fetchEarnings(), fetchFeeStatus()]).finally(() => setLoading(false))
   }, [])
+
+  async function fetchFeeStatus() {
+    try {
+      const res = await fetch('/api/vendor/fee-status')
+      if (res.ok) setFeeStatus(await res.json())
+    } catch { /* non-blocking */ }
+  }
 
   useEffect(() => {
     if (toast) {
@@ -227,6 +248,46 @@ export default function VendorDashboard() {
               : `You're #${monthlyRank} in sales this month!`}
             <span className="text-gray-500 ml-2">out of {totalVendors} vendor{totalVendors !== 1 ? 's' : ''}</span>
           </span>
+        </div>
+      )}
+
+      {/* Fee tier */}
+      {feeStatus && (
+        <div className="p-4 mb-8" style={{ background: '#1a1a1e', border: '2px solid #2a2a2e' }}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] text-gray-400 uppercase">Your Platform Fee</span>
+            <span className="text-lg font-bold text-white">
+              {(feeStatus.effectiveRate * 100).toFixed(1)}%
+            </span>
+          </div>
+          {feeStatus.source === 'manual' ? (
+            <p className="text-xs text-gray-400">Custom rate set by an admin.</p>
+          ) : feeStatus.qualifies ? (
+            <p className="text-xs text-green-400">
+              Volume discount active — {feeStatus.volume7dK.toLocaleString()}k sold this week
+              (≥ {feeStatus.thresholdK}k). Keep it up to stay at {(feeStatus.discountRate * 100).toFixed(1)}%.
+            </p>
+          ) : feeStatus.inGrace ? (
+            <p className="text-xs text-amber-400">
+              Discount holding at {(feeStatus.discountRate * 100).toFixed(1)}% — but you&apos;re under {feeStatus.thresholdK}k this week.
+              Reverts to {(feeStatus.defaultRate * 100).toFixed(1)}%
+              {feeStatus.graceEndsAt ? ` on ${new Date(feeStatus.graceEndsAt).toLocaleDateString()}` : ''} unless volume recovers.
+            </p>
+          ) : (
+            <>
+              <p className="text-xs text-gray-400 mb-2">
+                Sell <span className="text-white font-semibold">{feeStatus.remainingToThresholdK.toLocaleString()}k</span> more
+                this week to drop to {(feeStatus.discountRate * 100).toFixed(1)}%
+                ({feeStatus.volume7dK.toLocaleString()}k / {feeStatus.thresholdK}k).
+              </p>
+              <div className="w-full h-2 bg-dark-700 overflow-hidden" style={{ background: '#111' }}>
+                <div
+                  className="h-full bg-accent"
+                  style={{ width: `${Math.min(100, (feeStatus.volume7dK / feeStatus.thresholdK) * 100)}%` }}
+                />
+              </div>
+            </>
+          )}
         </div>
       )}
 
