@@ -64,12 +64,22 @@ export async function flagAndBlacklist(opts: {
   blacklistedIps.add(ip)
   if (userId) blacklistedUserIds.add(userId)
 
-  // Sync with middleware's in-memory blacklist (middleware runs in Edge, can't access Prisma)
-  // Uses loopback + secret header (never query params — those leak in logs/referer)
+  // Sync with middleware's in-memory blacklist (middleware runs in Edge, can't access Prisma).
+  // Use POST body + shared secret. Do not put blacklist data in the query string:
+  // query strings leak into proxy/app logs and Referer headers.
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
-    await fetch(`${baseUrl}/api/internal/blacklist-sync?ip=${encodeURIComponent(ip)}`, {
-      headers: { 'x-internal-secret': process.env.SESSION_SECRET || '' },
+    await fetch(`${baseUrl}/api/internal/blacklist-sync`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-secret': process.env.SESSION_SECRET || '',
+      },
+      body: JSON.stringify({
+        ip,
+        userId,
+        ttlMs: 24 * 60 * 60 * 1000,
+      }),
       signal: AbortSignal.timeout(3000),
     })
   } catch (err) {
