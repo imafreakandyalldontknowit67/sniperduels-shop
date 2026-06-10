@@ -3,7 +3,6 @@ import { NextRequest } from 'next/server'
 import { getCurrentUser, isAdmin } from '@/lib/auth'
 import { getLedgerEntries } from '@/lib/storage'
 import { getPandabaseAnalytics, getPandabasePayouts, getPandabaseGrossVolume, type PBPeriod } from '@/lib/pandabase-api'
-import { getCryptoPayments, summarizeCryptoPayments } from '@/lib/nearpayments-api'
 import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -67,7 +66,7 @@ export async function GET(request: NextRequest) {
       pbAnalytics,
       pbPayouts,
       pbDailyRevenue,
-      cryptoPayments,
+      cryptoDeposits,
       // Our DB data
       depositAgg,
       platformOrders,
@@ -79,7 +78,15 @@ export async function GET(request: NextRequest) {
       getPandabaseAnalytics(pbPeriod).catch(err => { console.error('PB analytics:', err); return null }),
       getPandabasePayouts().catch(() => []),
       getPandabaseGrossVolume(pbPeriod === 'all' ? '90d' : pbPeriod).catch(() => []),
-      getCryptoPayments().catch(() => []),
+      // Crypto deposits live in OUR DB (provider-agnostic, webhook-updated).
+      // Crypto deposits are tagged with a 'crypto_' pandabaseInvoiceId prefix in
+      // app/api/deposits/create-crypto. pandabaseRefId holds the crypto currency.
+      prisma.deposit.findMany({
+        where: { pandabaseInvoiceId: { startsWith: 'crypto_' }, ...(since ? { createdAt: { gte: since } } : {}) },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+        select: { id: true, amount: true, pandabaseRefId: true, status: true, createdAt: true },
+      }).catch(() => []),
       // Sum deposits from our DB (what users actually deposited + processing fees)
       prisma.deposit.aggregate({
         where: depositWhere,
@@ -117,11 +124,22 @@ export async function GET(request: NextRequest) {
     const depositProfit = Math.round((totalProcessingFees - pandabaseFees) * 100) / 100
 
     // === CRYPTO DEPOSITS ===
-    // No fees on crypto — but these are user wallet deposits, not profit
-    // Crypto deposits go to user wallets, user spends on gems/items
-    let filteredCrypto = cryptoPayments
-    if (since) filteredCrypto = cryptoPayments.filter(p => new Date(p.created_at) >= new Date(since))
-    const crypto = summarizeCryptoPayments(filteredCrypto)
+    // No fees on crypto — these are user wallet deposits, not profit. Sourced
+    // from our own Deposit table (see the findMany above), not an external
+    // provider API, so it always reflects real deposits regardless of which
+    // crypto provider (NOWPayments) processed them.
+    const cryptoCompleted = cryptoDeposits.filter(r => r.status === 'completed')
+    const crypto = {
+      totalDeposited: Math.round(cryptoCompleted.reduce((s, r) => s + d(r.amount), 0) * 100) / 100,
+      completedCount: cryptoCompleted.length,
+      payments: cryptoDeposits.slice(0, 20).map(r => ({
+        id: r.id,
+        amount: d(r.amount),
+        currency: r.pandabaseRefId ?? '',
+        status: r.status,
+        date: r.createdAt,
+      })),
+    }
 
     // === PLATFORM SALES PROFIT ===
     // When WE sell gems (not vendor), profit = sale price - cost
@@ -170,14 +188,7 @@ export async function GET(request: NextRequest) {
         depositProfit,
         count: depositAgg._count,
       },
-      crypto: {
-        totalDeposited: crypto.totalDeposited,
-        completedCount: crypto.completedCount,
-        payments: crypto.payments.slice(0, 20).map(p => ({
-          id: p.payment_id, amount: p.price_amount, currency: p.pay_currency,
-          status: p.payment_status, date: p.created_at,
-        })),
-      },
+      crypto,
       platformSales: {
         revenue: Math.round(platformSalesRevenue * 100) / 100,
         orderCount: platformOrderCount,

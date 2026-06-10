@@ -338,7 +338,7 @@ export default function FinancePage() {
                     <td className="py-3 text-gray-300 text-sm uppercase">{p.currency}</td>
                     <td className="py-3">
                       <span className={`text-xs px-2 py-1 rounded ${
-                        p.status === 'finished' || p.status === 'confirmed'
+                        p.status === 'finished' || p.status === 'confirmed' || p.status === 'completed'
                           ? 'bg-green-500/10 text-green-400'
                           : p.status === 'expired' || p.status === 'failed'
                             ? 'bg-red-500/10 text-red-400'
