@@ -13,6 +13,13 @@ const QUEUE_FALLBACK_TIMEOUT_MS = 4 * 60 * 60 * 1000 // 4 hours from createdAt
 // Time before an unready #1 order gets skipped (from when they reach #1, not order creation)
 const SKIP_TIMEOUT_MS = 3.5 * 60 * 1000 // 3.5 minutes
 
+// An order the bot moved to `processing` but never completed/failed (hung in-game trade,
+// abandoned buyer, bot restart that dropped its current job) otherwise blocks the
+// single-flight queue forever — no other timeout covers `processing`. This caused an ~8h
+// outage on 2026-06-10. Auto-fail + refund such orders past this age so the queue self-heals.
+// Real trades complete in ~1-3 min, so 30 min is safe headroom.
+const PROCESSING_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes stuck in `processing`
+
 function authenticateBot(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-bot-api-key')
   if (!apiKey || !process.env.BOT_API_KEY) return false
@@ -92,8 +99,28 @@ export async function GET(request: NextRequest) {
   // Clock starts when the order reaches #1 in the queue (reachedFrontAt), NOT at creation.
   // Orders still waiting in queue are only expired after 4 hours as a safety fallback.
   const now = Date.now()
+
+  // Self-heal: auto-fail orders wedged in `processing`. Scans ALL orders (not just the
+  // include_processing subset) so it runs on every bot poll. expireOrder flips the order to
+  // failed, refunds the wallet, and restores stock to the correct pool — same path as the
+  // pending-order timeouts below.
+  const expiredProcessingIds = new Set<string>()
+  for (const o of allOrders) {
+    if (o.status !== 'processing') continue
+    const ref = new Date(o.reachedFrontAt || o.updatedAt || o.createdAt).getTime()
+    const age = now - ref
+    if (age > PROCESSING_TIMEOUT_MS) {
+      const ok = await expireOrder(o, 'Auto-expired: stuck in processing past 30-minute timeout — wallet refunded')
+      if (ok) {
+        expiredProcessingIds.add(o.id)
+        console.log(`[BotPoll] auto-expired stuck processing order ${o.id} after ${Math.round(age / 60000)}m — refunded, queue unblocked`)
+      }
+    }
+  }
+
   const activeOrders: typeof pendingOrProcessing = []
   for (const o of pendingOrProcessing) {
+    if (expiredProcessingIds.has(o.id)) continue
     if (o.status === 'pending') {
       if (o.reachedFrontAt) {
         const ageAtFront = now - new Date(o.reachedFrontAt).getTime()
