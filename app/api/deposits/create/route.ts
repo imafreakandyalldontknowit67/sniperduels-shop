@@ -70,17 +70,11 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
-    const { amount, localCurrency, website, billing } = body
+    const { amount, localCurrency, billing } = body
 
-    // Honeypot check. This endpoint is auth-gated, so a filled honeypot is
-    // almost always a real logged-in user whose password manager autofilled the
-    // hidden field — NOT a bot. Do NOT blacklist (that blocks paying customers)
-    // and do NOT return the decoy '/dashboard/deposit' URL (the client would
-    // window.open it onto the crypto-default tab). Just reject and log.
-    if (website) {
-      console.warn(`[deposit.create] honeypot filled by authed user ${user.id} — autofill false positive, not blacklisting`)
-      return NextResponse.json({ error: 'Please try again.' }, { status: 400 })
-    }
+    // (Honeypot removed: this endpoint is auth-gated and money-IN, so a honeypot
+    // adds no real bot protection and password-manager autofill of the hidden
+    // field was blocking legit card payers.)
 
     if (!amount || typeof amount !== 'number' || amount <= 0) {
       return NextResponse.json({ error: 'Amount must be a positive number' }, { status: 400 })

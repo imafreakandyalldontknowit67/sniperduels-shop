@@ -24,16 +24,10 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
-    const { amount, currency, localCurrency, website } = body
+    const { amount, currency, localCurrency } = body
 
-    // Honeypot. This endpoint is auth-gated, so a filled honeypot is almost
-    // always a real logged-in user whose password manager autofilled the hidden
-    // field — NOT a bot. Do NOT blacklist (that blocks paying customers); just
-    // reject and log so we can monitor. Real bots can't clear Roblox OAuth.
-    if (website) {
-      console.warn(`[deposit.crypto] honeypot filled by authed user ${user.id} — autofill false positive, not blacklisting`)
-      return NextResponse.json({ error: 'Please try again.' }, { status: 400 })
-    }
+    // (Honeypot removed: auth-gated money-IN endpoint; autofill of the hidden
+    // field was blocking legit users for no real bot-protection benefit.)
 
     if (!amount || typeof amount !== 'number' || amount <= 0) {
       return NextResponse.json({ error: 'Amount must be a positive number' }, { status: 400 })

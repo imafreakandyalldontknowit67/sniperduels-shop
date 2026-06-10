@@ -341,7 +341,6 @@ export default function DepositPage() {
   const [deposits, setDeposits] = useState<Deposit[]>([])
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-  const [hpField, setHpField] = useState('')
   const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [botOnline, setBotOnline] = useState(true)
@@ -500,7 +499,7 @@ export default function DepositPage() {
       const res = await fetch('/api/deposits/estimate-card', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: numAmount, localCurrency: currency, billing, website: hpField }),
+        body: JSON.stringify({ amount: numAmount, localCurrency: currency, billing }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -552,7 +551,7 @@ export default function DepositPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         // Send the user's local-currency input; server converts to USD authoritatively.
-        body: JSON.stringify({ amount: numAmount, localCurrency: currency, billing, website: hpField }),
+        body: JSON.stringify({ amount: numAmount, localCurrency: currency, billing }),
       })
       const data = await res.json()
       if (!res.ok) { setMessage({ type: 'error', text: data.error || 'Failed to create deposit' }); return }
@@ -683,7 +682,7 @@ export default function DepositPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         // Send the user's local-currency input; server converts to USD authoritatively.
-        body: JSON.stringify({ amount: numAmount, localCurrency: currency, currency: cryptoCurrency, website: hpField }),
+        body: JSON.stringify({ amount: numAmount, localCurrency: currency, currency: cryptoCurrency }),
       })
       const data = await res.json()
       if (!res.ok) { setMessage({ type: 'error', text: data.error || 'Failed to create crypto deposit' }); return }
@@ -1047,9 +1046,6 @@ export default function DepositPage() {
         {/* Card Tab Content */}
         {tab === 'card' && (
           <>
-            <div className="absolute opacity-0 h-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
-              <input type="text" name="hp_url_check" value={hpField} onChange={(e) => setHpField(e.target.value)} autoComplete="off" tabIndex={-1} aria-hidden="true" data-lpignore="true" data-1p-ignore data-form-type="other" />
-            </div>
 
             <div className="bg-dark-800/50 rounded-xl p-5 mb-6 border border-dark-500">
               <div className="flex items-start justify-between gap-3 mb-4">
@@ -1244,9 +1240,6 @@ export default function DepositPage() {
               <p className="text-xs text-gray-500 text-center mt-3">No processing fees on crypto deposits</p>
             </div>
 
-            <div className="absolute opacity-0 h-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
-              <input type="text" name="hp_url_check" value={hpField} onChange={(e) => setHpField(e.target.value)} autoComplete="off" tabIndex={-1} aria-hidden="true" data-lpignore="true" data-1p-ignore data-form-type="other" />
-            </div>
 
             <div className="flex justify-center">
               <button
