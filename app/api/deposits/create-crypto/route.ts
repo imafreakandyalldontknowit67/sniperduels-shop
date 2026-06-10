@@ -3,7 +3,6 @@ import { getCurrentUser } from '@/lib/auth'
 import { getUserDeposits, createDeposit, updateDeposit, expireStaleDeposits, getSiteSettings, addToWallet } from '@/lib/storage'
 import { prisma } from '@/lib/prisma'
 import { createCryptoPayment } from '@/lib/nowpayments'
-import { flagAndBlacklist } from '@/lib/blacklist'
 import { localToUsd, usdToLocal, isSupportedCurrency } from '@/lib/fx'
 import { captureServerEvent, cryptoFinalMethod } from '@/lib/posthog-api'
 
@@ -27,16 +26,13 @@ export async function POST(request: NextRequest) {
     }
     const { amount, currency, localCurrency, website } = body
 
-    // Honeypot
+    // Honeypot. This endpoint is auth-gated, so a filled honeypot is almost
+    // always a real logged-in user whose password manager autofilled the hidden
+    // field — NOT a bot. Do NOT blacklist (that blocks paying customers); just
+    // reject and log so we can monitor. Real bots can't clear Roblox OAuth.
     if (website) {
-      const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-real-ip') || '127.0.0.1'
-      await flagAndBlacklist({
-        ip, userId: user.id,
-        reason: 'Filled honeypot on crypto deposit',
-        endpoint: '/api/deposits/create-crypto',
-        userAgent: request.headers.get('user-agent') || undefined,
-      })
-      return NextResponse.json({ depositId: `dep_${Date.now()}`, payAddress: '0x0000', payAmount: 0 })
+      console.warn(`[deposit.crypto] honeypot filled by authed user ${user.id} — autofill false positive, not blacklisting`)
+      return NextResponse.json({ error: 'Please try again.' }, { status: 400 })
     }
 
     if (!amount || typeof amount !== 'number' || amount <= 0) {

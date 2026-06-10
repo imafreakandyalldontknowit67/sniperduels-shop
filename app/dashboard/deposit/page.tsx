@@ -652,9 +652,13 @@ export default function DepositPage() {
         })
         checkout.open()
         posthog.capture('checkout_modal_opened', { provider: 'pandabase', amount_usd: usdAmount, intent_id: data.depositId })
-      } else {
+      } else if (data.checkoutUrl && data.sessionId) {
         window.open(data.checkoutUrl, '_blank')
         setMessage({ type: 'success', text: 'Checkout opened. Complete payment then verify below.' })
+      } else {
+        // No valid Pandabase session — never bounce a card payer to the deposit
+        // page (which defaults to the crypto tab). Surface a retry instead.
+        setMessage({ type: 'error', text: 'Could not open card checkout. Please try again.' })
       }
       setAmount('')
       setCardEstimate(null)
@@ -1044,7 +1048,7 @@ export default function DepositPage() {
         {tab === 'card' && (
           <>
             <div className="absolute opacity-0 h-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
-              <input type="text" name="website" value={hpField} onChange={(e) => setHpField(e.target.value)} autoComplete="off" tabIndex={-1} />
+              <input type="text" name="hp_url_check" value={hpField} onChange={(e) => setHpField(e.target.value)} autoComplete="off" tabIndex={-1} aria-hidden="true" data-lpignore="true" data-1p-ignore data-form-type="other" />
             </div>
 
             <div className="bg-dark-800/50 rounded-xl p-5 mb-6 border border-dark-500">
@@ -1241,7 +1245,7 @@ export default function DepositPage() {
             </div>
 
             <div className="absolute opacity-0 h-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
-              <input type="text" name="website" value={hpField} onChange={(e) => setHpField(e.target.value)} autoComplete="off" tabIndex={-1} />
+              <input type="text" name="hp_url_check" value={hpField} onChange={(e) => setHpField(e.target.value)} autoComplete="off" tabIndex={-1} aria-hidden="true" data-lpignore="true" data-1p-ignore data-form-type="other" />
             </div>
 
             <div className="flex justify-center">

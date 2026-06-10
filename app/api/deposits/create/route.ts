@@ -3,7 +3,6 @@ import { getCurrentUser } from '@/lib/auth'
 import { getUserDeposits, createDeposit, expireStaleDeposits, getSiteSettings, addToWallet } from '@/lib/storage'
 import { prisma } from '@/lib/prisma'
 import { calculateCardSubtotalCents, createCheckout, type CheckoutCustomer } from '@/lib/pandabase'
-import { flagAndBlacklist } from '@/lib/blacklist'
 import { logError } from '@/lib/error-log'
 import { localToUsd, usdToLocal, isSupportedCurrency } from '@/lib/fx'
 import { captureServerEvent } from '@/lib/posthog-api'
@@ -73,16 +72,14 @@ export async function POST(request: NextRequest) {
     }
     const { amount, localCurrency, website, billing } = body
 
-    // Honeypot check
+    // Honeypot check. This endpoint is auth-gated, so a filled honeypot is
+    // almost always a real logged-in user whose password manager autofilled the
+    // hidden field — NOT a bot. Do NOT blacklist (that blocks paying customers)
+    // and do NOT return the decoy '/dashboard/deposit' URL (the client would
+    // window.open it onto the crypto-default tab). Just reject and log.
     if (website) {
-      const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-real-ip') || '127.0.0.1'
-      await flagAndBlacklist({
-        ip, userId: user.id,
-        reason: 'Filled honeypot field on deposit form',
-        endpoint: '/api/deposits/create',
-        userAgent: request.headers.get('user-agent') || undefined,
-      })
-      return NextResponse.json({ depositId: `dep_${Date.now()}`, checkoutUrl: '/dashboard/deposit', sessionId: '' })
+      console.warn(`[deposit.create] honeypot filled by authed user ${user.id} — autofill false positive, not blacklisting`)
+      return NextResponse.json({ error: 'Please try again.' }, { status: 400 })
     }
 
     if (!amount || typeof amount !== 'number' || amount <= 0) {
