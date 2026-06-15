@@ -23,6 +23,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
+    // Dev-mode webhook simulation: locally (PANDABASE_DEV_MODE=true) there is no
+    // real Pandabase webhook to fire payment.success, so a card/Pandabase deposit
+    // would stay pending forever. Treat a verify as "the webhook arrived" so the
+    // guided continuation flow can be tested end-to-end. NEVER runs in prod.
+    if (process.env.PANDABASE_DEV_MODE === 'true' && deposit.status === 'pending' && !deposit.paymentProviderId) {
+      const claimed = await claimPendingDeposit(deposit.id)
+      if (claimed) {
+        await addToWallet(deposit.userId, deposit.amount, {
+          type: 'deposit',
+          description: `Fiat deposit (dev): $${deposit.amount}`,
+          relatedId: deposit.id,
+        })
+        console.log(`[Verify Dev] Simulated webhook credit: ${deposit.id} ($${deposit.amount})`)
+        deposit = (await getDeposit(depositId))!
+      }
+    }
+
     // Polling fallback: if deposit is still pending and we have a payment provider ID,
     // check NOWPayments directly in case the webhook never arrived
     if (deposit.status === 'pending' && deposit.paymentProviderId) {

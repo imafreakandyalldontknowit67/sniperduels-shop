@@ -8,6 +8,9 @@ function CheckoutContent() {
   const searchParams = useSearchParams()
   const amount = searchParams.get('amount')
   const invoiceId = searchParams.get('invoiceId')
+  // Mirror the real Pandabase redirect: bounce back to the continuation path
+  // (carries intentId + paid=1) so the guided "funds added" flow is exercised.
+  const returnPath = searchParams.get('returnPath') || '/dashboard/deposit?paid=1'
 
   return (
     <div className="bg-dark-800/50 border border-dark-500 rounded-2xl p-8 max-w-md w-full mx-4 text-center">
@@ -32,15 +35,15 @@ function CheckoutContent() {
 
       <div className="bg-accent/10 border border-accent/20 rounded-xl p-4 mb-6">
         <p className="text-sm text-accent">
-          Go back to the deposit page and click &quot;Verify Payment&quot; to credit your wallet.
+          Continuing back to finish your order...
         </p>
       </div>
 
       <Link
-        href="/dashboard/deposit"
+        href={returnPath}
         className="inline-block px-6 py-3 bg-accent hover:bg-accent-light text-white font-medium rounded-xl transition-colors"
       >
-        Back to Deposits
+        Continue
       </Link>
     </div>
   )

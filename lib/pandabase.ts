@@ -53,18 +53,24 @@ function getConfig() {
  * The trailing `#${refId}` MUST stay at the end of the name — the webhook
  * matcher (app/api/webhooks/pandabase/route.ts) extracts it via regex.
  */
-export async function createCheckout(amount: number, walletCredit?: number, customer?: CheckoutCustomer): Promise<{
+export async function createCheckout(amount: number, walletCredit?: number, customer?: CheckoutCustomer, returnPath?: string): Promise<{
   sessionId: string
   checkoutUrl: string
   refId: string
 }> {
   const refId = crypto.randomBytes(4).toString('hex').toUpperCase()
   const credit = walletCredit ?? amount
+  // Where Pandabase sends the user after a full-page redirect (3DS / closed
+  // modal / hosted page). Defaults to the bare deposit page; callers thread a
+  // continuation path (e.g. `/dashboard/deposit?intentId=X&paid=1`) so the user
+  // lands back inside the guided "funds added → place your order" flow instead
+  // of a dead end. Only same-origin relative paths are accepted.
+  const safeReturnPath = returnPath && returnPath.startsWith('/') ? returnPath : '/dashboard/deposit'
 
   if (process.env.PANDABASE_DEV_MODE === 'true') {
     return {
       sessionId: `dev_${Date.now()}`,
-      checkoutUrl: `/dev/checkout-success?amount=${amount}&invoiceId=dev_${Date.now()}`,
+      checkoutUrl: `/dev/checkout-success?amount=${amount}&invoiceId=dev_${Date.now()}&returnPath=${encodeURIComponent(safeReturnPath)}`,
       refId,
     }
   }
@@ -85,7 +91,7 @@ export async function createCheckout(amount: number, walletCredit?: number, cust
         quantity: 1,
       }],
       ...(customer ? { customer } : {}),
-      return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/deposit`,
+      return_url: `${process.env.NEXT_PUBLIC_BASE_URL}${safeReturnPath}`,
     }),
   })
 

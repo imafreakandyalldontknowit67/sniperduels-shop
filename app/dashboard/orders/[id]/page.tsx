@@ -6,6 +6,7 @@ import Link from 'next/link'
 import posthog from 'posthog-js'
 import type { Order } from '@/lib/storage'
 import { useCurrency } from '@/components/providers'
+import { CheckoutSteps } from '@/components/ui'
 
 const POLL_INTERVAL = 5000
 
@@ -307,6 +308,12 @@ export default function OrderTrackingPage() {
 
   return (
     <div className="max-w-lg mx-auto">
+      {/* Guided progress: final step (Delivery) for a standard gem order. */}
+      {order.type === 'gems' && !isVendorOp && (
+        <div className="pt-2">
+          <CheckoutSteps current={4} />
+        </div>
+      )}
       {/* Toast */}
       {toast && (
         <div className={`fixed bottom-6 right-4 z-50 p-4 rounded-xl shadow-lg border max-w-sm ${toastColors[toast.type]}`}>

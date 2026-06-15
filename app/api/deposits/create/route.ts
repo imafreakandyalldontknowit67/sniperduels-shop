@@ -70,7 +70,14 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
-    const { amount, localCurrency, billing } = body
+    const { amount, localCurrency, billing, intentId } = body
+
+    // Optional pending-buy-intent id. When present, we point the Pandabase
+    // return_url back into the guided continuation so the user lands on the
+    // "funds added → place your order" panel (and deep-links to /gems?resumeBuy).
+    const cleanIntentId = typeof intentId === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(intentId)
+      ? intentId
+      : null
 
     // (Honeypot removed: this endpoint is auth-gated and money-IN, so a honeypot
     // adds no real bot protection and password-manager autofill of the hidden
@@ -164,7 +171,10 @@ export async function POST(request: NextRequest) {
     // Charge the customer the deposit amount + processing fee.
     // Pass roundedAmount as walletCredit so the Pandabase line-item name shows
     // what the customer actually receives in their wallet, not the marked-up subtotal.
-    const { sessionId, checkoutUrl, refId } = await createCheckout(chargeAmount, roundedAmount, customerValidation.customer)
+    const returnPath = cleanIntentId
+      ? `/dashboard/deposit?intentId=${encodeURIComponent(cleanIntentId)}&paid=1`
+      : '/dashboard/deposit?paid=1'
+    const { sessionId, checkoutUrl, refId } = await createCheckout(chargeAmount, roundedAmount, customerValidation.customer, returnPath)
 
     // Store the original deposit amount (what gets credited to wallet)
     const deposit = await createDeposit({

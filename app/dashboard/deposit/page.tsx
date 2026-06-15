@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useAuth, useCurrency } from '@/components/providers'
+import { CheckoutSteps } from '@/components/ui'
 import type { Deposit } from '@/lib/storage'
 
 const PRESET_AMOUNTS = [5, 10, 25, 50, 100]
@@ -348,6 +349,11 @@ export default function DepositPage() {
   const [cardEstimate, setCardEstimate] = useState<CardEstimate | null>(null)
   const [estimateLoading, setEstimateLoading] = useState(false)
   const [billingTouched, setBillingTouched] = useState(false)
+  // Post-deposit continuation: once funds land we show a loud "funds added →
+  // place your order" panel that deep-links to /gems (carrying the buy intent).
+  const [depositComplete, setDepositComplete] = useState<{ balance: number; intentId: string | null } | null>(null)
+  const [depositsLoaded, setDepositsLoaded] = useState(false)
+  const paidHandledRef = useRef(false)
 
   // Mobile keyboard / viewport detection. Only emit analytics when the
   // keyboard obscures an input; never force-scroll the focused field because
@@ -431,6 +437,7 @@ export default function DepositPage() {
       const res = await fetch('/api/deposits')
       if (res.ok) setDeposits(await res.json())
     } catch { /* silently fail */ }
+    finally { setDepositsLoaded(true) }
   }
 
   useEffect(() => {
@@ -438,6 +445,28 @@ export default function DepositPage() {
       posthog.capture('deposit_page_viewed', { wallet_balance: authWalletBalance })
     }
   }, [isLoading, user])
+
+  // Returned from Pandabase (?paid=1) — the user just completed a full-page
+  // redirect (3DS / hosted checkout / dev mock). Verify the newest pending
+  // deposit so the "funds added" continuation panel reflects the real credit.
+  useEffect(() => {
+    if (paidHandledRef.current) return
+    if (isLoading || !user) return
+    if (searchParams.get('paid') !== '1') return
+    if (!depositsLoaded) return // wait for the deposit list to load before deciding
+    const newestPending = deposits
+      .filter(d => d.status === 'pending')
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+    paidHandledRef.current = true
+    if (newestPending) {
+      handleVerify(newestPending.id)
+    } else {
+      // No pending deposit (webhook already credited, or none) — still show the
+      // continuation panel so the user gets routed onward to place their order.
+      setDepositComplete({ balance: authWalletBalance, intentId: searchParams.get('intentId') })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, user, deposits, depositsLoaded])
 
   useEffect(() => {
     setCardEstimate(null)
@@ -551,7 +580,9 @@ export default function DepositPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         // Send the user's local-currency input; server converts to USD authoritatively.
-        body: JSON.stringify({ amount: numAmount, localCurrency: currency, billing }),
+        // intentId (if present) threads the pending gem order through Pandabase's
+        // return_url so the user lands back in the guided continuation flow.
+        body: JSON.stringify({ amount: numAmount, localCurrency: currency, billing, intentId: searchParams.get('intentId') || undefined }),
       })
       const data = await res.json()
       if (!res.ok) { setMessage({ type: 'error', text: data.error || 'Failed to create deposit' }); return }
@@ -812,12 +843,15 @@ export default function DepositPage() {
         setWalletBalance(data.walletBalance)
         setMessage({ type: 'success', text: data.message })
         fetchDeposits()
-        // B2: bounce back to /gems if a buy intent was attached.
+        // Show the "funds added → place your order" continuation panel. If a buy
+        // intent is attached, deep-link to /gems?resumeBuy and also auto-redirect
+        // after a beat (the visible link covers blocked redirects / no intent).
         const intentId = searchParams.get('intentId')
+        setDepositComplete({ balance: data.walletBalance, intentId })
         if (intentId) {
           setTimeout(() => {
             window.location.href = `/gems?resumeBuy=${encodeURIComponent(intentId)}`
-          }, 1500)
+          }, 2500)
         }
       } else if (data.error) {
         setMessage({ type: 'error', text: data.error })
@@ -854,6 +888,39 @@ export default function DepositPage() {
 
   return (
     <div className="flex flex-col items-center min-h-[100dvh] md:min-h-0 px-3 md:px-0 pb-[env(safe-area-inset-bottom)]">
+      <div className="w-full max-w-xl pt-2">
+        <CheckoutSteps current={2} />
+      </div>
+
+      {/* Post-deposit continuation — "funds added → place your order" */}
+      {depositComplete && (
+        <div
+          className="w-full max-w-xl mb-6 p-5 sm:p-6 text-center"
+          style={{ background: 'rgba(34,197,94,0.12)', border: '2px solid #22c55e', boxShadow: '4px 4px 0px #000' }}
+        >
+          <p className="text-green-400 text-lg sm:text-xl font-bold uppercase mb-1">✓ Funds Added!</p>
+          <p className="text-white text-sm mb-1">
+            Your balance is now <span className="font-bold">{formatPrice(depositComplete.balance)}</span>.
+          </p>
+          <p className="text-gray-300 text-xs sm:text-sm mb-4">
+            You&apos;re not done yet — place your order to get your gems.
+          </p>
+          <a
+            href={depositComplete.intentId ? `/gems?resumeBuy=${encodeURIComponent(depositComplete.intentId)}` : '/gems?topup=1'}
+            className="relative inline-flex items-center justify-center pixel-btn-press"
+            style={{ textDecoration: 'none' }}
+          >
+            <img src="/images/pixel/pngs/asset-59.png" alt="" className="h-[48px] sm:h-[54px] w-auto min-w-[200px]" style={{ imageRendering: 'pixelated' }} />
+            <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-xs sm:text-sm uppercase tracking-wider">
+              Place Your Order →
+            </span>
+          </a>
+          {depositComplete.intentId && (
+            <p className="text-gray-400 text-[10px] mt-3 uppercase tracking-wider">Taking you there automatically…</p>
+          )}
+        </div>
+      )}
+
       <div className="w-full max-w-xl mb-8">
         <h1 className="text-2xl font-bold text-white text-center">Add Balance</h1>
         <p className="text-gray-400 mt-1 text-center">

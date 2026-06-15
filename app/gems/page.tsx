@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import posthog from 'posthog-js'
 import { Minus, Plus, X, Wallet, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
-import { PixelButton } from '@/components/ui'
+import { PixelButton, CheckoutSteps } from '@/components/ui'
 import { useCurrency, useAuth } from '@/components/providers'
 
 interface GemListing {
@@ -93,6 +93,10 @@ function GemsContent() {
   const fromRecovery = searchParams?.get('from') === 'recovery'
   const fromOutageNotify = searchParams?.get('from') === 'outage_notify'
   const resumeBuyId = searchParams?.get('resumeBuy') ?? null
+  // ?topup=1 — arrived from a general deposit (no specific buy intent). Prefill
+  // the most gems the balance can buy so they can confirm without fiddling.
+  const fromTopup = searchParams?.get('topup') === '1'
+  const topupHandledRef = useRef(false)
   // Track previous bot status across renders to fire `bot_status_changed` only
   // on actual transitions (not on initial mount).
   const prevBotOnlineRef = useRef<boolean | null>(null)
@@ -158,34 +162,37 @@ function GemsContent() {
     }
   }, [toast])
 
-  async function fetchUser() {
+  async function fetchUser(): Promise<UserInfo> {
     try {
       const res = await fetch('/api/auth/me')
       if (res.ok) {
         const data = await res.json()
         if (data.user) {
-          setUserInfo({
+          const info: UserInfo = {
             user: data.user,
             walletBalance: data.walletBalance || 0,
             loyaltyDiscount: data.loyaltyDiscount || 0,
             canUseDiscordDiscount: data.canUseDiscordDiscount || false,
             discordLinked: !!data.discordLinked,
             notifyOnBotRecovery: !!data.notifyOnBotRecovery,
-          })
-          return
+          }
+          setUserInfo(info)
+          return info
         }
       }
     } catch { /* Not logged in — fall through to set logged-out sentinel */ }
     // Logged-out path: set a resolved-but-no-user sentinel so consumers that
     // gate on `userInfo === null` (e.g. the pre-auth banner) can proceed.
-    setUserInfo({
+    const loggedOut: UserInfo = {
       user: null,
       walletBalance: 0,
       loyaltyDiscount: 0,
       canUseDiscordDiscount: false,
       discordLinked: false,
       notifyOnBotRecovery: false,
-    })
+    }
+    setUserInfo(loggedOut)
+    return loggedOut
   }
 
   // Track when the offline banner is shown so we can fire `outage_banner_shown`
@@ -288,10 +295,25 @@ function GemsContent() {
           return
         }
         const data = await res.json()
-        const targetListing = listings.find(l => l.id === data.listingId)
-        if (!targetListing) return
-        const safeAmount = Math.min(Math.max(1, data.amountK), targetListing.stockK || data.amountK)
-        setSelectedListing(targetListing)
+        const targetListing = listings.find(l => l.id === data.listingId) || null
+        // Re-read fresh wallet balance — they just topped up, so we must size
+        // against the post-deposit balance, not the stale one.
+        const fresh = await fetchUser()
+        const balance = fresh?.walletBalance ?? userInfo?.walletBalance ?? 0
+        // Max convenience: auto-fill the most gems the balance can buy at the
+        // best available price. Fall back to the original intent amount only if
+        // the balance can't cover the minimum order on any listing.
+        const maxBuy = pickMaxBuy(balance, fresh)
+        let chosenListing = maxBuy.listing || targetListing
+        let chosenAmount = maxBuy.amountK
+        if (!chosenListing) return
+        if (chosenAmount <= 0) {
+          if (!targetListing) return
+          chosenListing = targetListing
+          chosenAmount = Math.min(Math.max(1, data.amountK), targetListing.stockK || data.amountK)
+        }
+        const safeAmount = chosenAmount
+        setSelectedListing(chosenListing)
         setAmount(safeAmount)
         setInputValue(String(safeAmount))
         // Open confirm modal once amount + listing are settled
@@ -315,11 +337,34 @@ function GemsContent() {
           intent_age_seconds: intentAgeSeconds,
           from_oauth_callback: true, // ?resumeBuy is only ever set by the post-OAuth redirect
           restored_amount: safeAmount,
-          restored_listing_id: targetListing.id,
+          restored_listing_id: chosenListing?.id ?? null,
+          intent_amount_k: data.amountK,
+          maxed_to_balance: maxBuy.amountK > 0,
+          balance_usd: balance,
         })
       } catch { /* ignore */ }
     })()
   }, [resumeBuyId, listings, userInfo?.user])
+
+  // Top-up max-fill: after a general deposit (?topup=1, no buy intent), prefill
+  // the largest affordable amount + best listing. Does NOT auto-open the confirm
+  // modal — they didn't commit to a specific order, so let them review first.
+  useEffect(() => {
+    if (!fromTopup || topupHandledRef.current || listings.length === 0) return
+    if (!userInfo?.user) return
+    topupHandledRef.current = true
+    ;(async () => {
+      const fresh = await fetchUser()
+      const balance = fresh?.walletBalance ?? userInfo.walletBalance
+      const maxBuy = pickMaxBuy(balance, fresh)
+      if (maxBuy.listing && maxBuy.amountK > 0) {
+        setSelectedListing(maxBuy.listing)
+        setAmount(maxBuy.amountK)
+        setInputValue(String(maxBuy.amountK))
+        safeCapture('gems_topup_maxfilled', { amount_k: maxBuy.amountK, balance_usd: balance, listing_id: maxBuy.listing.id })
+      }
+    })()
+  }, [fromTopup, listings, userInfo?.user])
 
   // Quicklink prefill from Discord bot: ?amount=&listing=&fromBot=1
   useEffect(() => {
@@ -443,6 +488,50 @@ function GemsContent() {
       || sorted.find(l => l.stockK > 0)
       || sorted[0]
       || null
+  }
+
+  // Platform listings get loyalty + Discord-first-purchase discounts; vendor
+  // listings are sold at their listed price with no platform discount.
+  function discountForListing(listing: GemListing, ui: UserInfo | null): number {
+    if (listing.type === 'vendor') return 0
+    return (ui?.loyaltyDiscount || 0) + (ui?.canUseDiscordDiscount ? 0.025 : 0)
+  }
+
+  // Largest amount (in k) the given balance can buy on a listing, honoring its
+  // bulk tiers (cost is non-monotonic — 100k can cost less than 99k — so we
+  // evaluate the max k at each tier rate and take the best), then clamp to the
+  // listing's min/max order size and available stock.
+  function maxAffordableK(listing: GemListing, balance: number, discount: number): number {
+    const cap = Math.min(listing.maxOrderK, listing.stockK)
+    if (cap < listing.minOrderK || balance <= 0) return 0
+    const factor = 1 - discount
+    if (factor <= 0) return cap
+    const rates = [listing.pricePerK, ...((listing.bulkTiers || []).map(t => t.pricePerK))]
+    let best = 0
+    for (const ppk of rates) {
+      const rate = ppk * factor
+      if (rate <= 0) continue
+      let k = Math.floor((balance + 1e-9) / rate)
+      if (k > cap) k = cap
+      // Re-check against the *actual* effective rate at k (k may fall into a
+      // different tier than the one we sized from) and trim until affordable.
+      while (k >= listing.minOrderK && Math.round(k * getEffectiveRate(listing, k) * factor * 100) / 100 > balance + 1e-9) k--
+      if (k >= listing.minOrderK && k > best) best = k
+    }
+    return best
+  }
+
+  // Across all in-stock listings, the listing + amount that lets the balance buy
+  // the most gems. Ties broken by the cheaper effective rate via sort order.
+  function pickMaxBuy(balance: number, ui: UserInfo | null): { listing: GemListing | null; amountK: number } {
+    let bestListing: GemListing | null = null
+    let bestK = 0
+    for (const l of [...listings].sort((a, b) => a.pricePerK - b.pricePerK)) {
+      if (l.stockK <= 0) continue
+      const k = maxAffordableK(l, balance, discountForListing(l, ui))
+      if (k > bestK) { bestK = k; bestListing = l }
+    }
+    return { listing: bestListing, amountK: bestK }
   }
 
   const maxAmount = listings.length > 0
@@ -912,6 +1001,18 @@ function GemsContent() {
             </div>
             <p className="text-gray-500 text-[9px] sm:text-[10px] text-center mt-2">
               Wallet deposits are non-refundable but always credit to your platform wallet &mdash; spend on anything, anytime.
+            </p>
+          </div>
+        )}
+
+        {/* Guided progress: step 3 (Confirm) when resuming after a deposit, else step 1 (Pick). */}
+        <CheckoutSteps current={resumeBuyId ? 3 : 1} />
+
+        {resumeBuyId && (
+          <div className="mb-6 p-4 text-center" style={{ background: 'rgba(34,197,94,0.12)', border: '2px solid #22c55e' }}>
+            <p className="text-green-400 text-xs sm:text-sm uppercase font-bold mb-1">✓ Funds added — finish your order</p>
+            <p className="text-gray-300 text-[10px] sm:text-xs">
+              We filled in the most gems your balance can buy at the best price. Adjust the amount if you like, then confirm to place your order.
             </p>
           </div>
         )}
@@ -1587,7 +1688,7 @@ function GemsContent() {
                   style={{ backgroundImage: 'url(/images/pixel/pngs/asset-59.png)', backgroundSize: '100% 100%' }}
                 >
                   <span className="absolute inset-0 flex items-center justify-center font-bold text-dark-900 text-[8px] sm:text-[10px] uppercase tracking-wider">
-                    {purchasing ? 'Buying...' : 'Confirm Purchase'}
+                    {purchasing ? 'Buying...' : 'Confirm & Place Order'}
                   </span>
                 </button>
               </div>
