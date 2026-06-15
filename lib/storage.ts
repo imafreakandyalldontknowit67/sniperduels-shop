@@ -158,13 +158,27 @@ export async function linkDiscordToUser(
   discord: { id: string; username: string; avatar?: string }
 ): Promise<StoredUser | null> {
   try {
-    // Reject if this Discord account is already linked to a different user
-    // (the User_discordId_key unique index will also enforce this at the DB level).
     const existing = await prisma.user.findUnique({
       where: { discordId: discord.id },
       select: { id: true },
     })
-    if (existing && existing.id !== userId) return null
+    if (existing && existing.id !== userId) {
+      // The Discord id is already claimed by another row. If that row is a
+      // Discord-bot orphan (`discord_<id>`), it's the SAME person who used the
+      // bot before logging into the site — merge it into this Roblox account
+      // (carrying balance + history) instead of failing the link.
+      if (existing.id.startsWith('discord_')) {
+        const merge = await mergeUserAccounts(existing.id, userId)
+        if (!merge.ok) {
+          console.error(`[storage] linkDiscordToUser merge failed (${existing.id} -> ${userId}):`, merge.error)
+          return null
+        }
+        // fall through to set fresh Discord fields on the canonical row
+      } else {
+        // A real Roblox account already owns this Discord id — genuine conflict.
+        return null
+      }
+    }
 
     const row = await prisma.user.update({
       where: { id: userId },
@@ -334,6 +348,134 @@ export async function deductFromWallet(
     })
     return toStoredUser(row)
   })
+}
+
+// ─── Account merge (dedupe Discord-bot vs Roblox-OAuth rows) ─────────────────
+
+export interface MergeResult {
+  ok: boolean
+  orphanId: string
+  canonicalId: string
+  movedBalance: number
+  reassigned: Record<string, number>
+  skipped: string[]
+  error?: string
+}
+
+/**
+ * Merge a duplicate (orphan) user row into the canonical user row, then delete
+ * the orphan. Heals the Discord-bot ↔ site duplication where the bot creates a
+ * synthetic `discord_<id>` row keyed differently from the site's Roblox-id row.
+ *
+ * Atomic + ledger-safe: balance is moved through a TransactionLedger row +
+ * `allowWalletChange` (the same path addToWallet uses), so the
+ * `enforce_wallet_ledger_trg` trigger is satisfied. All child FK rows are
+ * reassigned before the orphan is deleted.
+ */
+export async function mergeUserAccounts(orphanId: string, canonicalId: string): Promise<MergeResult> {
+  const result: MergeResult = { ok: false, orphanId, canonicalId, movedBalance: 0, reassigned: {}, skipped: [] }
+  if (!orphanId || !canonicalId || orphanId === canonicalId) {
+    result.error = 'invalid or identical ids'
+    return result
+  }
+
+  try {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const orphan = await tx.user.findUnique({ where: { id: orphanId } })
+      const canonical = await tx.user.findUnique({ where: { id: canonicalId } })
+      if (!orphan) throw new Error(`orphan ${orphanId} not found`)
+      if (!canonical) throw new Error(`canonical ${canonicalId} not found`)
+
+      const moveDiscord = !!orphan.discordId && !canonical.discordId
+      const moveReferral = !!orphan.referralCode && !canonical.referralCode
+      if (orphan.discordId && canonical.discordId) result.skipped.push('discord (canonical already linked)')
+
+      // 1. Clear the unique fields off the orphan first so moving them to the
+      //    canonical row cannot trip the unique indexes mid-transaction.
+      if (orphan.discordId || orphan.referralCode) {
+        await tx.user.update({
+          where: { id: orphanId },
+          data: {
+            ...(orphan.discordId ? { discordId: null, discordUsername: null, discordAvatar: null, discordLinkedAt: null } : {}),
+            ...(moveReferral ? { referralCode: null } : {}),
+          },
+        })
+      }
+
+      // 2. Reassign child FK rows orphan -> canonical.
+      const reassign = async (label: string, fn: () => Promise<{ count: number }>) => {
+        try {
+          const r = await fn()
+          if (r.count) result.reassigned[label] = r.count
+        } catch (e) {
+          result.skipped.push(`${label}: ${e instanceof Error ? e.message : String(e)}`)
+        }
+      }
+      await reassign('order', () => tx.order.updateMany({ where: { userId: orphanId }, data: { userId: canonicalId } }))
+      await reassign('deposit', () => tx.deposit.updateMany({ where: { userId: orphanId }, data: { userId: canonicalId } }))
+      await reassign('transactionLedger', () => tx.transactionLedger.updateMany({ where: { userId: orphanId }, data: { userId: canonicalId } }))
+      await reassign('pendingBuyIntent', () => tx.pendingBuyIntent.updateMany({ where: { userId: orphanId }, data: { userId: canonicalId } }))
+      await reassign('vaultItem', () => tx.vaultItem.updateMany({ where: { ownerId: orphanId }, data: { ownerId: canonicalId } }))
+      await reassign('itemDepositSession', () => tx.itemDepositSession.updateMany({ where: { userId: orphanId }, data: { userId: canonicalId } }))
+      await reassign('itemDeliveryJob', () => tx.itemDeliveryJob.updateMany({ where: { buyerUserId: orphanId }, data: { buyerUserId: canonicalId } }))
+      await reassign('itemWithdrawalJob', () => tx.itemWithdrawalJob.updateMany({ where: { userId: orphanId }, data: { userId: canonicalId } }))
+      await reassign('vendorDeposit', () => tx.vendorDeposit.updateMany({ where: { vendorId: orphanId }, data: { vendorId: canonicalId } }))
+      await reassign('vendorEarning', () => tx.vendorEarning.updateMany({ where: { vendorId: orphanId }, data: { vendorId: canonicalId } }))
+      await reassign('vendorPayout', () => tx.vendorPayout.updateMany({ where: { vendorId: orphanId }, data: { vendorId: canonicalId } }))
+
+      // 1:1 / unique relations — only move if canonical doesn't already have one.
+      const orphanListing = await tx.vendorGemListing.findUnique({ where: { vendorId: orphanId } })
+      if (orphanListing) {
+        const canonListing = await tx.vendorGemListing.findUnique({ where: { vendorId: canonicalId } })
+        if (!canonListing) await reassign('vendorGemListing', () => tx.vendorGemListing.updateMany({ where: { vendorId: orphanId }, data: { vendorId: canonicalId } }))
+        else result.skipped.push('vendorGemListing (both have one)')
+      }
+      const orphanCreator = await tx.creatorProfile.findUnique({ where: { userId: orphanId } })
+      if (orphanCreator) {
+        const canonCreator = await tx.creatorProfile.findUnique({ where: { userId: canonicalId } })
+        if (!canonCreator) await reassign('creatorProfile', () => tx.creatorProfile.updateMany({ where: { userId: orphanId }, data: { userId: canonicalId } }))
+        else result.skipped.push('creatorProfile (both have one)')
+      }
+
+      // 3. Fold balance (ledger-safe), loyalty, and the moved unique fields onto canonical.
+      const movedBalance = Math.round(d(orphan.walletBalance) * 100) / 100
+      const data: Prisma.UserUpdateInput = {
+        lifetimeSpend: Math.round((d(canonical.lifetimeSpend) + d(orphan.lifetimeSpend)) * 100) / 100,
+        discordFirstPurchaseUsed: canonical.discordFirstPurchaseUsed || orphan.discordFirstPurchaseUsed,
+      }
+      if (moveDiscord) {
+        data.discordId = orphan.discordId
+        data.discordUsername = orphan.discordUsername
+        data.discordAvatar = orphan.discordAvatar
+        data.discordLinkedAt = orphan.discordLinkedAt
+      }
+      if (moveReferral) data.referralCode = orphan.referralCode
+      if (movedBalance > 0) {
+        await tx.transactionLedger.create({
+          data: {
+            type: 'admin_adjust',
+            userId: canonicalId,
+            amount: movedBalance,
+            description: `account merge from ${orphanId}`,
+            relatedId: orphanId,
+            createdAt: new Date().toISOString(),
+          },
+        })
+        await allowWalletChange(tx)
+        data.walletBalance = Math.round((d(canonical.walletBalance) + movedBalance) * 100) / 100
+      }
+      await tx.user.update({ where: { id: canonicalId }, data })
+      result.movedBalance = movedBalance
+
+      // 4. Delete the orphan (children reassigned, balance/links moved off).
+      await tx.user.delete({ where: { id: orphanId } })
+    }, { timeout: 30000 })
+
+    result.ok = true
+  } catch (e) {
+    result.error = e instanceof Error ? e.message : String(e)
+  }
+  return result
 }
 
 // ─── Loyalty functions ───────────────────────────────────────────────────────
